@@ -71,10 +71,10 @@ export async function listChildren() {
   return data;
 }
 
-export async function addChild({ name, avatar, pin }) {
+export async function addChild({ name, avatar, pin, familyId }) {
   const { data, error } = await supabase
     .from("children")
-    .insert({ name, avatar, pin: pin || "0000" })
+    .insert({ name, avatar, pin: pin || "0000", family_id: familyId })
     .select()
     .single();
   if (error) throw error;
@@ -106,10 +106,10 @@ export async function listChores() {
   return data;
 }
 
-export async function addChore({ name, icon, value_pence }) {
+export async function addChore({ name, icon, value_pence, familyId }) {
   const { data, error } = await supabase
     .from("chores")
-    .insert({ name, icon, value_pence })
+    .insert({ name, icon, value_pence, family_id: familyId })
     .select()
     .single();
   if (error) throw error;
