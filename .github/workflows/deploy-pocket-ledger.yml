@@ -3,7 +3,7 @@ name: Deploy Pocket Ledger
 on:
   push:
     branches: [claude/new-session-5v4mqn]
-    paths: [pocket-ledger/**]
+    paths: [pocket-ledger/**, .github/workflows/deploy-pocket-ledger.yml]
   workflow_dispatch:
 
 permissions:
