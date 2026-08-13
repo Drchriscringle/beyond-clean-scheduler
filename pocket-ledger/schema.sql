@@ -160,19 +160,106 @@ begin
 end;
 $$;
 
--- Invite a co-parent: the invited user must already have signed up.
-create function join_family_as_coparent(invite_family_id uuid)
+-- ------------------------------------------------------------
+-- CO-PARENT INVITES
+-- Short-lived, single-use codes — knowing a family's raw UUID is never
+-- enough on its own to join it.
+-- ------------------------------------------------------------
+
+create table family_invites (
+  id          uuid primary key default gen_random_uuid(),
+  family_id   uuid not null references families(id) on delete cascade,
+  code        text not null unique,
+  created_by  uuid not null references parents(id) on delete cascade,
+  expires_at  timestamptz not null,
+  used_at     timestamptz,
+  used_by     uuid references parents(id),
+  created_at  timestamptz not null default now()
+);
+
+alter table family_invites enable row level security;
+
+create policy "select own family invites" on family_invites
+  for select using (family_id = my_family_id());
+-- no insert/update/delete policy: invites are only created/redeemed
+-- through the security-definer functions below.
+
+-- Generates a 6-character code (ambiguous characters 0/O, 1/I removed)
+-- valid for 24 hours, and stores it against the caller's family.
+create function create_family_invite()
+returns family_invites
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  fam_id uuid;
+  my_parent_id uuid;
+  new_code text;
+  new_invite family_invites;
+begin
+  fam_id := my_family_id();
+  if fam_id is null then
+    raise exception 'You must belong to a family to invite a co-parent.';
+  end if;
+
+  select id into my_parent_id from parents where user_id = auth.uid();
+
+  loop
+    select string_agg(substr('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', (floor(random() * 32) + 1)::int, 1), '')
+      into new_code
+      from generate_series(1, 6);
+    exit when not exists (
+      select 1 from family_invites where code = new_code and used_at is null and expires_at > now()
+    );
+  end loop;
+
+  insert into family_invites (family_id, code, created_by, expires_at)
+  values (fam_id, new_code, my_parent_id, now() + interval '24 hours')
+  returning * into new_invite;
+
+  return new_invite;
+end;
+$$;
+
+-- Redeems an invite code: only valid while unused and unexpired, and only
+-- for an account that doesn't already belong to a family.
+create function redeem_family_invite(invite_code text)
 returns void
 language plpgsql
 security definer
+set search_path = public
 as $$
+declare
+  invite record;
+  new_parent_id uuid;
 begin
   if exists (select 1 from parents where user_id = auth.uid()) then
     raise exception 'This account already belongs to a family.';
   end if;
-  insert into parents (family_id, user_id, role) values (invite_family_id, auth.uid(), 'co_parent');
+
+  select * into invite from family_invites
+    where code = upper(trim(invite_code)) and used_at is null and expires_at > now()
+    for update;
+
+  if invite is null then
+    raise exception 'That invite code is invalid or has expired.';
+  end if;
+
+  insert into parents (family_id, user_id, role) values (invite.family_id, auth.uid(), 'co_parent')
+    returning id into new_parent_id;
+
+  update family_invites set used_at = now(), used_by = new_parent_id where id = invite.id;
 end;
 $$;
+
+-- Both functions are SECURITY DEFINER but only need to run for signed-in
+-- parents, so the default PUBLIC/anon execute grants are revoked —
+-- matching the rest of this schema's functions, which never had them.
+revoke execute on function create_family_invite() from public;
+revoke execute on function create_family_invite() from anon;
+revoke execute on function redeem_family_invite(text) from public;
+revoke execute on function redeem_family_invite(text) from anon;
 
 -- Approve or decline a claim; only writes a transaction (and thus moves
 -- money) when approving. Keeps the "money only moves on approval" rule

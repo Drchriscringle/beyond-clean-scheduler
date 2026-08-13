@@ -49,8 +49,17 @@ export async function createFamily(name) {
   return data; // new family id
 }
 
-export async function joinFamilyAsCoParent(familyId) {
-  const { error } = await supabase.rpc("join_family_as_coparent", { invite_family_id: familyId });
+// Creates a 6-character invite code for the caller's family, valid for
+// 24 hours and single-use. Returns the full row, including `code` and
+// `expires_at`.
+export async function createFamilyInvite() {
+  const { data, error } = await supabase.rpc("create_family_invite");
+  if (error) throw error;
+  return data;
+}
+
+export async function redeemFamilyInvite(code) {
+  const { error } = await supabase.rpc("redeem_family_invite", { invite_code: code });
   if (error) throw error;
 }
 

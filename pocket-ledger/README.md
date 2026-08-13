@@ -39,9 +39,11 @@ Parents set recurring weekly bills per child (`bills` table — name, icon, penc
 - By default, can't push a child below zero — it pays what it can and records the rest as a shortfall (`bill_runs.shortfall_pence`) rather than real debt. Flip `children.allow_negative_balance` on a specific child for the sharper real-world version.
 - Logs every run in `bill_runs` so both parent and child can see a history, and each deduction lands in `transactions` with `jar = 'bills'` — so the ledger stays the single source of truth for balance.
 
+## Co-parent invites
+
+Joining as a co-parent no longer relies on typing in the family's raw UUID. `create_family_invite()` mints a 6-character code (ambiguous characters removed), valid for 24 hours and good for one use; `redeem_family_invite(code)` consumes it and adds the caller as a `co_parent`. The old `join_family_as_coparent(uuid)` function has been dropped — knowing a family's ID was never meant to be enough to join it.
+
 ## Next steps worth doing before real families use it
 
-- **Co-parent invites**: right now `join_family_as_coparent` takes a raw family ID typed in by hand — fine for testing, but wrap it in a proper invite-link flow (a signed, expiring token) before shipping.
 - **Child PIN**: stored in plain text in `children.pin` for simplicity. It's a UI convenience lock, not a security boundary (see the design note at the bottom of `schema.sql`) — but if that changes, hash it.
-- **Styling**: this file keeps markup minimal on purpose. Drop in the bright, Baloo-2, jar-visual UI from the earlier prototype and swap its `window.storage` calls for the equivalent functions in `lib/api.js` — the data shapes line up directly.
 - **Real money movement**: still unresolved from the design stage — this schema only tracks a virtual ledger. Decide the top-up model (manual parent top-up vs. Open Banking/Stripe) before connecting it to actual bank accounts.

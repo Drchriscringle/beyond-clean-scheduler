@@ -163,7 +163,7 @@ function AuthGate() {
 
 function CreateOrJoinFamily({ onDone }) {
   const [name, setName] = useState("");
-  const [joinId, setJoinId] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [err, setErr] = useState("");
 
   const create = async () => {
@@ -177,7 +177,7 @@ function CreateOrJoinFamily({ onDone }) {
 
   const join = async () => {
     try {
-      await api.joinFamilyAsCoParent(joinId.trim());
+      await api.redeemFamilyInvite(joinCode.trim());
       onDone(await api.getMyFamily());
     } catch (e) {
       setErr(e.message);
@@ -208,11 +208,13 @@ function CreateOrJoinFamily({ onDone }) {
         <div className="space-y-2">
           <h2 className="font-display font-bold text-slate-700">🔑 Join as co-parent</h2>
           <input
-            className="w-full border-2 border-indigo-100 focus:border-indigo-400 outline-none rounded-2xl px-4 py-3 transition"
-            placeholder="Family code (from other parent)"
-            value={joinId}
-            onChange={(e) => setJoinId(e.target.value)}
+            className="w-full border-2 border-indigo-100 focus:border-indigo-400 outline-none rounded-2xl px-4 py-3 transition uppercase tracking-widest text-center font-display font-bold"
+            placeholder="Invite code"
+            maxLength={6}
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value)}
           />
+          <p className="text-xs text-slate-400 text-center">Ask the other parent for the 6-character code from their app.</p>
           <BigButton onClick={join} className="bg-white border-2 border-indigo-200 text-indigo-600">
             Join
           </BigButton>
@@ -304,30 +306,11 @@ function FamilyDashboard({ family }) {
 }
 
 function DashboardHeader({ family }) {
-  const [copied, setCopied] = useState(false);
-
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(family.id);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // clipboard unavailable — silently ignore, code is still visible to copy manually
-    }
-  };
-
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 pt-2">
       <div>
         <h1 className="font-display text-2xl font-extrabold text-slate-800">🫙 {family.name}</h1>
-        <button
-          onClick={copyCode}
-          title="Share this code so a co-parent can join"
-          className="mt-1 flex items-center gap-1.5 text-xs font-mono font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition rounded-full px-3 py-1"
-        >
-          {copied ? <CopyCheck size={13} /> : <Copy size={13} />}
-          {copied ? "Copied!" : "Family code · tap to copy"}
-        </button>
+        <InviteCoParent />
       </div>
       <button
         onClick={() => api.signOut()}
@@ -336,6 +319,62 @@ function DashboardHeader({ family }) {
         <LogOut size={16} /> Sign out
       </button>
     </header>
+  );
+}
+
+function InviteCoParent() {
+  const [invite, setInvite] = useState(null); // { code, expires_at }
+  const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const makeInvite = async () => {
+    setBusy(true);
+    setErr("");
+    try {
+      setInvite(await api.createFamilyInvite());
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(invite.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable — silently ignore, code is still visible to copy manually
+    }
+  };
+
+  if (!invite) {
+    return (
+      <button
+        onClick={makeInvite}
+        disabled={busy}
+        className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition rounded-full px-3 py-1 disabled:opacity-50"
+      >
+        {busy ? "Generating…" : "👨‍👩‍👧 Invite a co-parent"}
+        {err && <span className="text-rose-600">· {err}</span>}
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-1 flex items-center gap-2 flex-wrap">
+      <button
+        onClick={copyCode}
+        title="Share this code — it expires in 24 hours and works once"
+        className="flex items-center gap-1.5 text-xs font-mono font-extrabold tracking-widest text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition rounded-full px-3 py-1"
+      >
+        {copied ? <CopyCheck size={13} /> : <Copy size={13} />}
+        {copied ? "Copied!" : invite.code}
+      </button>
+      <span className="text-[11px] text-slate-400">expires in 24h · one-time use</span>
+    </div>
   );
 }
 
