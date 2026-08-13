@@ -1,0 +1,47 @@
+name: Deploy Pocket Ledger
+
+on:
+  push:
+    branches: [claude/new-session-5v4mqn]
+    paths: [pocket-ledger/**]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: pages
+        uses: actions/configure-pages@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+        working-directory: pocket-ledger
+      - run: npm run build -- --base=${{ steps.pages.outputs.base_path }}
+        working-directory: pocket-ledger
+        env:
+          VITE_SUPABASE_URL: https://zbfsbutoivufqoedreax.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_Uk45y4_G3iaIR8UXwE_0OQ_Nnwmx8ue
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pocket-ledger/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
