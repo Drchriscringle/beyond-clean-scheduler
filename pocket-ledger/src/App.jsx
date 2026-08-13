@@ -7,6 +7,7 @@ const money = (pence) => `£${((pence || 0) / 100).toFixed(2)}`;
 
 const AVATARS = ["🙂", "🐶", "🐱", "🦊", "🐵", "🦄", "🐸", "🐼", "🐧", "🦁"];
 const CHORE_ICONS = ["⭐", "🧹", "🍽️", "🛏️", "🧺", "📚", "🐕", "🌱", "🚮", "🧼"];
+const BILL_ICONS = ["🏠", "💡", "🍽️", "🚌", "📱", "🛒", "💧", "🌐"];
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -232,6 +233,7 @@ function FamilyDashboard({ family }) {
   const [chores, setChores] = useState([]);
   const [pending, setPending] = useState([]);
   const [balances, setBalances] = useState({}); // childId -> balance row
+  const [bills, setBills] = useState({}); // childId -> bill[]
 
   const refreshAll = useCallback(async () => {
     const [c, ch, p] = await Promise.all([api.listChildren(), api.listChores(), api.listPendingClaims()]);
@@ -240,6 +242,8 @@ function FamilyDashboard({ family }) {
     setPending(p);
     const balPairs = await Promise.all(c.map(async (kid) => [kid.id, await api.getChildBalance(kid.id)]));
     setBalances(Object.fromEntries(balPairs));
+    const billPairs = await Promise.all(c.map(async (kid) => [kid.id, await api.listBillsForChild(kid.id)]));
+    setBills(Object.fromEntries(billPairs));
   }, []);
 
   useEffect(() => {
@@ -280,6 +284,27 @@ function FamilyDashboard({ family }) {
           ))}
         </div>
         <AddChoreForm familyId={family.id} onAdded={refreshAll} />
+      </Section>
+
+      <Section
+        title="Bills"
+        emoji="🧾"
+        subtitle="Set weekly household bills per child — pay day deducts them from their total balance, so they see saving up for chores and paying for essentials are the same pot."
+      >
+        <div className="space-y-3">
+          {children.map((kid) => (
+            <ChildBillsCard
+              key={kid.id}
+              kid={kid}
+              familyId={family.id}
+              bills={bills[kid.id] || []}
+              onChanged={refreshAll}
+            />
+          ))}
+          {children.length === 0 && (
+            <p className="text-sm text-slate-400 italic py-2">Add a child first.</p>
+          )}
+        </div>
       </Section>
 
       <Section title="Claim a chore" emoji="🙋" subtitle="Child-mode demo — lives behind the PIN toggle in the full app.">
@@ -622,6 +647,214 @@ function AddChoreForm({ familyId, onAdded }) {
         </button>
       </div>
       {err && <p className="text-xs text-rose-600 font-medium">{err}</p>}
+    </div>
+  );
+}
+
+/* ---------------- bills / pay day ---------------- */
+
+const money2 = (pence) => `£${((pence || 0) / 100).toFixed(2)}`;
+
+function ChildBillsCard({ kid, familyId, bills, onChanged }) {
+  const [payBusy, setPayBusy] = useState(false);
+  const [payResult, setPayResult] = useState(null); // { total_paid_pence, shortfall_pence }
+  const [payErr, setPayErr] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const totalWeekly = bills.reduce((sum, b) => sum + (b.frequency === "weekly" ? b.amount_pence : 0), 0);
+
+  const payDay = async () => {
+    setPayBusy(true);
+    setPayErr("");
+    setPayResult(null);
+    try {
+      const run = await api.runBillsNow(kid.id);
+      setPayResult(run);
+      onChanged();
+    } catch (e) {
+      setPayErr(e.message);
+    } finally {
+      setPayBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl p-3 bg-white border border-slate-100 shadow-sm">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-2xl">{kid.avatar}</span>
+        <div className="flex-1 min-w-0">
+          <div className="font-display font-bold text-slate-800 text-sm">{kid.name}</div>
+          {bills.length > 0 && (
+            <div className="text-xs text-slate-400">{money2(totalWeekly)} / week in bills</div>
+          )}
+        </div>
+        <button
+          onClick={payDay}
+          disabled={payBusy || bills.length === 0}
+          className="flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 disabled:opacity-40 text-white rounded-full px-3 py-1.5 text-sm font-bold transition"
+        >
+          💸 {payBusy ? "Paying…" : "Pay day"}
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-2">
+        {bills.map((b) => (
+          <BillChip key={b.id} bill={b} onRemoved={onChanged} />
+        ))}
+        {bills.length === 0 && <p className="text-xs text-slate-400 italic">No bills set yet.</p>}
+      </div>
+
+      {payErr && <p className="text-xs text-rose-600 font-medium mb-2">{payErr}</p>}
+      {payResult && (
+        <p className="text-xs font-semibold mb-2 text-sky-700 bg-sky-50 rounded-lg px-2 py-1.5">
+          Paid {money2(payResult.total_paid_pence)}
+          {payResult.shortfall_pence > 0 && (
+            <span className="text-rose-600"> · {money2(payResult.shortfall_pence)} shortfall</span>
+          )}
+        </p>
+      )}
+
+      <AddBillForm familyId={familyId} childId={kid.id} onAdded={onChanged} />
+
+      <button
+        onClick={() => setHistoryOpen((o) => !o)}
+        className="mt-2 text-xs font-semibold text-slate-400 hover:text-slate-600 transition"
+      >
+        {historyOpen ? "Hide" : "Show"} pay day history
+      </button>
+      {historyOpen && <BillHistory childId={kid.id} />}
+    </div>
+  );
+}
+
+function BillChip({ bill, onRemoved }) {
+  return (
+    <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-full pl-3 pr-1.5 py-1.5">
+      <span>{bill.icon}</span>
+      <span className="text-sm font-semibold text-slate-700">{bill.name}</span>
+      <span className="text-xs font-bold text-sky-700 bg-sky-100 rounded-full px-2 py-0.5">
+        {money2(bill.amount_pence)}/{bill.frequency === "weekly" ? "wk" : "mo"}
+      </span>
+      <button
+        onClick={() => api.removeBill(bill.id).then(onRemoved)}
+        className="text-slate-300 hover:text-rose-500 transition p-1"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+function AddBillForm({ familyId, childId, onAdded }) {
+  const [name, setName] = useState("");
+  const [value, setValue] = useState("");
+  const [icon, setIcon] = useState(BILL_ICONS[0]);
+  const [frequency, setFrequency] = useState("weekly");
+  const [open, setOpen] = useState(false);
+  const [err, setErr] = useState("");
+
+  const add = async () => {
+    const pence = parseInt(value, 10);
+    if (!name.trim() || !pence) return;
+    setErr("");
+    try {
+      await api.addBill({ familyId, childId, name: name.trim(), icon, amount_pence: pence, frequency });
+      setName("");
+      setValue("");
+      setIcon(BILL_ICONS[0]);
+      setFrequency("weekly");
+      setOpen(false);
+      onAdded();
+    } catch (e) {
+      setErr(e.message);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-sky-600 border-2 border-dashed border-sky-200 hover:border-sky-400 hover:bg-sky-50 transition rounded-xl py-1.5"
+      >
+        <Plus size={14} /> Add a bill
+      </button>
+    );
+  }
+
+  return (
+    <div className="p-2.5 rounded-xl bg-sky-50/70 space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {BILL_ICONS.map((i) => (
+          <button
+            key={i}
+            onClick={() => setIcon(i)}
+            className={`text-lg w-8 h-8 rounded-full flex items-center justify-center transition ${
+              icon === i ? "bg-sky-400 scale-110 shadow" : "bg-white hover:bg-sky-100"
+            }`}
+          >
+            {i}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input
+          autoFocus
+          className="border-2 border-sky-100 focus:border-sky-400 outline-none rounded-lg px-2.5 py-1.5 text-sm flex-1"
+          placeholder="Bill name (e.g. Rent)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          className="border-2 border-sky-100 focus:border-sky-400 outline-none rounded-lg px-2.5 py-1.5 text-sm w-16 text-center"
+          placeholder="p"
+          value={value}
+          onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
+          onKeyDown={(e) => e.key === "Enter" && add()}
+        />
+      </div>
+      <div className="flex gap-2 items-center">
+        <select
+          value={frequency}
+          onChange={(e) => setFrequency(e.target.value)}
+          className="border-2 border-sky-100 focus:border-sky-400 outline-none rounded-lg px-2 py-1.5 text-sm bg-white"
+        >
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+        <button
+          onClick={add}
+          className="flex-1 bg-sky-500 hover:bg-sky-600 text-white rounded-lg px-3 py-1.5 text-sm font-bold transition"
+        >
+          Add bill
+        </button>
+      </div>
+      {err && <p className="text-xs text-rose-600 font-medium">{err}</p>}
+    </div>
+  );
+}
+
+function BillHistory({ childId }) {
+  const [runs, setRuns] = useState(null); // null = loading
+
+  useEffect(() => {
+    api.listBillRuns(childId).then(setRuns);
+  }, [childId]);
+
+  if (runs === null) return <p className="text-xs text-slate-400 mt-1">Loading…</p>;
+  if (runs.length === 0) return <p className="text-xs text-slate-400 italic mt-1">No pay days yet.</p>;
+
+  return (
+    <div className="mt-2 space-y-1">
+      {runs.map((r) => (
+        <div key={r.id} className="flex items-center justify-between text-xs bg-slate-50 rounded-lg px-2.5 py-1.5">
+          <span className="text-slate-500">{new Date(r.run_at).toLocaleDateString()}</span>
+          <span className="font-semibold text-slate-700">
+            Paid {money2(r.total_paid_pence)} of {money2(r.total_due_pence)}
+          </span>
+          {r.shortfall_pence > 0 && (
+            <span className="font-semibold text-rose-600">{money2(r.shortfall_pence)} short</span>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
