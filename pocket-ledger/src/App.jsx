@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Check, X, LogOut, Copy, CopyCheck, Plus } from "lucide-react";
+import { Check, X, LogOut, Copy, CopyCheck, Plus, Delete, Lock, ArrowLeft } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 import * as api from "./lib/api";
 
@@ -234,6 +234,8 @@ function FamilyDashboard({ family }) {
   const [pending, setPending] = useState([]);
   const [balances, setBalances] = useState({}); // childId -> balance row
   const [bills, setBills] = useState({}); // childId -> bill[]
+  const [pinTarget, setPinTarget] = useState(null); // child being unlocked
+  const [activeChildId, setActiveChildId] = useState(null); // child currently in child mode
 
   const refreshAll = useCallback(async () => {
     const [c, ch, p] = await Promise.all([api.listChildren(), api.listChores(), api.listPendingClaims()]);
@@ -253,14 +255,30 @@ function FamilyDashboard({ family }) {
     return unsubscribe;
   }, [family.id, refreshAll]);
 
+  const activeChild = children.find((k) => k.id === activeChildId);
+  if (activeChild) {
+    return (
+      <ChildView
+        kid={activeChild}
+        family={family}
+        chores={chores}
+        pending={pending}
+        balance={balances[activeChild.id]}
+        bills={bills[activeChild.id] || []}
+        onExit={() => setActiveChildId(null)}
+        onChanged={refreshAll}
+      />
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-8 pb-16">
       <DashboardHeader family={family} />
 
-      <Section title="Children" emoji="👨‍👩‍👧‍👦">
+      <Section title="Children" emoji="👨‍👩‍👧‍👦" subtitle="Tap a child to open their own screen — locked behind their PIN.">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {children.map((kid) => (
-            <ChildCard key={kid.id} kid={kid} balance={balances[kid.id]} />
+            <ChildCard key={kid.id} kid={kid} balance={balances[kid.id]} onOpen={() => setPinTarget(kid)} />
           ))}
         </div>
         <AddChildForm familyId={family.id} onAdded={refreshAll} />
@@ -307,25 +325,16 @@ function FamilyDashboard({ family }) {
         </div>
       </Section>
 
-      <Section title="Claim a chore" emoji="🙋" subtitle="Child-mode demo — lives behind the PIN toggle in the full app.">
-        <div className="flex flex-wrap gap-2">
-          {chores.map((c) =>
-            children.map((kid) => (
-              <button
-                key={c.id + kid.id}
-                onClick={() => api.claimChore(c.id, kid.id, family.id).then(refreshAll)}
-                className="flex items-center gap-1.5 text-sm font-semibold rounded-full pl-1.5 pr-3 py-1.5 bg-white border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 transition shadow-sm"
-              >
-                <span className="text-lg">{kid.avatar}</span>
-                {kid.name} did {c.icon} {c.name}
-              </button>
-            ))
-          )}
-          {(chores.length === 0 || children.length === 0) && (
-            <p className="text-sm text-slate-400 italic py-2">Add a child and a chore to try this.</p>
-          )}
-        </div>
-      </Section>
+      {pinTarget && (
+        <PinPad
+          kid={pinTarget}
+          onCancel={() => setPinTarget(null)}
+          onSuccess={() => {
+            setActiveChildId(pinTarget.id);
+            setPinTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -446,7 +455,7 @@ function Jar({ label, emoji, pence, sharePct }) {
   );
 }
 
-function ChildCard({ kid, balance }) {
+function ChildCard({ kid, balance, onOpen }) {
   const save = balance?.save_pence ?? 0;
   const spend = balance?.spend_pence ?? 0;
   const give = balance?.give_pence ?? 0;
@@ -454,7 +463,11 @@ function ChildCard({ kid, balance }) {
   const shareOf = (v) => (total > 0 ? (v / total) * 100 : 0);
 
   return (
-    <div className="rounded-2xl p-3 bg-white shadow-sm border border-slate-100 flex flex-col items-center text-center gap-1.5 hover:shadow-md transition">
+    <button
+      onClick={onOpen}
+      className="rounded-2xl p-3 bg-white shadow-sm border border-slate-100 flex flex-col items-center text-center gap-1.5 hover:shadow-md hover:border-indigo-200 transition relative"
+    >
+      {onOpen && <Lock size={11} className="absolute top-2 right-2 text-slate-300" />}
       <span className="text-3xl">{kid.avatar}</span>
       <div className="font-display font-bold text-slate-800 text-sm">{kid.name}</div>
       <div className="font-display text-xl font-extrabold text-indigo-600">{money(total)}</div>
@@ -463,13 +476,15 @@ function ChildCard({ kid, balance }) {
         <Jar label="spend" emoji="🛍️" pence={spend} sharePct={shareOf(spend)} />
         <Jar label="give" emoji="🎁" pence={give} sharePct={shareOf(give)} />
       </div>
-    </div>
+      {onOpen && <div className="text-[10px] font-semibold text-indigo-400 mt-0.5">Tap to open</div>}
+    </button>
   );
 }
 
 function AddChildForm({ familyId, onAdded }) {
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState(AVATARS[0]);
+  const [pin, setPin] = useState("");
   const [open, setOpen] = useState(false);
   const [err, setErr] = useState("");
 
@@ -477,9 +492,10 @@ function AddChildForm({ familyId, onAdded }) {
     if (!name.trim()) return;
     setErr("");
     try {
-      await api.addChild({ name: name.trim(), avatar, familyId });
+      await api.addChild({ name: name.trim(), avatar, pin: pin || "0000", familyId });
       setName("");
       setAvatar(AVATARS[0]);
+      setPin("");
       setOpen(false);
       onAdded();
     } catch (e) {
@@ -526,6 +542,14 @@ function AddChildForm({ familyId, onAdded }) {
           Add
         </button>
       </div>
+      <input
+        className="w-full border-2 border-indigo-100 focus:border-indigo-400 outline-none rounded-xl px-3 py-2 text-sm tracking-widest text-center"
+        placeholder="4-digit PIN (optional, defaults to 0000)"
+        maxLength={4}
+        value={pin}
+        onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+        onKeyDown={(e) => e.key === "Enter" && add()}
+      />
       {err && <p className="text-xs text-rose-600 font-medium">{err}</p>}
     </div>
   );
@@ -855,6 +879,271 @@ function BillHistory({ childId }) {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ---------------- child mode: PIN lock + kid's own screen ---------------- */
+
+function PinPad({ kid, onCancel, onSuccess }) {
+  const [entered, setEntered] = useState("");
+  const [shake, setShake] = useState(false);
+
+  const press = (digit) => {
+    if (shake) return;
+    const next = (entered + digit).slice(0, 4);
+    setEntered(next);
+    if (next.length === 4) {
+      if (next === (kid.pin || "0000")) {
+        onSuccess();
+      } else {
+        setShake(true);
+        setTimeout(() => {
+          setShake(false);
+          setEntered("");
+        }, 400);
+      }
+    }
+  };
+
+  const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div
+        className={`w-full max-w-xs bg-white rounded-[2rem] p-6 shadow-2xl text-center ${shake ? "animate-shake" : ""}`}
+      >
+        <span className="text-4xl">{kid.avatar}</span>
+        <div className="font-display font-bold text-slate-800 mt-1 mb-4">{kid.name}'s PIN</div>
+        <div className="flex justify-center gap-3 mb-5">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className={`w-3.5 h-3.5 rounded-full border-2 transition ${
+                i < entered.length ? "bg-indigo-500 border-indigo-500" : "border-slate-300"
+              }`}
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {KEYS.map((d) => (
+            <button
+              key={d}
+              onClick={() => press(d)}
+              className="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:bg-indigo-100 text-xl font-display font-bold text-slate-700 transition"
+            >
+              {d}
+            </button>
+          ))}
+          <button
+            onClick={onCancel}
+            className="h-14 rounded-2xl bg-slate-50 hover:bg-rose-50 text-slate-400 flex items-center justify-center transition"
+          >
+            <X size={20} />
+          </button>
+          <button
+            onClick={() => press("0")}
+            className="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:bg-indigo-100 text-xl font-display font-bold text-slate-700 transition"
+          >
+            0
+          </button>
+          <button
+            onClick={() => setEntered((e) => e.slice(0, -1))}
+            className="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 text-slate-500 flex items-center justify-center transition"
+          >
+            <Delete size={18} />
+          </button>
+        </div>
+        <p className="text-xs text-slate-400 mt-4">Ask a grown-up if you forgot your PIN.</p>
+      </div>
+    </div>
+  );
+}
+
+function BigJar({ label, emoji, title, pence, sharePct }) {
+  const fillPct = pence > 0 ? Math.max(10, Math.min(100, sharePct)) : 0;
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative w-16 h-24 rounded-b-3xl rounded-t-lg border-4 border-white bg-slate-100 shadow-inner overflow-hidden">
+        <div
+          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${JAR_COLORS[label]} transition-all duration-700`}
+          style={{ height: `${fillPct}%` }}
+        />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-2 rounded-full bg-white/80" />
+      </div>
+      <div className="text-xs font-bold text-slate-500">
+        {emoji} {title}
+      </div>
+      <div className="font-display font-extrabold text-slate-800">{money(pence)}</div>
+    </div>
+  );
+}
+
+function ChildView({ kid, family, chores, pending, balance, bills, onExit, onChanged }) {
+  const [claimingId, setClaimingId] = useState(null);
+  const [justClaimed, setJustClaimed] = useState(null); // chore name
+  const [activity, setActivity] = useState(null);
+  const [err, setErr] = useState("");
+
+  const refreshActivity = useCallback(() => {
+    api
+      .listRecentActivity(6, kid.id)
+      .then(setActivity)
+      .catch(() => {}); // non-critical — the rest of the screen still works
+  }, [kid.id]);
+
+  useEffect(() => {
+    refreshActivity();
+  }, [refreshActivity]);
+
+  const save = balance?.save_pence ?? 0;
+  const spend = balance?.spend_pence ?? 0;
+  const give = balance?.give_pence ?? 0;
+  const total = balance?.total_pence ?? 0;
+  const shareOf = (v) => (total > 0 ? (v / total) * 100 : 0);
+
+  const myPending = pending.filter((p) => p.children.id === kid.id);
+  const pendingChoreIds = new Set(myPending.map((p) => p.chores?.id).filter(Boolean));
+  const availableChores = chores.filter((c) => !pendingChoreIds.has(c.id));
+
+  const claim = async (chore) => {
+    setClaimingId(chore.id);
+    setErr("");
+    try {
+      await api.claimChore(chore.id, kid.id, family.id);
+      setJustClaimed(chore.name);
+      setTimeout(() => setJustClaimed(null), 2500);
+      onChanged();
+      refreshActivity();
+    } catch (e) {
+      setErr("Something went wrong — ask a grown-up to try again.");
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  return (
+    <div className="relative min-h-screen overflow-hidden">
+      <BackgroundBlobs />
+      <div className="relative max-w-2xl mx-auto p-4 space-y-6 pb-16">
+        <header className="flex items-center justify-between pt-2">
+          <button
+            onClick={onExit}
+            className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-600 transition"
+          >
+            <ArrowLeft size={14} /> Parent
+          </button>
+          <div className="text-xs font-semibold text-slate-400">🫙 {family.name}</div>
+        </header>
+
+        <div className="text-center space-y-1">
+          <span className="text-6xl">{kid.avatar}</span>
+          <h1 className="font-display text-2xl font-extrabold text-slate-800">Hi {kid.name}!</h1>
+          <div className="font-display text-4xl font-extrabold bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
+            {money(total)}
+          </div>
+        </div>
+
+        <div className="flex justify-center gap-4 bg-white/70 backdrop-blur rounded-3xl p-5 shadow-sm border border-white">
+          <BigJar label="save" emoji="💰" title="Save" pence={save} sharePct={shareOf(save)} />
+          <BigJar label="spend" emoji="🛍️" title="Spend" pence={spend} sharePct={shareOf(spend)} />
+          <BigJar label="give" emoji="🎁" title="Give" pence={give} sharePct={shareOf(give)} />
+        </div>
+
+        {justClaimed && (
+          <div className="text-center text-sm font-bold text-emerald-700 bg-emerald-50 rounded-2xl py-2.5">
+            🎉 Nice! "{justClaimed}" is waiting for a grown-up to say yes.
+          </div>
+        )}
+        {err && (
+          <div className="text-center text-sm font-bold text-rose-600 bg-rose-50 rounded-2xl py-2.5">{err}</div>
+        )}
+
+        <Section title="Chores I can do" emoji="⭐">
+          <div className="grid grid-cols-2 gap-2">
+            {availableChores.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => claim(c)}
+                disabled={claimingId === c.id}
+                className="flex flex-col items-center gap-1 bg-white border-2 border-amber-100 hover:border-amber-400 hover:bg-amber-50 disabled:opacity-50 rounded-2xl py-3 transition shadow-sm"
+              >
+                <span className="text-2xl">{c.icon}</span>
+                <span className="text-sm font-bold text-slate-700 text-center px-1">{c.name}</span>
+                <span className="text-xs font-bold text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">
+                  {money(c.value_pence)}
+                </span>
+              </button>
+            ))}
+            {availableChores.length === 0 && (
+              <p className="col-span-2 text-sm text-slate-400 italic py-2 text-center">
+                Nothing to claim right now — nice work!
+              </p>
+            )}
+          </div>
+        </Section>
+
+        {myPending.length > 0 && (
+          <Section title="Waiting for approval" emoji="⏳">
+            <div className="space-y-2">
+              {myPending.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-sm"
+                >
+                  <span className="text-xl">{p.chores?.icon}</span>
+                  <span className="flex-1 text-sm font-semibold text-slate-700">{p.chores?.name}</span>
+                  <span className="text-xs font-bold text-slate-400">{money(p.chores?.value_pence)}</span>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {bills.length > 0 && (
+          <Section title="What I pay for" emoji="🧾" subtitle="Real bills, just like grown-ups have.">
+            <div className="flex flex-wrap gap-2">
+              {bills.map((b) => (
+                <div
+                  key={b.id}
+                  className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-full pl-3 pr-2.5 py-1.5"
+                >
+                  <span>{b.icon}</span>
+                  <span className="text-sm font-semibold text-slate-700">{b.name}</span>
+                  <span className="text-xs font-bold text-sky-700 bg-sky-100 rounded-full px-2 py-0.5">
+                    {money2(b.amount_pence)}/{b.frequency === "weekly" ? "wk" : "mo"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        <Section title="Recent activity" emoji="📜">
+          <div className="space-y-1.5">
+            {(activity || []).map((a) => (
+              <div key={a.id} className="flex items-center gap-2 text-sm">
+                <span>{a.chores?.icon || "⭐"}</span>
+                <span className="flex-1 text-slate-600">{a.chores?.name}</span>
+                <span
+                  className={`text-xs font-bold rounded-full px-2 py-0.5 ${
+                    a.status === "approved"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : a.status === "declined"
+                        ? "bg-rose-50 text-rose-600"
+                        : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {a.status === "approved" ? `+${money2(a.chores?.value_pence)}` : a.status}
+                </span>
+              </div>
+            ))}
+            {activity !== null && activity.length === 0 && (
+              <p className="text-sm text-slate-400 italic py-2">Nothing yet — go claim a chore!</p>
+            )}
+          </div>
+        </Section>
+      </div>
     </div>
   );
 }

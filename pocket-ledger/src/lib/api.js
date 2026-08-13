@@ -189,7 +189,7 @@ export async function claimChore(choreId, childId, familyId) {
 export async function listPendingClaims() {
   const { data, error } = await supabase
     .from("chore_claims")
-    .select("id, claimed_at, chores(name, icon, value_pence), children(id, name, avatar)")
+    .select("id, claimed_at, chores(id, name, icon, value_pence), children(id, name, avatar)")
     .eq("status", "pending")
     .order("claimed_at");
   if (error) throw error;
@@ -213,12 +213,14 @@ export async function getChildBalance(childId) {
   return data || { save_pence: 0, spend_pence: 0, give_pence: 0, total_pence: 0 };
 }
 
-export async function listRecentActivity(limit = 10) {
-  const { data, error } = await supabase
+export async function listRecentActivity(limit = 10, childId = null) {
+  let query = supabase
     .from("chore_claims")
-    .select("id, status, claimed_at, decided_at, chores(name), children(name)")
+    .select("id, status, claimed_at, decided_at, chores(icon, name, value_pence), children(id, name)")
     .order("claimed_at", { ascending: false })
     .limit(limit);
+  if (childId) query = query.eq("child_id", childId);
+  const { data, error } = await query;
   if (error) throw error;
   return data;
 }
