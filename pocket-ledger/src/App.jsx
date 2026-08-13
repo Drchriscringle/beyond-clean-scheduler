@@ -259,7 +259,7 @@ function FamilyDashboard({ family }) {
             <ChildCard key={kid.id} kid={kid} balance={balances[kid.id]} />
           ))}
         </div>
-        <AddChildForm onAdded={refreshAll} />
+        <AddChildForm familyId={family.id} onAdded={refreshAll} />
       </Section>
 
       <Section title="Awaiting approval" emoji="✅" badge={pending.length}>
@@ -279,7 +279,7 @@ function FamilyDashboard({ family }) {
             <ChoreChip key={c.id} chore={c} onRemoved={refreshAll} />
           ))}
         </div>
-        <AddChoreForm onAdded={refreshAll} />
+        <AddChoreForm familyId={family.id} onAdded={refreshAll} />
       </Section>
 
       <Section title="Claim a chore" emoji="🙋" subtitle="Child-mode demo — lives behind the PIN toggle in the full app.">
@@ -442,18 +442,24 @@ function ChildCard({ kid, balance }) {
   );
 }
 
-function AddChildForm({ onAdded }) {
+function AddChildForm({ familyId, onAdded }) {
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [open, setOpen] = useState(false);
+  const [err, setErr] = useState("");
 
   const add = async () => {
     if (!name.trim()) return;
-    await api.addChild({ name: name.trim(), avatar });
-    setName("");
-    setAvatar(AVATARS[0]);
-    setOpen(false);
-    onAdded();
+    setErr("");
+    try {
+      await api.addChild({ name: name.trim(), avatar, familyId });
+      setName("");
+      setAvatar(AVATARS[0]);
+      setOpen(false);
+      onAdded();
+    } catch (e) {
+      setErr(e.message);
+    }
   };
 
   if (!open) {
@@ -495,6 +501,7 @@ function AddChildForm({ onAdded }) {
           Add
         </button>
       </div>
+      {err && <p className="text-xs text-rose-600 font-medium">{err}</p>}
     </div>
   );
 }
@@ -543,21 +550,27 @@ function ChoreChip({ chore, onRemoved }) {
   );
 }
 
-function AddChoreForm({ onAdded }) {
+function AddChoreForm({ familyId, onAdded }) {
   const [name, setName] = useState("");
   const [value, setValue] = useState("");
   const [icon, setIcon] = useState(CHORE_ICONS[0]);
   const [open, setOpen] = useState(false);
+  const [err, setErr] = useState("");
 
   const add = async () => {
     const pence = parseInt(value, 10);
     if (!name.trim() || !pence) return;
-    await api.addChore({ name: name.trim(), icon, value_pence: pence });
-    setName("");
-    setValue("");
-    setIcon(CHORE_ICONS[0]);
-    setOpen(false);
-    onAdded();
+    setErr("");
+    try {
+      await api.addChore({ name: name.trim(), icon, value_pence: pence, familyId });
+      setName("");
+      setValue("");
+      setIcon(CHORE_ICONS[0]);
+      setOpen(false);
+      onAdded();
+    } catch (e) {
+      setErr(e.message);
+    }
   };
 
   if (!open) {
@@ -608,6 +621,7 @@ function AddChoreForm({ onAdded }) {
           Add
         </button>
       </div>
+      {err && <p className="text-xs text-rose-600 font-medium">{err}</p>}
     </div>
   );
 }
