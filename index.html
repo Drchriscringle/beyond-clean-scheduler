@@ -1,0 +1,637 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1b84e7" />
+  <title>Beyond Clean – Scheduler</title>
+  <style>
+    :root {
+      --bg:#f7fbff;
+      --panel:#ffffff;
+      --muted:#e0e7ef;
+      --text:#0b2a3f;
+      --sub:#5b7286;
+      --accent:#1b84e7;
+      --accent2:#2eb872;
+      --danger:#e74c3c;
+      --warn:#f39c12;
+    }
+    * { box-sizing: border-box; }
+    html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    header { position:sticky; top:0; z-index:10; background:var(--panel); border-bottom:1px solid var(--muted); }
+    .bar { display:flex; align-items:center; gap:.75rem; padding:.6rem 1rem; }
+    .brand-img { height:44px; width:auto; }
+    .spacer { flex:1; }
+    .tabs { display:flex; gap:.5rem; }
+    .tab { padding:.5rem .8rem; border:1px solid var(--muted); border-radius:10px; cursor:pointer; user-select:none; font-weight:650; color:var(--sub); background:#f9fcff; }
+    .tab.active { color:var(--text); border-color:var(--accent); box-shadow:0 0 0 2px rgba(27,132,231,.08) inset; }
+    main { padding: 1rem; max-width: 1100px; margin: 0 auto;}
+    .grid { display:grid; gap:1rem; grid-template-columns: 1fr; }
+    @media (min-width: 900px){ .grid { grid-template-columns: 380px 1fr; } }
+    .card { background:var(--panel); border:1px solid var(--muted); border-radius:16px; padding:1rem; }
+    h1 { margin:.2rem 0; font-size:1.2rem; }
+    h2 { margin:.2rem 0 1rem; font-size:1.1rem; }
+    label { display:block; font-size:.86rem; color:var(--sub); margin:.5rem 0 .25rem; }
+    input, select, textarea { width:100%; padding:.7rem .8rem; border-radius:12px; border:1px solid var(--muted); background:#fff; color:var(--text); }
+    textarea { min-height:84px; resize:vertical; }
+    .row { display:flex; gap:.6rem; }
+    .row > * { flex:1; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.7rem .9rem; border-radius:12px; border:1px solid var(--muted); background:#fff; color:var(--text); cursor:pointer; font-weight:700; }
+    .btn.primary { background:var(--accent); color:#fff; border-color:transparent; }
+    .btn.warn { background:var(--warn); color:#1a1305; border-color:transparent; }
+    .btn.ghost { background:transparent; }
+    .btn.small { padding:.4rem .6rem; font-weight:600; }
+    .list { display:flex; flex-direction:column; gap:.6rem; }
+    .job { display:flex; gap:.8rem; align-items:flex-start; border:1px solid var(--muted); background:#fff; padding:.8rem; border-radius:14px; }
+    .job .left { width:8px; border-radius:4px; background:var(--accent2); }
+    .job .content { flex:1; }
+    .job h3 { margin:.1rem 0 .2rem; font-size:1rem; }
+    .meta { font-size:.85rem; color:var(--sub); display:flex; gap:.8rem; flex-wrap:wrap; }
+    .chips { display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.4rem; }
+    .chip { font-size:.72rem; background:#f3f8ff; border:1px solid var(--muted); padding:.2rem .45rem; border-radius:999px; color:var(--sub); }
+    .kpis { display:grid; grid-template-columns: repeat(2, 1fr); gap:.6rem; margin-bottom:.6rem; }
+    @media (min-width: 600px){ .kpis { grid-template-columns: repeat(4, 1fr);} }
+    .kpi { background:#fff; border:1px solid var(--muted); padding:.9rem; border-radius:14px; }
+    .kpi .label { font-size:.8rem; color:var(--sub); }
+    .kpi .value { font-size:1.2rem; font-weight:800; margin-top:.2rem; color:var(--accent); }
+    .filterbar { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:.6rem; }
+    .gal { display:grid; grid-template-columns: repeat(2, 1fr); gap:.5rem; }
+    .gal img { width:100%; border-radius:10px; border:1px solid var(--muted); object-fit:cover; }
+    .footer { padding:1rem; text-align:center; color:var(--sub); }
+    .hidden { display:none !important; }
+    .brandline { border-top: 3px solid var(--accent); border-bottom:3px solid var(--accent2); height:0; margin:0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <img src="bc-logo.png" class="brand-img" alt="Beyond Clean logo" />
+      <h1>Beyond Clean</h1>
+      <div class="spacer"></div>
+      <div class="tabs">
+        <button class="tab active" data-tab="schedule">Schedule</button>
+        <button class="tab" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="cleaner">Cleaner</button>
+        <button class="tab" data-tab="settings">Settings</button>
+      </div>
+    </div>
+    <div class="brandline"></div>
+  </header>
+
+  <main>
+    <section id="schedule" class="grid">
+      <div class="card">
+        <h2>Create / Edit Job</h2>
+        <form id="jobForm">
+          <input type="hidden" id="jobId" />
+          <label>Client / Location</label>
+          <input id="client" placeholder="e.g., 3 Carrick Rd, Ayr" required />
+          <div class="row">
+            <div>
+              <label>Start</label>
+              <input id="start" type="datetime-local" required />
+            </div>
+            <div>
+              <label>End</label>
+              <input id="end" type="datetime-local" required />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Assign Cleaner</label>
+              <select id="cleaner"></select>
+            </div>
+            <div>
+              <label>Status</label>
+              <select id="status">
+                <option value="scheduled">Scheduled</option>
+                <option value="in_progress">In Progress</option>
+                <option value="done">Done</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Price (£)</label>
+              <input id="price" type="number" step="0.01" placeholder="e.g., 120" />
+            </div>
+            <div>
+              <label>Wage Cost (£)</label>
+              <input id="wage" type="number" step="0.01" placeholder="e.g., 50" />
+            </div>
+          </div>
+          <label>Notes</label>
+          <textarea id="notes" placeholder="Checklist, access codes, linen notes…"></textarea>
+          <div class="row" style="margin-top:.6rem">
+            <button class="btn primary" type="submit">Save Job</button>
+            <button class="btn ghost" type="button" id="resetForm">Reset</button>
+            <button class="btn warn" type="button" id="deleteJob">Delete</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="filterbar">
+          <strong>Jobs</strong>
+          <select id="viewRange">
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
+            <option value="all">All</option>
+          </select>
+          <input id="dateAnchor" type="date" />
+          <select id="filterCleaner"></select>
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="in_progress">In Progress</option>
+            <option value="done">Done</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button class="btn small" id="exportCSV">Export CSV</button>
+        </div>
+        <div id="jobList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="card">
+        <div class="filterbar">
+          <strong>Dashboard</strong>
+          <select id="dashRange">
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+            <option value="month" selected>Month</option>
+            <option value="year">Year</option>
+            <option value="all">All</option>
+          </select>
+          <input id="dashAnchor" type="date" />
+          <select id="dashCleaner"></select>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="label">Jobs</div><div id="kpiJobs" class="value">0</div></div>
+          <div class="kpi"><div class="label">Turnover (£)</div><div id="kpiTurnover" class="value">0</div></div>
+          <div class="kpi"><div class="label">Wages (£)</div><div id="kpiWages" class="value">0</div></div>
+          <div class="kpi"><div class="label">Profit (£)</div><div id="kpiProfit" class="value">0</div></div>
+        </div>
+        <div class="card" style="margin-top:.6rem">
+          <h2>By Cleaner</h2>
+          <div id="byCleaner" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cleaner" class="hidden">
+      <div class="card">
+        <h2>Cleaner Mode</h2>
+        <label>Choose your name</label>
+        <select id="cleanerSelf"></select>
+      </div>
+      <div class="card">
+        <div id="cleanerJobs" class="list"></div>
+      </div>
+    </section>
+
+    <section id="settings" class="hidden">
+      <div class="card">
+        <h2>Settings</h2>
+        <label>Team</label>
+        <div id="teamList" class="list"></div>
+        <div class="row" style="margin-top:.4rem">
+          <input id="newCleaner" placeholder="Add cleaner name" />
+          <button class="btn" id="addCleaner">Add</button>
+        </div>
+        <div class="section-title">Backup & Reset</div>
+        <div class="row">
+          <button class="btn" id="backupData">Download Backup</button>
+          <input type="file" id="restoreFile" accept="application/json" />
+          <button class="btn warn" id="resetAll">Factory Reset</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer">Beyond Clean • Install via “Add to Home Screen” • Works offline</div>
+
+<script>
+const DB_KEY = 'bc_data_v1';
+const state = { cleaners: [], jobs: [] };
+
+function load() {
+  const raw = localStorage.getItem(DB_KEY);
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      state.cleaners = data.cleaners || [];
+      state.jobs = (data.jobs || []).map(j => ({...j, start: new Date(j.start), end: new Date(j.end)}));
+    } catch(e) { console.error('Load failed', e); }
+  } else {
+    state.cleaners = ['Chris','Zara-Louise'];
+    save();
+  }
+}
+function save() {
+  const out = {
+    cleaners: state.cleaners,
+    jobs: state.jobs.map(j => ({...j, start: j.start.toISOString(), end: j.end.toISOString()}))
+  };
+  localStorage.setItem(DB_KEY, JSON.stringify(out));
+}
+
+function $(id){ return document.getElementById(id); }
+function fmtDate(dt){
+  return dt.toLocaleString([], {year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+}
+function pounds(v){ return (Number(v)||0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+function startOf(d, mode){
+  const x = new Date(d);
+  if (mode==='day'){ x.setHours(0,0,0,0); }
+  if (mode==='week'){ const day = x.getDay(); const diff = (day===0?6:day-1); x.setDate(x.getDate()-diff); x.setHours(0,0,0,0); }
+  if (mode==='month'){ x.setDate(1); x.setHours(0,0,0,0); }
+  if (mode==='year'){ x.setMonth(0,1); x.setHours(0,0,0,0); }
+  return x;
+}
+function endOf(d, mode){
+  const x = new Date(startOf(d, mode));
+  if (mode==='day'){ x.setDate(x.getDate()+1); }
+  if (mode==='week'){ x.setDate(x.getDate()+7); }
+  if (mode==='month'){ x.setMonth(x.getMonth()+1); }
+  if (mode==='year'){ x.setFullYear(x.getFullYear()+1); }
+  return x;
+}
+function inRange(dt, a, b){ return dt>=a && dt<b; }
+
+function populateTeamSelects(){
+  const selects = [$('cleaner'), $('filterCleaner'), $('dashCleaner'), $('cleanerSelf')];
+  selects.forEach(sel => { sel.innerHTML=''; 
+    const optAny = document.createElement('option');
+    optAny.value = ''; optAny.textContent = sel.id==='cleaner' ? '(select)' : 'All Cleaners';
+    if (sel.id==='cleanerSelf') { optAny.textContent='(choose your name)'; }
+    if (sel.id!=='cleaner') sel.appendChild(optAny);
+    state.cleaners.forEach(c=>{
+      const o=document.createElement('option');
+      o.value=o.textContent=c;
+      sel.appendChild(o);
+    });
+  });
+  renderTeamList();
+}
+
+function renderTeamList(){
+  const box = $('teamList'); box.innerHTML='';
+  state.cleaners.forEach((c,i)=>{
+    const row = document.createElement('div');
+    row.className='job';
+    row.innerHTML = '<div class="left"></div><div class="content"><h3>'+c+'</h3></div>';
+    const del = document.createElement('button');
+    del.className='btn small'; del.textContent='Remove';
+    del.onclick=()=>{ if(confirm('Remove '+c+'?')){ state.cleaners.splice(i,1); save(); populateTeamSelects(); refresh(); } };
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    ['schedule','dashboard','cleaner','settings'].forEach(id=>{
+      $(id).classList.toggle('hidden', id!==tab);
+    });
+    if (tab==='dashboard') updateDashboard();
+    if (tab==='cleaner') renderCleanerView();
+  });
+});
+
+const todayISO = new Date().toISOString().slice(0,10);
+$('dateAnchor').value = todayISO;
+$('dashAnchor').value = todayISO;
+
+$('addCleaner').addEventListener('click', ()=>{
+  const name = $('newCleaner').value.trim();
+  if (!name) return;
+  if (state.cleaners.includes(name)) return alert('Already in team');
+  state.cleaners.push(name);
+  $('newCleaner').value='';
+  save(); populateTeamSelects();
+});
+
+$('backupData').addEventListener('click', ()=>{
+  const blob = new Blob([localStorage.getItem(DB_KEY) || '{}'], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'beyond_clean_backup.json';
+  a.click();
+});
+$('restoreFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      localStorage.setItem(DB_KEY, JSON.stringify(data));
+      load(); populateTeamSelects(); refresh(); alert('Data restored.');
+    }catch(err){ alert('Restore failed: '+err.message); }
+  };
+  reader.readAsText(file);
+});
+$('resetAll').addEventListener('click', ()=>{
+  if (confirm('This will erase all data. Proceed?')){
+    localStorage.removeItem(DB_KEY);
+    state.cleaners=[]; state.jobs=[]; save(); load(); populateTeamSelects(); refresh();
+  }
+});
+
+function renderJobs(){
+  const range = $('viewRange').value;
+  const anchor = new Date($('dateAnchor').value + 'T00:00:00');
+  const cleaner = $('filterCleaner').value;
+  const status = $('filterStatus').value;
+  const list = $('jobList'); list.innerHTML='';
+
+  let jobs = [...state.jobs];
+  if (range!=='all'){
+    const a = startOf(anchor, range); const b = endOf(anchor, range);
+    jobs = jobs.filter(j => inRange(j.start, a, b));
+  }
+  if (cleaner) jobs = jobs.filter(j => j.cleaner===cleaner);
+  if (status) jobs = jobs.filter(j => j.status===status);
+
+  jobs.sort((a,b)=> a.start - b.start);
+
+  if (!jobs.length){
+    const empty = document.createElement('div');
+    empty.className='meta'; empty.textContent='No jobs in this view.';
+    list.appendChild(empty);
+    return;
+  }
+
+  jobs.forEach(j=>{
+    const row = document.createElement('div'); row.className='job';
+    const left = document.createElement('div'); left.className='left'; row.appendChild(left);
+    const content = document.createElement('div'); content.className='content'; row.appendChild(content);
+    const h3 = document.createElement('h3'); h3.textContent = j.client; content.appendChild(h3);
+    const meta = document.createElement('div'); meta.className='meta';
+    meta.textContent = fmtDate(j.start)+' → '+fmtDate(j.end)+' • '+(j.cleaner||'Unassigned');
+    content.appendChild(meta);
+
+    const chips = document.createElement('div'); chips.className='chips';
+    const c1=document.createElement('div'); c1.className='chip'; c1.textContent='Status: '+j.status.replace('_',' ');
+    const c2=document.createElement('div'); c2.className='chip'; c2.textContent='£'+pounds(j.price);
+    const c3=document.createElement('div'); c3.className='chip'; c3.textContent='Wage £'+pounds(j.wage);
+    const c4=document.createElement('div'); c4.className='chip'; c4.textContent='Profit £'+pounds((j.price||0)-(j.wage||0));
+    chips.append(c1,c2,c3,c4); content.appendChild(chips);
+
+    const gal = document.createElement('div'); gal.className='gal';
+    (j.before||[]).slice(0,2).forEach(src=>{ const img=new Image(); img.src=src; gal.appendChild(img); });
+    (j.after||[]).slice(0,2).forEach(src=>{ const img=new Image(); img.src=src; gal.appendChild(img); });
+    if ((j.before&&j.before.length)||(j.after&&j.after.length)) content.appendChild(gal);
+
+    const actions = document.createElement('div'); actions.className='chips';
+    const edit = document.createElement('button'); edit.className='btn small'; edit.textContent='Edit';
+    edit.onclick=()=>loadJobIntoForm(j.id);
+    const open = document.createElement('button'); open.className='btn small'; open.textContent='Open';
+    open.onclick=()=>openJob(j.id);
+    actions.append(edit, open);
+    row.appendChild(actions);
+
+    list.appendChild(row);
+  });
+}
+
+function loadJobIntoForm(id){
+  const j = state.jobs.find(x=>x.id===id);
+  if (!j) return;
+  $('jobId').value = j.id;
+  $('client').value = j.client;
+  $('start').value = j.start.toISOString().slice(0,16);
+  $('end').value = j.end.toISOString().slice(0,16);
+  $('cleaner').value = j.cleaner || '';
+  $('status').value = j.status || 'scheduled';
+  $('price').value = j.price || '';
+  $('wage').value = j.wage || '';
+  $('notes').value = j.notes || '';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function clearForm(){
+  ['jobId','client','start','end','price','wage','notes'].forEach(id=>$(id).value='');
+  $('cleaner').value='';
+  $('status').value='scheduled';
+}
+
+$('resetForm').addEventListener('click', clearForm);
+
+$('deleteJob').addEventListener('click', ()=>{
+  const id = $('jobId').value;
+  if (!id) return alert('Load a job first.');
+  if (!confirm('Delete this job?')) return;
+  const idx = state.jobs.findIndex(j=>j.id===id);
+  if (idx>-1){ state.jobs.splice(idx,1); save(); clearForm(); refresh(); }
+});
+
+$('jobForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const id = $('jobId').value || uid();
+  const base = state.jobs.find(x=>x.id===id)||{};
+  const j = {
+    id,
+    client: $('client').value.trim(),
+    start: new Date($('start').value),
+    end: new Date($('end').value),
+    cleaner: $('cleaner').value || '',
+    status: $('status').value || 'scheduled',
+    price: Number($('price').value)||0,
+    wage: Number($('wage').value)||0,
+    notes: $('notes').value.trim(),
+    before: base.before || [],
+    after: base.after || []
+  };
+  if (!j.client || !j.start || !j.end) return alert('Please fill client, start and end.');
+  const existing = state.jobs.findIndex(x=>x.id===id);
+  if (existing>-1) state.jobs[existing] = j; else state.jobs.push(j);
+  save(); clearForm(); refresh();
+});
+
+$('viewRange').addEventListener('change', renderJobs);
+$('dateAnchor').addEventListener('change', renderJobs);
+$('filterCleaner').addEventListener('change', renderJobs);
+$('filterStatus').addEventListener('change', renderJobs);
+
+$('exportCSV').addEventListener('click', ()=>{
+  const rows = [['ID','Client','Start','End','Cleaner','Status','Price','Wage','Profit','Notes']];
+  state.jobs.forEach(j=>{
+    rows.push([j.id,j.client,j.start.toISOString(),j.end.toISOString(),j.cleaner,j.status,j.price,j.wage,(j.price-j.wage), (j.notes||'').replace(/\n/g,' ') ]);
+  });
+  const csv = rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='beyond_clean_jobs.csv'; a.click();
+});
+
+function openJob(id){
+  const j = state.jobs.find(x=>x.id===id);
+  if (!j) return;
+  const w = window.open('', '_blank');
+  w.document.write(`
+    <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Job ${j.client}</title>
+    <style>
+      body{font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#fff;color:#0b2a3f;margin:0;padding:1rem}
+      .card{background:#fff;border:1px solid #e0e7ef;border-radius:14px;padding:1rem;margin-bottom:1rem}
+      .row{display:flex;gap:.6rem;flex-wrap:wrap}
+      .btn{padding:.6rem .8rem;border-radius:10px;border:1px solid #e0e7ef;background:#fff;color:#0b2a3f;cursor:pointer;font-weight:700}
+      .btn.primary{background:#1b84e7;color:#fff;border-color:transparent}
+      .meta{color:#5b7286}
+      img{max-width:100%;border-radius:10px;border:1px solid #e0e7ef}
+      .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+    </style></head><body>
+      <div class="card">
+        <h2>${j.client}</h2>
+        <div class="meta">${fmtDate(j.start)} → ${fmtDate(j.end)} • ${j.cleaner || 'Unassigned'} • £${pounds(j.price)} / Wage £${pounds(j.wage)}</div>
+        <p>${(j.notes||'').replace(/</g,'&lt;')}</p>
+        <div class="row"><button class="btn" onclick="window.close()">Back</button></div>
+      </div>
+
+      <div class="card">
+        <h3>Before Photos</h3>
+        <input type="file" id="beforeFiles" accept="image/*" multiple capture="environment" />
+        <div id="beforeGal" class="grid"></div>
+      </div>
+      <div class="card">
+        <h3>After Photos</h3>
+        <input type="file" id="afterFiles" accept="image/*" multiple capture="environment" />
+        <div id="afterGal" class="grid"></div>
+      </div>
+
+      <script>
+        const DB_KEY = 'bc_data_v1';
+        const jobId = ${JSON.stringify(j.id)};
+        function load(){
+          const raw = localStorage.getItem(DB_KEY); const data = raw?JSON.parse(raw):{jobs:[]};
+          const job = (data.jobs||[]).find(x=>x.id===jobId);
+          return job;
+        }
+        function save(job){
+          const raw = localStorage.getItem(DB_KEY); const data = raw?JSON.parse(raw):{jobs:[]};
+          const idx = (data.jobs||[]).findIndex(x=>x.id===jobId);
+          if (idx>-1) data.jobs[idx]=job;
+          localStorage.setItem(DB_KEY, JSON.stringify(data));
+        }
+        function renderGal(which){
+          const job = load();
+          const box = document.getElementById(which+'Gal'); box.innerHTML='';
+          (job[which]||[]).forEach(src=>{ const img=new Image(); img.src=src; box.appendChild(img); });
+        }
+        function handleFiles(which, files){
+          const readerSeq = [...files];
+          function next(){
+            if (!readerSeq.length){ renderGal(which); return; }
+            const f = readerSeq.shift();
+            const reader = new FileReader();
+            reader.onload = (ev)=>{
+              const job = load();
+              job[which] = job[which] || [];
+              job[which].push(ev.target.result);
+              save(job);
+              next();
+            };
+            reader.readAsDataURL(f);
+          }
+          next();
+        }
+        document.getElementById('beforeFiles').addEventListener('change', (e)=>handleFiles('before', e.target.files));
+        document.getElementById('afterFiles').addEventListener('change', (e)=>handleFiles('after', e.target.files));
+        renderGal('before'); renderGal('after');
+      </script>
+    </body></html>
+  `);
+}
+
+function updateDashboard(){
+  const range = $('dashRange').value;
+  const anchor = new Date($('dashAnchor').value + 'T00:00:00');
+  const cleaner = $('dashCleaner').value;
+  let jobs = [...state.jobs];
+  if (range!=='all'){
+    const a = startOf(anchor, range); const b = endOf(anchor, range);
+    jobs = jobs.filter(j => inRange(j.start, a, b));
+  }
+  if (cleaner) jobs = jobs.filter(j => j.cleaner===cleaner);
+  const jobsN = jobs.length;
+  const turnover = jobs.reduce((s,j)=>s+(Number(j.price)||0),0);
+  const wages = jobs.reduce((s,j)=>s+(Number(j.wage)||0),0);
+  const profit = turnover - wages;
+  $('kpiJobs').textContent = jobsN;
+  $('kpiTurnover').textContent = pounds(turnover);
+  $('kpiWages').textContent = pounds(wages);
+  $('kpiProfit').textContent = pounds(profit);
+  const map = {};
+  jobs.forEach(j=>{
+    const c = j.cleaner || '(unassigned)';
+    if (!map[c]) map[c] = {jobs:0, turnover:0, wages:0};
+    map[c].jobs += 1;
+    map[c].turnover += Number(j.price)||0;
+    map[c].wages += Number(j.wage)||0;
+  });
+  const box = $('byCleaner'); box.innerHTML='';
+  Object.entries(map).forEach(([name,vals])=>{
+    const row = document.createElement('div'); row.className='job';
+    row.innerHTML = '<div class="left"></div><div class="content"><h3>'+name+'</h3>'+
+      '<div class="chips">'+
+      '<div class="chip">Jobs: '+vals.jobs+'</div>'+
+      '<div class="chip">Turnover £'+pounds(vals.turnover)+'</div>'+
+      '<div class="chip">Wages £'+pounds(vals.wages)+'</div>'+
+      '<div class="chip">Profit £'+pounds(vals.turnover - vals.wages)+'</div>'+
+      '</div></div>';
+    box.appendChild(row);
+  });
+}
+
+function renderCleanerView(){
+  const name = $('cleanerSelf').value;
+  const list = $('cleanerJobs'); list.innerHTML='';
+  if (!name){ list.innerHTML='<div class="meta">Choose your name to see assigned jobs.</div>'; return; }
+  const now = new Date();
+  const today = startOf(now,'day'); const nextWeek = new Date(today); nextWeek.setDate(today.getDate()+7);
+  const jobs = state.jobs.filter(j=> j.cleaner===name && j.start>=today && j.start<nextWeek).sort((a,b)=>a.start-b.start);
+  if (!jobs.length){ list.innerHTML='<div class="meta">No jobs assigned in the next 7 days.</div>'; return; }
+  jobs.forEach(j=>{
+    const row = document.createElement('div'); row.className='job';
+    row.innerHTML = '<div class="left"></div>';
+    const content = document.createElement('div'); content.className='content'; row.appendChild(content);
+    const h3 = document.createElement('h3'); h3.textContent=j.client; content.appendChild(h3);
+    const meta = document.createElement('div'); meta.className='meta';
+    meta.textContent = fmtDate(j.start)+' → '+fmtDate(j.end)+' • '+(j.cleaner||'Unassigned');
+    content.appendChild(meta);
+    const actions = document.createElement('div'); actions.className='chips';
+    const open = document.createElement('button'); open.className='btn small'; open.textContent='Open Job';
+    open.onclick=()=>openJob(j.id);
+    actions.append(open); row.appendChild(actions);
+    list.appendChild(row);
+  });
+}
+
+$('cleanerSelf').addEventListener('change', renderCleanerView);
+
+function refresh(){ renderJobs(); updateDashboard(); renderCleanerView(); }
+function init(){
+  load();
+  populateTeamSelects();
+  refresh();
+  if ('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+}
+init();
+</script>
+</body>
+</html>
