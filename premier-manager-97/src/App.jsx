@@ -1,5 +1,6 @@
-import { useReducer } from 'react'
+import { useEffect, useReducer, useRef } from 'react'
 import { gameReducer, makeInitialState, leaguePositionOf } from './state/gameReducer.js'
+import { saveGame } from './state/persistence.js'
 import { CLUBS, CLUB_BY_ID } from './data/clubs.js'
 import MenuBar from './components/MenuBar.jsx'
 import { NoticeBanner, Money } from './components/shared.jsx'
@@ -26,6 +27,26 @@ const SCREENS = {
 
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, undefined, makeInitialState)
+  const stateRef = useRef(state)
+  stateRef.current = state
+
+  useEffect(() => {
+    if (!state.started) return
+    const timeout = setTimeout(() => saveGame(state), 600)
+    return () => clearTimeout(timeout)
+  }, [state])
+
+  useEffect(() => {
+    function flush() {
+      if (stateRef.current.started) saveGame(stateRef.current)
+    }
+    window.addEventListener('beforeunload', flush)
+    window.addEventListener('pagehide', flush)
+    return () => {
+      window.removeEventListener('beforeunload', flush)
+      window.removeEventListener('pagehide', flush)
+    }
+  }, [])
 
   if (!state.started) {
     return (

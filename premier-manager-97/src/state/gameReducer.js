@@ -589,6 +589,19 @@ export function gameReducer(state, action) {
       return advanceWeek(state)
     case 'CLEAR_NOTICE':
       return { ...state, notice: null }
+    case 'NOTICE':
+      return { ...state, notice: action.payload.message }
+    case 'LOAD_GAME': {
+      const savedAt = action.payload.savedAt
+      const when = savedAt ? new Date(savedAt).toLocaleString() : null
+      return {
+        ...makeInitialState(),
+        ...action.payload.state,
+        notice: when ? `Save from ${when} loaded.` : 'Save loaded.',
+      }
+    }
+    case 'QUIT_TO_MENU':
+      return makeInitialState()
     default:
       return state
   }
