@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { CLUBS } from '../data/clubs.js'
+import { CLUBS, CLUB_BY_ID } from '../data/clubs.js'
 import { totalCapacity } from '../data/clubs.js'
 import { formatMoney } from '../utils/format.js'
 import { RepStars } from './shared.jsx'
+import { loadGame, clearSave } from '../state/persistence.js'
 
 export default function NewGameScreen({ dispatch }) {
   const [clubId, setClubId] = useState(null)
   const [managerName, setManagerName] = useState('')
+  const [savedGame, setSavedGame] = useState(() => loadGame())
 
   const selected = CLUBS.find((c) => c.id === clubId)
 
@@ -15,8 +17,35 @@ export default function NewGameScreen({ dispatch }) {
     dispatch({ type: 'START_NEW_GAME', payload: { clubId, managerName: managerName.trim() } })
   }
 
+  function continueSave() {
+    if (!savedGame) return
+    dispatch({ type: 'LOAD_GAME', payload: { state: savedGame.state, savedAt: savedGame.savedAt } })
+  }
+
+  function deleteSave() {
+    clearSave()
+    setSavedGame(null)
+  }
+
   return (
     <div className="screen">
+      {savedGame && (
+        <div className="panel">
+          <div className="panel-title">CONTINUE SAVED CAREER</div>
+          <p>
+            {savedGame.state.managerName} — {CLUB_BY_ID[savedGame.state.playerClubId]?.name ?? 'Unknown club'}
+            &nbsp;· Season {savedGame.state.season}, Week {Math.min(savedGame.state.week, 38)}/38
+          </p>
+          <p style={{ fontSize: 14 }}>Last saved: {new Date(savedGame.savedAt).toLocaleString()}</p>
+          <button className="btn btn-primary" onClick={continueSave}>
+            Continue
+          </button>{' '}
+          <button className="btn btn-danger" onClick={deleteSave}>
+            Delete Save
+          </button>
+        </div>
+      )}
+
       <div className="panel">
         <div className="panel-title">PREMIER MANAGER '97 — NEW GAME</div>
         <p>Select a club to take charge of for the 2025/26 season.</p>
