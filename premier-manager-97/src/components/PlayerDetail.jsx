@@ -89,7 +89,18 @@ export default function PlayerDetail({ state, dispatch }) {
             <p>Wage: {formatWage(player.wage)}</p>
             <p>Contract: {player.contractYears === 0 ? 'Expired' : `${player.contractYears} year(s)`}</p>
             <p>Morale: {player.morale}/100</p>
-            <p>Fitness: {player.fitness}/100 {player.injured ? `(injured, ${player.injuryWeeks} wks)` : ''}</p>
+            <p>Fitness: {player.fitness}/100</p>
+            {player.injured && (
+              <p style={{ color: '#800000', fontWeight: 'bold' }}>
+                Injured: {player.injuryType} — expected back in {player.injuryWeeks} week(s)
+              </p>
+            )}
+            {player.suspended && (
+              <p style={{ color: '#800000', fontWeight: 'bold' }}>
+                Suspended — misses {player.suspensionMatches} more match(es)
+              </p>
+            )}
+            <p>Yellow cards this season: {player.yellowCards ?? 0}</p>
             <p>Form: <FormBadge player={player} /> — {formLabel(currentForm(player))}</p>
             <p>Estimated value: <Money value={value} /></p>
           </div>

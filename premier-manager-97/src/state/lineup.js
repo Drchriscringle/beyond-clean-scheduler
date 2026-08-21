@@ -6,7 +6,7 @@ import { FORMATIONS } from '../data/formations.js'
 export function pickBestXI(squad, formationName = '4-4-2') {
   const formation = FORMATIONS[formationName] ?? FORMATIONS['4-4-2']
   const available = [...squad]
-    .filter((p) => p.fitness >= 45)
+    .filter((p) => p.fitness >= 45 && !p.injured && !p.suspended)
     .sort((a, b) => b.ability - a.ability)
 
   const chosen = []

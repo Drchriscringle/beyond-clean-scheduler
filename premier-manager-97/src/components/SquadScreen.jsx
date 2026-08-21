@@ -17,8 +17,15 @@ const COLUMNS = [
   { key: 'contractYears', label: 'Contract' },
   { key: 'morale', label: 'Morale' },
   { key: 'fitness', label: 'Fitness' },
+  { key: 'status', label: 'Status' },
   { key: 'listed', label: 'Listed' },
 ]
+
+function playerStatus(p) {
+  if (p.injured) return `${p.injuryType} (${p.injuryWeeks}wk)`
+  if (p.suspended) return `Suspended (${p.suspensionMatches})`
+  return '-'
+}
 
 export default function SquadScreen({ state, dispatch }) {
   const [sortKey, setSortKey] = useState('squadNumber')
@@ -78,7 +85,7 @@ export default function SquadScreen({ state, dispatch }) {
                   onClick={() => dispatch({ type: 'NAVIGATE', payload: { screen: 'player-detail', playerId: p.id, clubId: null } })}
                 >
                   <td>{p.squadNumber}</td>
-                  <td>{p.name}{p.injured ? ' 🩹' : ''}</td>
+                  <td>{p.name}{p.injured ? ' 🩹' : ''}{p.suspended ? ' 🟥' : ''}</td>
                   <td>{p.position}</td>
                   <td>{p.age}</td>
                   <td>{p.ability}</td>
@@ -92,6 +99,9 @@ export default function SquadScreen({ state, dispatch }) {
                   </td>
                   <td>{p.morale}</td>
                   <td>{p.fitness}</td>
+                  <td style={p.injured || p.suspended ? { color: '#800000', fontWeight: 'bold' } : undefined}>
+                    {playerStatus(p)}
+                  </td>
                   <td>
                     <input
                       type="checkbox"

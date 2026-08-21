@@ -114,7 +114,10 @@ export default function FixturesScreen({ state }) {
               </p>
               <div className="commentary-log">
                 {state.lastMatch.commentary.map((line, i) => (
-                  <p key={i} className={`commentary-line${line.includes('GOAL') ? ' goal' : ''}`}>
+                  <p
+                    key={i}
+                    className={`commentary-line${line.includes('GOAL') ? ' goal' : ''}${line.includes('RED CARD') ? ' red-card' : ''}`}
+                  >
                     {line}
                   </p>
                 ))}

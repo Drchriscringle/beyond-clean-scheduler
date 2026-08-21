@@ -56,6 +56,8 @@ const COMMENTARY_FILLER = [
 
 const SCORER_WEIGHT = { FW: 5, MF: 2.5, DF: 0.6, GK: 0.05 }
 const ASSIST_WEIGHT = { FW: 1.5, MF: 3, DF: 1, GK: 0.1 }
+const YELLOW_CARD_CHANCE = 0.11
+const RED_CARD_CHANCE = 0.006
 
 function pickWeighted(xi, weightTable, rng, exclude = null) {
   const candidates = xi.filter((p) => p.id !== exclude)
@@ -72,6 +74,19 @@ function pickWeighted(xi, weightTable, rng, exclude = null) {
 
 function pad(n) {
   return `${n}'`
+}
+
+function generateBookings(xi, side, rng) {
+  const bookings = []
+  for (const p of xi) {
+    const roll = rng()
+    if (roll < RED_CARD_CHANCE) {
+      bookings.push({ playerId: p.id, side, type: 'red', minute: 1 + Math.floor(rng() * 90), name: p.name })
+    } else if (roll < RED_CARD_CHANCE + YELLOW_CARD_CHANCE) {
+      bookings.push({ playerId: p.id, side, type: 'yellow', minute: 1 + Math.floor(rng() * 90), name: p.name })
+    }
+  }
+  return bookings
 }
 
 export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLineup, awayLineup, rng = Math.random }) {
@@ -124,6 +139,16 @@ export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLi
   addGoals(homeGoals, 'home', homeXI, homeClub.name)
   addGoals(awayGoals, 'away', awayXI, awayClub.name)
 
+  const bookings = [...generateBookings(homeXI, 'home', rng), ...generateBookings(awayXI, 'away', rng)]
+  for (const b of bookings) {
+    const clubName = b.side === 'home' ? homeClub.name : awayClub.name
+    events.push({
+      minute: b.minute,
+      text: b.type === 'red' ? `RED CARD! ${b.name} (${clubName}) is sent off!` : `Booking: ${b.name} (${clubName})`,
+      isGoal: false,
+    })
+  }
+
   const fillerCount = 6 + Math.floor(rng() * 5)
   for (let i = 0; i < fillerCount; i++) {
     const m = 1 + Math.floor(rng() * 90)
@@ -167,5 +192,5 @@ export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLi
     }
   }
 
-  return { homeGoals, awayGoals, commentary, homeRatings, awayRatings, goals, motmId, motmClubId }
+  return { homeGoals, awayGoals, commentary, homeRatings, awayRatings, goals, motmId, motmClubId, bookings }
 }

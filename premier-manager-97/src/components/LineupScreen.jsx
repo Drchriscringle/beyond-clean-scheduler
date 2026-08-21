@@ -51,10 +51,10 @@ export default function LineupScreen({ state, dispatch }) {
                   key={p.id}
                   className={`pitch-slot${startingXI.includes(p.id) ? ' filled' : ''}`}
                   onClick={() => toggle(p.id)}
-                  disabled={p.injured}
-                  title={p.injured ? 'Injured' : ''}
+                  disabled={p.injured || p.suspended}
+                  title={p.injured ? `${p.injuryType} (${p.injuryWeeks} wk)` : p.suspended ? `Suspended (${p.suspensionMatches} match)` : ''}
                 >
-                  #{p.squadNumber} {p.name} ({p.ability}){p.injured ? ' 🩹' : ''}
+                  #{p.squadNumber} {p.name} ({p.ability}){p.injured ? ' 🩹' : ''}{p.suspended ? ' 🟥' : ''}
                 </button>
               ))}
             </div>

@@ -372,6 +372,11 @@ table.pm-table tbody tr.clickable {
   font-weight: bold;
 }
 
+.commentary-line.red-card {
+  color: #ff5555;
+  font-weight: bold;
+}
+
 /* ---------- New Game screen ---------- */
 .club-list {
   display: grid;

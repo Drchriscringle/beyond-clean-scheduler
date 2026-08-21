@@ -25,6 +25,8 @@ import { generateYouthIntake, assignFreeSquadNumbers } from './youthIntake.js'
 import { evaluateContractOffer } from './contracts.js'
 import { applyMatchStats, rollSeasonStatsIntoCareer } from './playerStats.js'
 import { maybeGenerateOffer } from './incomingOffers.js'
+import { maybeInjureStarters, tickInjuries } from './injuries.js'
+import { applyBookings, tickSuspensions } from './discipline.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -163,8 +165,6 @@ function driftMoraleAndFitness(squad, resultPoints, starterIds) {
   return squad.map((p) => {
     let fitness = p.fitness
     let morale = p.morale
-    let injured = p.injured ?? false
-    let injuryWeeks = p.injuryWeeks ?? 0
 
     if (starterIds.includes(p.id)) {
       fitness = Math.max(35, fitness - (6 + Math.floor(Math.random() * 8)))
@@ -176,29 +176,14 @@ function driftMoraleAndFitness(squad, resultPoints, starterIds) {
       morale = morale + (morale < 60 ? 1 : morale > 60 ? -1 : 0)
     }
 
-    if (injured) {
-      injuryWeeks = Math.max(0, injuryWeeks - 1)
-      if (injuryWeeks === 0) injured = false
-    }
-
-    return { ...p, fitness, morale, injured, injuryWeeks }
+    return { ...p, fitness, morale }
   })
 }
 
-function maybeInjurePlayers(squad, starterIds, injuryRateMultiplier) {
-  return squad.map((p) => {
-    if (!starterIds.includes(p.id) || p.injured) return p
-    const chance = 0.012 * injuryRateMultiplier
-    if (Math.random() < chance) {
-      return {
-        ...p,
-        injured: true,
-        injuryWeeks: 2 + Math.floor(Math.random() * 4),
-        fitness: 20 + Math.floor(Math.random() * 20),
-      }
-    }
-    return p
-  })
+function availablePlayerLineup(startingXI, squad, formation) {
+  const unavailable = new Set(squad.filter((p) => p.injured || p.suspended).map((p) => p.id))
+  const filtered = (startingXI ?? []).filter((id) => !unavailable.has(id))
+  return filtered.length > 0 ? filtered : pickBestXI(squad, formation)
 }
 
 function facilityInjuryMultiplier(facilities) {
@@ -212,11 +197,11 @@ function simulateCupTie(homeId, awayId, { clubs, squads, lineups, playerClubId }
   const awaySquad = squads[awayId]
   const homeLineup =
     homeId === playerClubId
-      ? (lineups[homeId]?.startingXI ?? pickBestXI(homeSquad, '4-4-2'))
+      ? availablePlayerLineup(lineups[homeId]?.startingXI, homeSquad, lineups[homeId]?.formation)
       : pickBestXI(homeSquad, lineups[homeId]?.formation ?? '4-4-2')
   const awayLineup =
     awayId === playerClubId
-      ? (lineups[awayId]?.startingXI ?? pickBestXI(awaySquad, '4-4-2'))
+      ? availablePlayerLineup(lineups[awayId]?.startingXI, awaySquad, lineups[awayId]?.formation)
       : pickBestXI(awaySquad, lineups[awayId]?.formation ?? '4-4-2')
 
   const result = simulateMatch({ homeClub: clubs[homeId], awayClub: clubs[awayId], homeSquad, awaySquad, homeLineup, awayLineup })
@@ -240,6 +225,8 @@ function advanceWeek(state) {
   let playerResultPoints = null
   let playerPlayedThisWeek = false
   let playerWasHome = false
+  const freshInjuryIds = {}
+  const freshSuspensionIds = {}
 
   const aiResult = aiTransferTick({ clubs, squads, freeAgents: state.freeAgents, playerClubId: state.playerClubId, week: state.week })
   squads = aiResult.squads
@@ -294,11 +281,11 @@ function advanceWeek(state) {
 
     const homeLineup =
       match.home === state.playerClubId
-        ? (state.lineups[match.home]?.startingXI ?? pickBestXI(homeSquad, '4-4-2'))
+        ? availablePlayerLineup(state.lineups[match.home]?.startingXI, homeSquad, state.lineups[match.home]?.formation)
         : pickBestXI(homeSquad, state.lineups[match.home]?.formation ?? '4-4-2')
     const awayLineup =
       match.away === state.playerClubId
-        ? (state.lineups[match.away]?.startingXI ?? pickBestXI(awaySquad, '4-4-2'))
+        ? availablePlayerLineup(state.lineups[match.away]?.startingXI, awaySquad, state.lineups[match.away]?.formation)
         : pickBestXI(awaySquad, state.lineups[match.away]?.formation ?? '4-4-2')
 
     const result = simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLineup, awayLineup })
@@ -307,6 +294,24 @@ function advanceWeek(state) {
     squads[match.away] = applyFormRatings(squads[match.away], result.awayRatings)
     squads[match.home] = applyMatchStats(squads[match.home], { lineupIds: homeLineup, goals: result.goals, motmId: result.motmId })
     squads[match.away] = applyMatchStats(squads[match.away], { lineupIds: awayLineup, goals: result.goals, motmId: result.motmId })
+
+    const homeInjuryMult = facilityInjuryMultiplier(clubs[match.home].facilities)
+    const awayInjuryMult = facilityInjuryMultiplier(clubs[match.away].facilities)
+    const homeInjuryResult = maybeInjureStarters(squads[match.home], homeLineup, homeInjuryMult)
+    const awayInjuryResult = maybeInjureStarters(squads[match.away], awayLineup, awayInjuryMult)
+    squads[match.home] = homeInjuryResult.squad
+    squads[match.away] = awayInjuryResult.squad
+    freshInjuryIds[match.home] = new Set([...(freshInjuryIds[match.home] ?? []), ...homeInjuryResult.freshIds])
+    freshInjuryIds[match.away] = new Set([...(freshInjuryIds[match.away] ?? []), ...awayInjuryResult.freshIds])
+
+    const homeBookings = result.bookings.filter((b) => b.side === 'home')
+    const awayBookings = result.bookings.filter((b) => b.side === 'away')
+    const homeBookingResult = applyBookings(squads[match.home], homeBookings)
+    const awayBookingResult = applyBookings(squads[match.away], awayBookings)
+    squads[match.home] = homeBookingResult.squad
+    squads[match.away] = awayBookingResult.squad
+    freshSuspensionIds[match.home] = new Set([...(freshSuspensionIds[match.home] ?? []), ...homeBookingResult.freshIds])
+    freshSuspensionIds[match.away] = new Set([...(freshSuspensionIds[match.away] ?? []), ...awayBookingResult.freshIds])
 
     applyResultToStandings(standings, match.home, result.homeGoals, result.awayGoals)
     applyResultToStandings(standings, match.away, result.awayGoals, result.homeGoals)
@@ -337,11 +342,17 @@ function advanceWeek(state) {
       playerResultPoints = gf > ga ? 3 : gf === ga ? 1 : 0
 
       const starterIds = playerWasHome ? homeLineup : awayLineup
-      const injuryMult = facilityInjuryMultiplier(clubs[state.playerClubId].facilities)
-      let updatedSquad = maybeInjurePlayers(squads[state.playerClubId], starterIds, injuryMult)
-      updatedSquad = driftMoraleAndFitness(updatedSquad, playerResultPoints, starterIds)
-      squads[state.playerClubId] = updatedSquad
+      squads[state.playerClubId] = driftMoraleAndFitness(squads[state.playerClubId], playerResultPoints, starterIds)
     }
+  }
+
+  // Weekly injury/suspension countdown for every club, once per week
+  // regardless of how many matches (league + cup) they played. Anyone only
+  // just injured/booked this same week is excluded so the countdown starts
+  // next week, not immediately.
+  for (const id of clubIds) {
+    squads[id] = tickInjuries(squads[id], freshInjuryIds[id] ?? new Set())
+    squads[id] = tickSuspensions(squads[id], freshSuspensionIds[id] ?? new Set())
   }
 
   // --- Player club finances for the week ---
@@ -507,6 +518,7 @@ function seasonRollover(state) {
         contractYears: Math.max(0, p.contractYears - 1),
         fitness: 90,
         morale: Math.max(40, Math.min(80, p.morale)),
+        yellowCards: 0,
       })
     })
 
