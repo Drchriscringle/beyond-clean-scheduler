@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CLUBS } from '../data/clubs.js'
 import { formatWage } from '../utils/format.js'
-import { Money } from './shared.jsx'
+import { Money, FormBadge } from './shared.jsx'
 
 export default function TransfersScreen({ state, dispatch }) {
   const [tab, setTab] = useState('browse')
@@ -50,6 +50,7 @@ export default function TransfersScreen({ state, dispatch }) {
                       <th>Pos</th>
                       <th>Age</th>
                       <th>CA</th>
+                      <th>Form</th>
                       <th>Wage</th>
                     </tr>
                   </thead>
@@ -60,6 +61,7 @@ export default function TransfersScreen({ state, dispatch }) {
                         <td>{p.position}</td>
                         <td>{p.age}</td>
                         <td>{p.ability}</td>
+                        <td><FormBadge player={p} /></td>
                         <td>{formatWage(p.wage)}</td>
                       </tr>
                     ))}
@@ -106,6 +108,7 @@ export default function TransfersScreen({ state, dispatch }) {
                     <th>Pos</th>
                     <th>Age</th>
                     <th>CA</th>
+                    <th>Form</th>
                     <th>Wage</th>
                   </tr>
                 </thead>
@@ -116,6 +119,7 @@ export default function TransfersScreen({ state, dispatch }) {
                       <td>{p.position}</td>
                       <td>{p.age}</td>
                       <td>{p.ability}</td>
+                      <td><FormBadge player={p} /></td>
                       <td>{formatWage(p.wage)}</td>
                     </tr>
                   ))}

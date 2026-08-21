@@ -13,6 +13,7 @@ export default function FinancesScreen({ state }) {
       acc.matchday += e.income.matchday
       acc.tv += e.income.tv
       acc.sponsorship += e.income.sponsorship
+      acc.merchandise += e.income.merchandise ?? 0
       acc.wages += e.expenditure.wages
       acc.staff += e.expenditure.staff
       acc.maintenance += e.expenditure.maintenance
@@ -21,7 +22,7 @@ export default function FinancesScreen({ state }) {
       acc.net += e.net
       return acc
     },
-    { matchday: 0, tv: 0, sponsorship: 0, wages: 0, staff: 0, maintenance: 0, construction: 0, interest: 0, net: 0 },
+    { matchday: 0, tv: 0, sponsorship: 0, merchandise: 0, wages: 0, staff: 0, maintenance: 0, construction: 0, interest: 0, net: 0 },
   )
 
   const chartData = [...ledger].slice(0, 12).reverse()
@@ -37,6 +38,10 @@ export default function FinancesScreen({ state }) {
         <div className="panel-title">CLUB FINANCES — {club.name.toUpperCase()}</div>
         <p>
           Bank balance: <Money value={club.bankBalance} /> &nbsp; Transfer budget: <Money value={club.budget} />
+        </p>
+        <p style={{ fontSize: 15 }}>
+          Shirt sponsor: {club.sponsorshipDeal?.partner} ({formatMoneyFull(club.sponsorshipDeal?.weeklyIncome ?? 0)}/wk) &nbsp;
+          Merchandise: {club.merchandiseDeal?.partner} ({formatMoneyFull(club.merchandiseDeal?.weeklyIncome ?? 0)}/wk)
         </p>
 
         <div className="grid-2">
@@ -55,6 +60,10 @@ export default function FinancesScreen({ state }) {
                 <tr>
                   <td>Sponsorship</td>
                   <td>{formatMoneyFull(totals.sponsorship)}</td>
+                </tr>
+                <tr>
+                  <td>Merchandising</td>
+                  <td>{formatMoneyFull(totals.merchandise)}</td>
                 </tr>
                 <tr>
                   <td>Player wages</td>
@@ -137,6 +146,7 @@ export default function FinancesScreen({ state }) {
                   <th>Matchday</th>
                   <th>TV</th>
                   <th>Sponsor</th>
+                  <th>Merch</th>
                   <th>Wages</th>
                   <th>Staff</th>
                   <th>Maint.</th>
@@ -152,6 +162,7 @@ export default function FinancesScreen({ state }) {
                     <td>{formatMoneyFull(e.income.matchday)}</td>
                     <td>{formatMoneyFull(e.income.tv)}</td>
                     <td>{formatMoneyFull(e.income.sponsorship)}</td>
+                    <td>{formatMoneyFull(e.income.merchandise ?? 0)}</td>
                     <td>-{formatMoneyFull(e.expenditure.wages)}</td>
                     <td>-{formatMoneyFull(e.expenditure.staff)}</td>
                     <td>-{formatMoneyFull(e.expenditure.maintenance)}</td>

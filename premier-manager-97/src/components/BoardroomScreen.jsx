@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { ConfidenceMeter, Money } from './shared.jsx'
 import { confidenceLabel } from '../state/boardroom.js'
+import { CLUBS } from '../data/clubs.js'
+import { leaguePositionOf } from '../state/gameReducer.js'
 
 const REASONS = [
   { value: 'striker', label: 'We need a new striker' },
@@ -16,6 +18,9 @@ export default function BoardroomScreen({ state, dispatch }) {
   const [reason, setReason] = useState('striker')
 
   const club = state.clubs[state.playerClubId]
+  const clubIds = CLUBS.map((c) => c.id)
+  const position = leaguePositionOf(state.standings, clubIds, state.playerClubId)
+  const onTrack = position <= club.objective.targetPosition
 
   function submit() {
     dispatch({ type: 'REQUEST_BUDGET', payload: { amount: Number(amount), reason } })
@@ -25,6 +30,18 @@ export default function BoardroomScreen({ state, dispatch }) {
     <div className="screen">
       <div className="panel">
         <div className="panel-title">BOARDROOM</div>
+
+        <div className="panel-inset" style={{ marginBottom: 10 }}>
+          <h3>Season Objective</h3>
+          <p>The board expects: <strong>{club.objective.label}</strong></p>
+          <p>Current league position: {position} — {onTrack ? 'on track' : 'currently short of the target'}</p>
+          {club.objectiveMissedStreak > 0 && (
+            <p style={{ color: '#800000', fontWeight: 'bold' }}>
+              Warning: {club.objectiveMissedStreak} season(s) running without meeting the objective. One more failure and the board will act.
+            </p>
+          )}
+        </div>
+
         <div className="grid-2">
           <div className="panel-inset">
             <h3>Chairman's Confidence</h3>

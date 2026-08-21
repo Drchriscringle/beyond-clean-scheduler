@@ -513,3 +513,42 @@ h3 {
 .pitch-slot.filled {
   background: #cce0ff;
 }
+
+/* ---------- Form ---------- */
+.form-badge {
+  font-weight: bold;
+  padding: 1px 5px;
+  border: 1px solid var(--black);
+}
+
+.form-good {
+  background: #b6f0b6;
+  color: #004d00;
+}
+
+.form-average {
+  background: #fff3b0;
+  color: #665500;
+}
+
+.form-poor {
+  background: #f5b6b6;
+  color: #660000;
+}
+
+.form-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.form-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 13px;
+  font-weight: bold;
+  border: 1px solid var(--black);
+  border-radius: 50%;
+}

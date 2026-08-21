@@ -8,7 +8,6 @@ import {
   weeklyWageBill,
   staffWageBill,
   maintenanceCost,
-  sponsorshipIncome,
   tvIncomeForWeek,
   availableCapacity,
   matchdayIncome,
@@ -17,8 +16,17 @@ import {
 import { requestBudget as evaluateBudgetRequest, driftConfidence } from './boardroom.js'
 import { evaluateOffer, buildCost, buildWeeks } from './transfers.js'
 import { PITCH_LEVELS, TRAINING_LEVELS, YOUTH_LEVELS, nextLevel } from '../data/facilities.js'
+import { pushFormRating } from './form.js'
+import { generateSponsorshipOffers, generateMerchandiseOffers } from '../data/commercial.js'
+import { generateObjective, evaluateObjective } from './objectives.js'
+import { initCupState, isCupWeek, roundIndexForWeek, playCupRound, prizeMoneyForRound, WINNER_BONUS } from './cup.js'
+import { aiTransferTick } from './aiTransfers.js'
+import { generateYouthIntake, assignFreeSquadNumbers } from './youthIntake.js'
+import { evaluateContractOffer } from './contracts.js'
 
 const LEDGER_LIMIT = 30
+const SACK_CONFIDENCE_THRESHOLD = 5
+const OBJECTIVE_FAIL_STREAK_LIMIT = 2
 
 export function makeInitialState() {
   return {
@@ -41,6 +49,9 @@ export function makeInitialState() {
     selectedPlayerId: null,
     viewingClubId: null,
     notice: null,
+    cup: null,
+    commercial: null,
+    sackedInfo: null,
   }
 }
 
@@ -81,8 +92,11 @@ function startNewGame(state, { clubId, managerName }) {
   const squads = {}
   const standings = {}
   const lineups = {}
+  const season = 2025
 
   for (const staticClub of CLUBS) {
+    const sponsorshipDeal = generateSponsorshipOffers(staticClub.reputation)[0]
+    const merchandiseDeal = generateMerchandiseOffers(staticClub.reputation)[0]
     clubs[staticClub.id] = {
       ...staticClub,
       budget: staticClub.startingBudget,
@@ -93,6 +107,10 @@ function startNewGame(state, { clubId, managerName }) {
       facilities: { pitch: 1, training: 1, youth: 1 },
       stadiumProjects: {},
       ledger: [],
+      objective: generateObjective(staticClub.reputation),
+      objectiveMissedStreak: 0,
+      sponsorshipDeal,
+      merchandiseDeal,
     }
     squads[staticClub.id] = generateSquadForClub(staticClub)
     standings[staticClub.id] = emptyStandingRow()
@@ -100,27 +118,38 @@ function startNewGame(state, { clubId, managerName }) {
   }
 
   const fixtures = generateFixtures(CLUBS.map((c) => c.id))
+  const playerClub = clubs[clubId]
 
   return {
     ...state,
     started: true,
-    screen: 'squad',
+    screen: 'commercial',
     managerName,
     playerClubId: clubId,
-    season: 2025,
+    season,
     week: 1,
     clubs,
     squads,
     standings,
     fixtures,
     lineups,
-    freeAgents: generateFreeAgents('2025-1'),
+    freeAgents: generateFreeAgents(`${season}-1`),
     transferLog: [],
     boardroomLog: [],
     lastMatch: null,
     weekResults: [],
-    notice: `You have been appointed manager of ${CLUB_BY_ID[clubId].name}.`,
+    cup: initCupState(CLUBS.map((c) => c.id), season),
+    commercial: {
+      sponsorshipOptions: generateSponsorshipOffers(playerClub.reputation),
+      merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
+    },
+    sackedInfo: null,
+    notice: `You have been appointed manager of ${CLUB_BY_ID[clubId].name}. Objective: ${playerClub.objective.label}.`,
   }
+}
+
+function applyFormRatings(squad, ratings) {
+  return squad.map((p) => (ratings[p.id] != null ? pushFormRating(p, ratings[p.id]) : p))
 }
 
 function currentWeekFixtures(state) {
@@ -175,6 +204,24 @@ function facilityInjuryMultiplier(facilities) {
   return pitch.injuryRate * training.injuryRate
 }
 
+function simulateCupTie(homeId, awayId, { clubs, squads, lineups, playerClubId }) {
+  const homeSquad = squads[homeId]
+  const awaySquad = squads[awayId]
+  const homeLineup =
+    homeId === playerClubId
+      ? (lineups[homeId]?.startingXI ?? pickBestXI(homeSquad, '4-4-2'))
+      : pickBestXI(homeSquad, lineups[homeId]?.formation ?? '4-4-2')
+  const awayLineup =
+    awayId === playerClubId
+      ? (lineups[awayId]?.startingXI ?? pickBestXI(awaySquad, '4-4-2'))
+      : pickBestXI(awaySquad, lineups[awayId]?.formation ?? '4-4-2')
+
+  const result = simulateMatch({ homeClub: clubs[homeId], awayClub: clubs[awayId], homeSquad, awaySquad, homeLineup, awayLineup })
+  const winner =
+    result.homeGoals === result.awayGoals ? (Math.random() < 0.5 ? homeId : awayId) : result.homeGoals > result.awayGoals ? homeId : awayId
+  return { winner, homeGoals: result.homeGoals, awayGoals: result.awayGoals }
+}
+
 function advanceWeek(state) {
   const week = currentWeekFixtures(state)
   if (!week) {
@@ -182,7 +229,7 @@ function advanceWeek(state) {
   }
 
   const clubs = { ...state.clubs }
-  const squads = { ...state.squads }
+  let squads = { ...state.squads }
   const standings = { ...state.standings }
   const clubIds = CLUBS.map((c) => c.id)
   const weekResults = []
@@ -190,6 +237,43 @@ function advanceWeek(state) {
   let playerResultPoints = null
   let playerPlayedThisWeek = false
   let playerWasHome = false
+
+  const aiResult = aiTransferTick({ clubs, squads, freeAgents: state.freeAgents, playerClubId: state.playerClubId, week: state.week })
+  squads = aiResult.squads
+  const freeAgents = aiResult.freeAgents
+  const transferLog =
+    aiResult.events.length > 0
+      ? [...aiResult.events.map((e) => ({ week: e.week, playerName: e.playerName, fee: e.fee, outcome: e.outcome, message: e.message })), ...state.transferLog].slice(0, 20)
+      : state.transferLog
+
+  let cup = state.cup
+  let cupNotice = null
+  if (cup && !cup.champion && isCupWeek(state.week) && roundIndexForWeek(state.week) === cup.roundIndex) {
+    const involvedBefore = cup.matches.some((m) => m.home === state.playerClubId || m.away === state.playerClubId)
+    const roundIndexPlayed = cup.roundIndex
+    const nextCup = playCupRound(cup, (h, a) => simulateCupTie(h, a, { clubs, squads, lineups: state.lineups, playerClubId: state.playerClubId }))
+    if (involvedBefore) {
+      const playedRound = nextCup.history[nextCup.history.length - 1]
+      const tie = playedRound.matches.find((m) => m.home === state.playerClubId || m.away === state.playerClubId)
+      const wasHome = tie.home === state.playerClubId
+      const oppId = wasHome ? tie.away : tie.home
+      const won = tie.winner === state.playerClubId
+      const prize = prizeMoneyForRound(roundIndexPlayed)
+      const bonus = won && nextCup.champion === state.playerClubId ? WINNER_BONUS : 0
+      clubs[state.playerClubId] = {
+        ...clubs[state.playerClubId],
+        bankBalance: clubs[state.playerClubId].bankBalance + prize + bonus,
+      }
+      if (nextCup.champion === state.playerClubId) {
+        cupNotice = `FA Cup Final: WON ${tie.homeGoals}-${tie.awayGoals} vs ${CLUB_BY_ID[oppId].name} — you are FA Cup Champions!`
+      } else if (won) {
+        cupNotice = `FA Cup ${playedRound.round}: Won ${tie.homeGoals}-${tie.awayGoals} vs ${CLUB_BY_ID[oppId].name} — through to the next round!`
+      } else {
+        cupNotice = `FA Cup ${playedRound.round}: Lost ${tie.homeGoals}-${tie.awayGoals} to ${CLUB_BY_ID[oppId].name} — you're out of the cup.`
+      }
+    }
+    cup = nextCup
+  }
 
   for (const match of week.matches) {
     const homeClub = clubs[match.home]
@@ -207,6 +291,9 @@ function advanceWeek(state) {
         : pickBestXI(awaySquad, state.lineups[match.away]?.formation ?? '4-4-2')
 
     const result = simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLineup, awayLineup })
+
+    squads[match.home] = applyFormRatings(squads[match.home], result.homeRatings)
+    squads[match.away] = applyFormRatings(squads[match.away], result.awayRatings)
 
     applyResultToStandings(standings, match.home, result.homeGoals, result.awayGoals)
     applyResultToStandings(standings, match.away, result.awayGoals, result.homeGoals)
@@ -270,7 +357,8 @@ function advanceWeek(state) {
     }
   }
 
-  const sponsorship = sponsorshipIncome(club)
+  const sponsorship = club.sponsorshipDeal?.weeklyIncome ?? 0
+  const merchandise = club.merchandiseDeal?.weeklyIncome ?? 0
   const tv = tvIncomeForWeek(position)
 
   let matchday = { attendance: 0, attendancePct: 0, gateRevenue: 0 }
@@ -285,7 +373,7 @@ function advanceWeek(state) {
     })
   }
 
-  const income = sponsorship + tv + matchday.gateRevenue
+  const income = sponsorship + merchandise + tv + matchday.gateRevenue
   const expenditure = wages + staff + maintenance + constructionSpend + interest
   const net = income - expenditure
   const bankBalance = club.bankBalance + net
@@ -303,7 +391,7 @@ function advanceWeek(state) {
   const ledgerEntry = {
     week: state.week,
     season: state.season,
-    income: { matchday: matchday.gateRevenue, tv, sponsorship },
+    income: { matchday: matchday.gateRevenue, tv, sponsorship, merchandise },
     expenditure: { wages, staff, maintenance, construction: constructionSpend, interest },
     net,
     balance: bankBalance,
@@ -319,54 +407,115 @@ function advanceWeek(state) {
 
   const nextWeek = state.week + 1
 
-  return {
+  const weekReturn = {
     ...state,
     clubs,
     squads,
     standings,
+    freeAgents,
+    transferLog,
+    cup,
     week: nextWeek,
     lastMatch,
     weekResults,
-    notice: playerPlayedThisWeek
-      ? `Full-time: ${CLUB_BY_ID[lastMatch.homeClubId].name} ${lastMatch.homeGoals}-${lastMatch.awayGoals} ${CLUB_BY_ID[lastMatch.awayClubId].name}`
-      : 'A quiet week — no fixture for your side.',
+    notice:
+      cupNotice ??
+      (playerPlayedThisWeek
+        ? `Full-time: ${CLUB_BY_ID[lastMatch.homeClubId].name} ${lastMatch.homeGoals}-${lastMatch.awayGoals} ${CLUB_BY_ID[lastMatch.awayClubId].name}`
+        : 'A quiet week — no fixture for your side.'),
   }
+
+  if (boardConfidence <= SACK_CONFIDENCE_THRESHOLD) {
+    return {
+      ...weekReturn,
+      screen: 'sacked',
+      sackedInfo: {
+        clubName: CLUB_BY_ID[playerClubId].name,
+        reason: 'The board have lost all faith in your management.',
+        finalPosition: position,
+      },
+    }
+  }
+
+  return weekReturn
 }
 
 function seasonRollover(state) {
-  const clubs = { ...state.clubs }
-  const squads = { ...state.squads }
+  const clubIds = CLUBS.map((c) => c.id)
+  const playerClubId = state.playerClubId
+  const finalPosition = leaguePositionOf(state.standings, clubIds, playerClubId)
+  const playerClubBefore = state.clubs[playerClubId]
+  const objectiveResult = evaluateObjective(playerClubBefore.objective, finalPosition)
+  const confidenceAfterObjective = Math.max(0, Math.min(100, playerClubBefore.boardConfidence + objectiveResult.confidenceDelta))
+  const objectiveMissedStreak = objectiveResult.met ? 0 : playerClubBefore.objectiveMissedStreak + 1
 
-  for (const id of Object.keys(squads)) {
+  if (confidenceAfterObjective <= SACK_CONFIDENCE_THRESHOLD || objectiveMissedStreak >= OBJECTIVE_FAIL_STREAK_LIMIT) {
+    return {
+      ...state,
+      clubs: {
+        ...state.clubs,
+        [playerClubId]: { ...playerClubBefore, boardConfidence: confidenceAfterObjective, objectiveMissedStreak },
+      },
+      screen: 'sacked',
+      sackedInfo: {
+        clubName: CLUB_BY_ID[playerClubId].name,
+        reason: objectiveResult.message,
+        finalPosition,
+      },
+    }
+  }
+
+  const clubs = { ...state.clubs }
+  const squads = {}
+  const season = state.season + 1
+  let releasedFromPlayerClub = []
+
+  for (const id of Object.keys(state.squads)) {
     const club = clubs[id]
     const training = TRAINING_LEVELS.find((l) => l.level === club.facilities.training) ?? TRAINING_LEVELS[0]
-    squads[id] = squads[id]
-      .map((p) => {
-        const age = p.age + 1
-        let ability = p.ability
-        if (age <= 26 && p.potential > p.ability) {
-          const growth = Math.round((p.potential - p.ability) * 0.22 * training.developmentRate)
-          ability = Math.min(p.potential, p.ability + Math.max(1, growth))
-        } else if (age >= 32) {
-          ability = Math.max(30, p.ability - (2 + Math.floor(Math.random() * 3)))
-        }
-        return {
-          ...p,
-          age,
-          ability,
-          contractYears: Math.max(0, p.contractYears - 1),
-          fitness: 90,
-          morale: Math.max(40, Math.min(80, p.morale)),
-        }
-      })
-      .filter((p) => p.contractYears > 0 || p.age < 34)
+
+    let aged = state.squads[id].map((p) => {
+      const age = p.age + 1
+      let ability = p.ability
+      if (age <= 26 && p.potential > p.ability) {
+        const growth = Math.round((p.potential - p.ability) * 0.22 * training.developmentRate)
+        ability = Math.min(p.potential, p.ability + Math.max(1, growth))
+      } else if (age >= 32) {
+        ability = Math.max(30, p.ability - (2 + Math.floor(Math.random() * 3)))
+      }
+      return {
+        ...p,
+        age,
+        ability,
+        contractYears: Math.max(0, p.contractYears - 1),
+        fitness: 90,
+        morale: Math.max(40, Math.min(80, p.morale)),
+      }
+    })
+
+    if (id === playerClubId) {
+      releasedFromPlayerClub = aged.filter((p) => p.contractYears <= 0)
+      aged = aged.filter((p) => p.contractYears > 0)
+    } else {
+      aged = aged.map((p) => (p.contractYears <= 0 ? { ...p, contractYears: 2 + Math.floor(Math.random() * 3) } : p))
+    }
+
+    const youth = assignFreeSquadNumbers(aged, generateYouthIntake(club, season))
+    const room = Math.max(0, 30 - aged.length)
+    squads[id] = [...aged, ...youth.slice(0, room)]
   }
 
   const standings = {}
   for (const c of CLUBS) standings[c.id] = emptyStandingRow()
 
-  const season = state.season + 1
-  const fixtures = generateFixtures(CLUBS.map((c) => c.id))
+  const fixtures = generateFixtures(clubIds)
+  const playerClub = {
+    ...clubs[playerClubId],
+    boardConfidence: confidenceAfterObjective,
+    objectiveMissedStreak,
+    objective: generateObjective(clubs[playerClubId].reputation),
+  }
+  clubs[playerClubId] = playerClub
 
   return {
     ...state,
@@ -376,10 +525,16 @@ function seasonRollover(state) {
     fixtures,
     season,
     week: 1,
-    freeAgents: generateFreeAgents(`${season}-1`),
+    freeAgents: [...generateFreeAgents(`${season}-1`), ...releasedFromPlayerClub],
     lastMatch: null,
     weekResults: [],
-    notice: `The ${state.season}/${String(state.season + 1).slice(2)} season has ended. Welcome to the new campaign.`,
+    cup: initCupState(clubIds, season),
+    commercial: {
+      sponsorshipOptions: generateSponsorshipOffers(playerClub.reputation),
+      merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
+    },
+    screen: 'commercial',
+    notice: `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended — welcome to the new campaign.`,
   }
 }
 
@@ -415,6 +570,49 @@ function handleRequestBudget(state, { amount, reason }) {
       { week: state.week, amount, reason, outcome: result.outcome, grantedAmount: result.grantedAmount, message: result.message },
       ...state.boardroomLog,
     ].slice(0, 20),
+    notice: result.message,
+  }
+}
+
+function handleConfirmCommercialDeals(state, { sponsorshipId, merchandiseId }) {
+  const club = state.clubs[state.playerClubId]
+  const sponsorshipDeal = state.commercial.sponsorshipOptions.find((o) => o.id === sponsorshipId) ?? club.sponsorshipDeal
+  const merchandiseDeal = state.commercial.merchandiseOptions.find((o) => o.id === merchandiseId) ?? club.merchandiseDeal
+  const signingBonuses = sponsorshipDeal.signingBonus + merchandiseDeal.signingBonus
+
+  return {
+    ...state,
+    clubs: {
+      ...state.clubs,
+      [state.playerClubId]: {
+        ...club,
+        sponsorshipDeal,
+        merchandiseDeal,
+        bankBalance: club.bankBalance + signingBonuses,
+      },
+    },
+    commercial: null,
+    screen: 'squad',
+    notice: `Signed with ${sponsorshipDeal.partner} (shirt sponsor) and ${merchandiseDeal.partner} (merchandise).`,
+  }
+}
+
+function handleOfferContract(state, { playerId, wage, years }) {
+  const squad = state.squads[state.playerClubId]
+  const player = squad.find((p) => p.id === playerId)
+  if (!player) return state
+
+  const result = evaluateContractOffer(player, wage, years)
+  if (!result.accepted) {
+    return { ...state, notice: result.message }
+  }
+
+  return {
+    ...state,
+    squads: {
+      ...state.squads,
+      [state.playerClubId]: squad.map((p) => (p.id === playerId ? { ...p, wage, contractYears: years } : p)),
+    },
     notice: result.message,
   }
 }
@@ -577,6 +775,10 @@ export function gameReducer(state, action) {
       }
     case 'REQUEST_BUDGET':
       return handleRequestBudget(state, action.payload)
+    case 'CONFIRM_COMMERCIAL_DEALS':
+      return handleConfirmCommercialDeals(state, action.payload)
+    case 'OFFER_CONTRACT':
+      return handleOfferContract(state, action.payload)
     case 'MAKE_OFFER':
       return handleMakeOffer(state, action.payload)
     case 'SIGN_FREE_AGENT':

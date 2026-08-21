@@ -1,6 +1,8 @@
 // All figures per matchday/week are simulated approximations, tuned for a
 // readable in-game economy rather than real-world accuracy.
 
+import { currentForm } from './form.js'
+
 export function weeklyWageBill(squad) {
   return squad.reduce((sum, p) => sum + p.wage, 0)
 }
@@ -54,7 +56,9 @@ export function squadValue(squad) {
 export function estimatePlayerValue(player) {
   const ageFactor = player.age <= 24 ? 1.35 : player.age <= 29 ? 1.0 : player.age <= 32 ? 0.6 : 0.32
   const base = Math.pow(player.ability / 50, 3.4) * 3_500_000
-  return Math.max(50_000, Math.round(base * ageFactor))
+  const form = currentForm(player)
+  const formFactor = Math.max(0.7, Math.min(1.3, 0.85 + (form - 6) * 0.075))
+  return Math.max(50_000, Math.round(base * ageFactor * formFactor))
 }
 
 export function stadiumValue(club) {

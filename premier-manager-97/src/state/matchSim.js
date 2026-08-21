@@ -1,3 +1,5 @@
+import { ratePerformance } from './form.js'
+
 function poissonRandom(lambda, rng) {
   const L = Math.exp(-lambda)
   let k = 0
@@ -105,5 +107,12 @@ export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLi
   const commentary = events.map((e) => `${pad(e.minute)} — ${e.text}`)
   commentary.push(`90' — Full-time: ${homeClub.name} ${homeGoals}-${awayGoals} ${awayClub.name}`)
 
-  return { homeGoals, awayGoals, commentary }
+  const homeResultPoints = homeGoals > awayGoals ? 3 : homeGoals === awayGoals ? 1 : 0
+  const awayResultPoints = awayGoals > homeGoals ? 3 : homeGoals === awayGoals ? 1 : 0
+  const homeRatings = {}
+  for (const id of homeLineup) homeRatings[id] = ratePerformance(homeResultPoints, rng)
+  const awayRatings = {}
+  for (const id of awayLineup) awayRatings[id] = ratePerformance(awayResultPoints, rng)
+
+  return { homeGoals, awayGoals, commentary, homeRatings, awayRatings }
 }

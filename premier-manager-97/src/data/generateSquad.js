@@ -87,6 +87,7 @@ export function buildPlayer({ id, name, position, age, ability, potential, reput
     morale: 50 + Math.floor(rng() * 40),
     fitness: 82 + Math.floor(rng() * 18),
     listed: false,
+    formHistory: [],
     attributes: abilityToAttributes(position, ability, rng),
   }
 }

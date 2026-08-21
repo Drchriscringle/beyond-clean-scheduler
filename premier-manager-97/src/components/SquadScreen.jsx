@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { formatWage } from '../utils/format.js'
+import { currentForm } from '../state/form.js'
+import { FormBadge } from './shared.jsx'
 
 const COLUMNS = [
   { key: 'squadNumber', label: '#' },
@@ -8,6 +10,7 @@ const COLUMNS = [
   { key: 'age', label: 'Age' },
   { key: 'ability', label: 'CA' },
   { key: 'potential', label: 'PA' },
+  { key: 'form', label: 'Form' },
   { key: 'wage', label: 'Wage' },
   { key: 'contractYears', label: 'Contract' },
   { key: 'morale', label: 'Morale' },
@@ -22,8 +25,10 @@ export default function SquadScreen({ state, dispatch }) {
   const squad = state.squads[state.playerClubId]
   const club = state.clubs[state.playerClubId]
 
+  const withForm = useMemo(() => squad.map((p) => ({ ...p, form: currentForm(p) })), [squad])
+
   const sorted = useMemo(() => {
-    const copy = [...squad]
+    const copy = [...withForm]
     copy.sort((a, b) => {
       const va = a[sortKey]
       const vb = b[sortKey]
@@ -31,7 +36,7 @@ export default function SquadScreen({ state, dispatch }) {
       return (va - vb) * sortDir
     })
     return copy
-  }, [squad, sortKey, sortDir])
+  }, [withForm, sortKey, sortDir])
 
   function handleSort(key) {
     if (key === sortKey) setSortDir((d) => -d)
@@ -73,8 +78,11 @@ export default function SquadScreen({ state, dispatch }) {
                   <td>{p.age}</td>
                   <td>{p.ability}</td>
                   <td>{p.potential}</td>
+                  <td><FormBadge player={p} /></td>
                   <td>{formatWage(p.wage)}</td>
-                  <td>{p.contractYears === 0 ? 'Expired' : `${p.contractYears} yr`}</td>
+                  <td style={p.contractYears <= 1 ? { color: '#800000', fontWeight: 'bold' } : undefined}>
+                    {p.contractYears === 0 ? 'Expiring!' : `${p.contractYears} yr`}
+                  </td>
                   <td>{p.morale}</td>
                   <td>{p.fitness}</td>
                   <td>

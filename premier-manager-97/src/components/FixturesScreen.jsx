@@ -1,5 +1,31 @@
 import { CLUBS, CLUB_BY_ID } from '../data/clubs.js'
 import { standingsToTable } from '../state/gameReducer.js'
+import { clubCupStatus, CUP_ROUND_WEEKS } from '../state/cup.js'
+
+function CupPanel({ state }) {
+  const cup = state.cup
+  if (!cup) return null
+  const status = clubCupStatus(cup, state.playerClubId)
+  const stillIn = cup.matches.some((m) => m.home === state.playerClubId || m.away === state.playerClubId)
+  const nextWeek = CUP_ROUND_WEEKS[cup.roundIndex]
+
+  return (
+    <div className="panel">
+      <div className="panel-title">FA CUP</div>
+      {cup.champion && <p>Champions: <strong>{CLUB_BY_ID[cup.champion].name}</strong></p>}
+      {!cup.champion && stillIn && (
+        <p>
+          Your status: {status.roundLabel}
+          {nextWeek ? ` — next tie in Week ${nextWeek}` : ''}
+        </p>
+      )}
+      {!cup.champion && !stillIn && status.roundLabel !== 'Did not enter' && (
+        <p>Eliminated in the {status.roundLabel}.</p>
+      )}
+      {status.roundLabel === 'Did not enter' && <p>Not involved in this season's competition.</p>}
+    </div>
+  )
+}
 
 export default function FixturesScreen({ state }) {
   const clubIds = CLUBS.map((c) => c.id)
@@ -47,6 +73,7 @@ export default function FixturesScreen({ state }) {
               </tbody>
             </table>
           </div>
+          <CupPanel state={state} />
         </div>
 
         <div>
