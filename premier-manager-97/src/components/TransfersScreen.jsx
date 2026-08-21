@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { CLUBS } from '../data/clubs.js'
-import { formatWage } from '../utils/format.js'
+import { CLUBS, CLUB_BY_ID } from '../data/clubs.js'
+import { formatWage, formatMoneyFull } from '../utils/format.js'
 import { Money, FormBadge } from './shared.jsx'
 
 export default function TransfersScreen({ state, dispatch }) {
@@ -22,9 +22,17 @@ export default function TransfersScreen({ state, dispatch }) {
         <div className="panel-title">TRANSFERS</div>
         <p>Transfer budget: <Money value={club.budget} /> &nbsp; Bank balance: <Money value={club.bankBalance} /></p>
         <div className="tabs">
-          {['browse', 'free-agents', 'listed', 'activity'].map((t) => (
+          {['browse', 'free-agents', 'listed', 'offers', 'activity'].map((t) => (
             <button key={t} className={`tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-              {t === 'browse' ? 'Browse Clubs' : t === 'free-agents' ? 'Free Agents' : t === 'listed' ? 'Transfer List' : 'Activity'}
+              {t === 'browse'
+                ? 'Browse Clubs'
+                : t === 'free-agents'
+                  ? 'Free Agents'
+                  : t === 'listed'
+                    ? 'Transfer List'
+                    : t === 'offers'
+                      ? `Offers${state.incomingOffers.length > 0 ? ` (${state.incomingOffers.length})` : ''}`
+                      : 'Activity'}
             </button>
           ))}
         </div>
@@ -125,6 +133,34 @@ export default function TransfersScreen({ state, dispatch }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {tab === 'offers' && (
+            <div className="scrollbox">
+              {state.incomingOffers.length === 0 && (
+                <p>No offers on the table. List a player for transfer on the Squad screen to attract interest.</p>
+              )}
+              {state.incomingOffers.map((offer) => (
+                <div key={offer.id} className="panel-inset" style={{ marginBottom: 8 }}>
+                  <p>
+                    <strong>{CLUB_BY_ID[offer.fromClubId].name}</strong> offer {formatMoneyFull(offer.fee)} for{' '}
+                    <strong>{offer.playerName}</strong> (Wk{offer.week}).
+                  </p>
+                  <button
+                    className="btn btn-primary btn-small"
+                    onClick={() => dispatch({ type: 'RESPOND_TO_OFFER', payload: { offerId: offer.id, accept: true } })}
+                  >
+                    Accept
+                  </button>{' '}
+                  <button
+                    className="btn btn-small"
+                    onClick={() => dispatch({ type: 'RESPOND_TO_OFFER', payload: { offerId: offer.id, accept: false } })}
+                  >
+                    Reject
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 

@@ -88,6 +88,14 @@ export function buildPlayer({ id, name, position, age, ability, potential, reput
     fitness: 82 + Math.floor(rng() * 18),
     listed: false,
     formHistory: [],
+    stats: { appearances: 0, goals: 0, assists: 0, motm: 0 },
+    careerStats: { appearances: 0, goals: 0, assists: 0, motm: 0 },
+    injured: false,
+    injuryType: null,
+    injuryWeeks: 0,
+    suspended: false,
+    suspensionMatches: 0,
+    yellowCards: 0,
     attributes: abilityToAttributes(position, ability, rng),
   }
 }

@@ -114,11 +114,19 @@ export default function FixturesScreen({ state }) {
               </p>
               <div className="commentary-log">
                 {state.lastMatch.commentary.map((line, i) => (
-                  <p key={i} className={`commentary-line${line.includes('GOAL') ? ' goal' : ''}`}>
+                  <p
+                    key={i}
+                    className={`commentary-line${line.includes('GOAL') ? ' goal' : ''}${line.includes('RED CARD') ? ' red-card' : ''}`}
+                  >
                     {line}
                   </p>
                 ))}
               </div>
+              {state.lastMatch.motmName && (
+                <p style={{ marginTop: 8 }}>
+                  <strong>Man of the Match:</strong> {state.lastMatch.motmName} ({CLUB_BY_ID[state.lastMatch.motmClubId].name})
+                </p>
+              )}
             </div>
           )}
         </div>

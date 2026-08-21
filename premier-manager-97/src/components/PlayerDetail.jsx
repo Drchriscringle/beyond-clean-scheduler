@@ -16,6 +16,7 @@ export default function PlayerDetail({ state, dispatch }) {
   const [offerFee, setOfferFee] = useState('')
   const [contractWage, setContractWage] = useState(null)
   const [contractYears, setContractYears] = useState(3)
+  const [confirmingRelease, setConfirmingRelease] = useState(false)
   const ownSquad = state.squads[state.playerClubId]
   const viewingClubId = state.viewingClubId
   const foreignSquad = viewingClubId && viewingClubId !== state.playerClubId ? state.squads[viewingClubId] : null
@@ -61,6 +62,15 @@ export default function PlayerDetail({ state, dispatch }) {
     dispatch({ type: 'OFFER_CONTRACT', payload: { playerId: player.id, wage, years: Number(contractYears) } })
   }
 
+  function releasePlayer() {
+    if (!confirmingRelease) {
+      setConfirmingRelease(true)
+      return
+    }
+    dispatch({ type: 'RELEASE_PLAYER', payload: { playerId: player.id } })
+    dispatch({ type: 'NAVIGATE', payload: { screen: 'squad' } })
+  }
+
   return (
     <div className="screen">
       <div className="panel">
@@ -79,7 +89,18 @@ export default function PlayerDetail({ state, dispatch }) {
             <p>Wage: {formatWage(player.wage)}</p>
             <p>Contract: {player.contractYears === 0 ? 'Expired' : `${player.contractYears} year(s)`}</p>
             <p>Morale: {player.morale}/100</p>
-            <p>Fitness: {player.fitness}/100 {player.injured ? `(injured, ${player.injuryWeeks} wks)` : ''}</p>
+            <p>Fitness: {player.fitness}/100</p>
+            {player.injured && (
+              <p style={{ color: '#800000', fontWeight: 'bold' }}>
+                Injured: {player.injuryType} — expected back in {player.injuryWeeks} week(s)
+              </p>
+            )}
+            {player.suspended && (
+              <p style={{ color: '#800000', fontWeight: 'bold' }}>
+                Suspended — misses {player.suspensionMatches} more match(es)
+              </p>
+            )}
+            <p>Yellow cards this season: {player.yellowCards ?? 0}</p>
             <p>Form: <FormBadge player={player} /> — {formLabel(currentForm(player))}</p>
             <p>Estimated value: <Money value={value} /></p>
           </div>
@@ -97,6 +118,31 @@ export default function PlayerDetail({ state, dispatch }) {
           <strong>Recent form</strong>
           <div style={{ marginTop: 6 }}>
             <FormDots player={player} />
+          </div>
+        </div>
+
+        <div className="grid-2" style={{ marginTop: 10 }}>
+          <div className="panel-inset">
+            <strong>This Season</strong>
+            <table className="pm-table" style={{ marginTop: 6 }}>
+              <tbody>
+                <tr><td>Appearances</td><td>{player.stats.appearances}</td></tr>
+                <tr><td>Goals</td><td>{player.stats.goals}</td></tr>
+                <tr><td>Assists</td><td>{player.stats.assists}</td></tr>
+                <tr><td>Man of the Match</td><td>{player.stats.motm}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="panel-inset">
+            <strong>Career</strong>
+            <table className="pm-table" style={{ marginTop: 6 }}>
+              <tbody>
+                <tr><td>Appearances</td><td>{player.careerStats.appearances + player.stats.appearances}</td></tr>
+                <tr><td>Goals</td><td>{player.careerStats.goals + player.stats.goals}</td></tr>
+                <tr><td>Assists</td><td>{player.careerStats.assists + player.stats.assists}</td></tr>
+                <tr><td>Man of the Match</td><td>{player.careerStats.motm + player.stats.motm}</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -124,6 +170,21 @@ export default function PlayerDetail({ state, dispatch }) {
                 Offer New Deal
               </button>
             </div>
+          </div>
+        )}
+
+        {isOwn && (
+          <div className="panel-inset" style={{ marginTop: 10 }}>
+            <strong>Release Player</strong>
+            <p style={{ fontSize: 14 }}>Terminates their contract immediately - they join the free agent pool and you receive no fee.</p>
+            <button className="btn btn-danger" onClick={releasePlayer}>
+              {confirmingRelease ? 'Click again to confirm release' : 'Release Player'}
+            </button>
+            {confirmingRelease && (
+              <button className="btn btn-small" style={{ marginLeft: 8 }} onClick={() => setConfirmingRelease(false)}>
+                Cancel
+              </button>
+            )}
           </div>
         )}
 
