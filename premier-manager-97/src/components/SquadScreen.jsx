@@ -80,7 +80,9 @@ export default function SquadScreen({ state, dispatch }) {
                   <td>{p.potential}</td>
                   <td><FormBadge player={p} /></td>
                   <td>{formatWage(p.wage)}</td>
-                  <td>{p.contractYears === 0 ? 'Expired' : `${p.contractYears} yr`}</td>
+                  <td style={p.contractYears <= 1 ? { color: '#800000', fontWeight: 'bold' } : undefined}>
+                    {p.contractYears === 0 ? 'Expiring!' : `${p.contractYears} yr`}
+                  </td>
                   <td>{p.morale}</td>
                   <td>{p.fitness}</td>
                   <td>

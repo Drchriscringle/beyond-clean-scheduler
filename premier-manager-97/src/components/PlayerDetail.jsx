@@ -3,6 +3,7 @@ import { AttrBar, Money, FormBadge, FormDots } from './shared.jsx'
 import { formatWage } from '../utils/format.js'
 import { estimatePlayerValue } from '../state/finance.js'
 import { formLabel, currentForm } from '../state/form.js'
+import { expectedWage } from '../state/contracts.js'
 
 function attrLabels(position) {
   if (position === 'GK') {
@@ -13,6 +14,8 @@ function attrLabels(position) {
 
 export default function PlayerDetail({ state, dispatch }) {
   const [offerFee, setOfferFee] = useState('')
+  const [contractWage, setContractWage] = useState(null)
+  const [contractYears, setContractYears] = useState(3)
   const ownSquad = state.squads[state.playerClubId]
   const viewingClubId = state.viewingClubId
   const foreignSquad = viewingClubId && viewingClubId !== state.playerClubId ? state.squads[viewingClubId] : null
@@ -53,6 +56,11 @@ export default function PlayerDetail({ state, dispatch }) {
     dispatch({ type: 'NAVIGATE', payload: { screen: 'transfers' } })
   }
 
+  function offerContract() {
+    const wage = Number(contractWage ?? expectedWage(player))
+    dispatch({ type: 'OFFER_CONTRACT', payload: { playerId: player.id, wage, years: Number(contractYears) } })
+  }
+
   return (
     <div className="screen">
       <div className="panel">
@@ -91,6 +99,33 @@ export default function PlayerDetail({ state, dispatch }) {
             <FormDots player={player} />
           </div>
         </div>
+
+        {isOwn && (
+          <div className="panel-inset" style={{ marginTop: 10 }}>
+            <strong>Contract Renewal</strong>
+            <p style={{ fontSize: 14 }}>Current wage: {formatWage(player.wage)}. Guide expectation: {formatWage(expectedWage(player))}.</p>
+            <div className="field-row">
+              <label htmlFor="contract-wage">New wage (£/wk)</label>
+              <input
+                id="contract-wage"
+                type="number"
+                value={contractWage ?? expectedWage(player)}
+                onChange={(e) => setContractWage(e.target.value)}
+              />
+              <label htmlFor="contract-years">Years</label>
+              <select id="contract-years" value={contractYears} onChange={(e) => setContractYears(e.target.value)}>
+                {[1, 2, 3, 4, 5].map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+              <button className="btn btn-primary" onClick={offerContract}>
+                Offer New Deal
+              </button>
+            </div>
+          </div>
+        )}
 
         {!isOwn && !isFreeAgent && (
           <div className="panel-inset" style={{ marginTop: 10 }}>

@@ -13,6 +13,8 @@ import FinancesScreen from './components/FinancesScreen.jsx'
 import StadiumScreen from './components/StadiumScreen.jsx'
 import FixturesScreen from './components/FixturesScreen.jsx'
 import PlayerDetail from './components/PlayerDetail.jsx'
+import CommercialScreen from './components/CommercialScreen.jsx'
+import SackedScreen from './components/SackedScreen.jsx'
 
 const SCREENS = {
   squad: SquadScreen,
@@ -48,6 +50,10 @@ export default function App() {
     }
   }, [])
 
+  if (state.screen === 'sacked') {
+    return <SackedScreen state={state} dispatch={dispatch} />
+  }
+
   if (!state.started) {
     return (
       <div className="pm97-app">
@@ -59,6 +65,20 @@ export default function App() {
   const club = state.clubs[state.playerClubId]
   const clubIds = CLUBS.map((c) => c.id)
   const position = leaguePositionOf(state.standings, clubIds, state.playerClubId)
+
+  if (state.screen === 'commercial') {
+    return (
+      <div className="pm97-app">
+        <div className="statusbar">
+          <span>{state.managerName} — {CLUB_BY_ID[state.playerClubId].name}</span>
+          <span>Season {state.season}/{String(state.season + 1).slice(2)}</span>
+        </div>
+        <NoticeBanner notice={state.notice} onClear={() => dispatch({ type: 'CLEAR_NOTICE' })} />
+        <CommercialScreen state={state} dispatch={dispatch} />
+      </div>
+    )
+  }
+
   const ScreenComponent = SCREENS[state.screen] ?? SquadScreen
 
   return (
