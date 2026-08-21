@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { CLUBS, CLUB_BY_ID } from '../data/clubs.js'
+import { ALL_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
 import { formatWage, formatMoneyFull } from '../utils/format.js'
 import { Money, FormBadge } from './shared.jsx'
 
 export default function TransfersScreen({ state, dispatch }) {
   const [tab, setTab] = useState('browse')
-  const [browseClubId, setBrowseClubId] = useState(CLUBS.find((c) => c.id !== state.playerClubId).id)
+  const [browseClubId, setBrowseClubId] = useState(ALL_CLUBS.find((c) => c.id !== state.playerClubId).id)
 
   const club = state.clubs[state.playerClubId]
   const ownSquad = state.squads[state.playerClubId]
@@ -43,9 +43,9 @@ export default function TransfersScreen({ state, dispatch }) {
               <div className="field-row">
                 <label htmlFor="browse-club">Club</label>
                 <select id="browse-club" value={browseClubId} onChange={(e) => setBrowseClubId(e.target.value)}>
-                  {CLUBS.filter((c) => c.id !== state.playerClubId).map((c) => (
+                  {ALL_CLUBS.filter((c) => c.id !== state.playerClubId).map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name}
+                      {c.name} {c.division === 'CH' ? '(Championship)' : ''}
                     </option>
                   ))}
                 </select>

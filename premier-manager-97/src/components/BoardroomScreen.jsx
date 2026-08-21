@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { ConfidenceMeter, Money } from './shared.jsx'
 import { confidenceLabel } from '../state/boardroom.js'
-import { CLUBS } from '../data/clubs.js'
-import { leaguePositionOf } from '../state/gameReducer.js'
+import { leaguePositionOf, playerLeagueClubIds } from '../state/gameReducer.js'
 
 const REASONS = [
   { value: 'striker', label: 'We need a new striker' },
@@ -18,7 +17,7 @@ export default function BoardroomScreen({ state, dispatch }) {
   const [reason, setReason] = useState('striker')
 
   const club = state.clubs[state.playerClubId]
-  const clubIds = CLUBS.map((c) => c.id)
+  const clubIds = playerLeagueClubIds(state)
   const position = leaguePositionOf(state.standings, clubIds, state.playerClubId)
   const onTrack = position <= club.objective.targetPosition
 

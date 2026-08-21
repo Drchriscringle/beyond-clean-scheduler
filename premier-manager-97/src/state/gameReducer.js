@@ -1,7 +1,7 @@
-import { CLUBS, CLUB_BY_ID, totalCapacity } from '../data/clubs.js'
+import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, totalCapacity } from '../data/clubs.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
-import { generateFixtures } from './fixtures.js'
+import { generateFixtures, combineFixturesByWeek } from './fixtures.js'
 import { pickBestXI } from './lineup.js'
 import { simulateMatch } from './matchSim.js'
 import {
@@ -92,6 +92,20 @@ function leaguePositionOf(standings, clubIds, clubId) {
   return table.findIndex((row) => row.clubId === clubId) + 1
 }
 
+function divisionClubIds(clubs, division) {
+  return Object.values(clubs)
+    .filter((c) => c.division === division)
+    .map((c) => c.id)
+}
+
+// The club ids that make up whichever division the player's club currently
+// sits in - used everywhere a league table/position needs to be computed for
+// the player, since standings are shared across both divisions in one map.
+export function playerLeagueClubIds(state) {
+  const division = state.clubs[state.playerClubId]?.division ?? 'PL'
+  return divisionClubIds(state.clubs, division)
+}
+
 function startNewGame(state, { clubId, managerName }) {
   const clubs = {}
   const squads = {}
@@ -99,7 +113,7 @@ function startNewGame(state, { clubId, managerName }) {
   const lineups = {}
   const season = 2025
 
-  for (const staticClub of CLUBS) {
+  for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS]) {
     const sponsorshipDeal = generateSponsorshipOffers(staticClub.reputation)[0]
     const merchandiseDeal = generateMerchandiseOffers(staticClub.reputation)[0]
     clubs[staticClub.id] = {
@@ -112,7 +126,7 @@ function startNewGame(state, { clubId, managerName }) {
       facilities: { pitch: 1, training: 1, youth: 1 },
       stadiumProjects: {},
       ledger: [],
-      objective: generateObjective(staticClub.reputation),
+      objective: generateObjective(staticClub.reputation, Math.random, staticClub.division),
       objectiveMissedStreak: 0,
       sponsorshipDeal,
       merchandiseDeal,
@@ -122,7 +136,9 @@ function startNewGame(state, { clubId, managerName }) {
     lineups[staticClub.id] = { formation: '4-4-2', startingXI: pickBestXI(squads[staticClub.id], '4-4-2') }
   }
 
-  const fixtures = generateFixtures(CLUBS.map((c) => c.id))
+  const plIds = CLUBS.map((c) => c.id)
+  const chIds = CHAMPIONSHIP_CLUBS.map((c) => c.id)
+  const fixtures = combineFixturesByWeek(generateFixtures(plIds), generateFixtures(chIds))
   const playerClub = clubs[clubId]
 
   return {
@@ -143,7 +159,7 @@ function startNewGame(state, { clubId, managerName }) {
     boardroomLog: [],
     lastMatch: null,
     weekResults: [],
-    cup: initCupState(CLUBS.map((c) => c.id), season),
+    cup: initCupState([...plIds, ...chIds], season),
     commercial: {
       sponsorshipOptions: generateSponsorshipOffers(playerClub.reputation),
       merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
@@ -219,7 +235,8 @@ function advanceWeek(state) {
   const clubs = { ...state.clubs }
   let squads = { ...state.squads }
   const standings = { ...state.standings }
-  const clubIds = CLUBS.map((c) => c.id)
+  const allClubIds = Object.keys(state.squads)
+  const leagueClubIds = playerLeagueClubIds(state)
   const weekResults = []
   let lastMatch = state.lastMatch
   let playerResultPoints = null
@@ -238,7 +255,7 @@ function advanceWeek(state) {
 
   const newOffer = maybeGenerateOffer({
     squad: squads[state.playerClubId],
-    clubIds,
+    clubIds: allClubIds,
     playerClubId: state.playerClubId,
     week: state.week,
   })
@@ -350,7 +367,7 @@ function advanceWeek(state) {
   // regardless of how many matches (league + cup) they played. Anyone only
   // just injured/booked this same week is excluded so the countdown starts
   // next week, not immediately.
-  for (const id of clubIds) {
+  for (const id of allClubIds) {
     squads[id] = tickInjuries(squads[id], freshInjuryIds[id] ?? new Set())
     squads[id] = tickSuspensions(squads[id], freshSuspensionIds[id] ?? new Set())
   }
@@ -359,7 +376,7 @@ function advanceWeek(state) {
   const playerClubId = state.playerClubId
   const club = clubs[playerClubId]
   const squad = squads[playerClubId]
-  const position = leaguePositionOf(standings, clubIds, playerClubId)
+  const position = leaguePositionOf(standings, leagueClubIds, playerClubId)
 
   const wages = weeklyWageBill(squad)
   const staff = staffWageBill(club)
@@ -386,7 +403,7 @@ function advanceWeek(state) {
 
   const sponsorship = club.sponsorshipDeal?.weeklyIncome ?? 0
   const merchandise = club.merchandiseDeal?.weeklyIncome ?? 0
-  const tv = tvIncomeForWeek(position)
+  const tv = tvIncomeForWeek(position, club.division)
 
   let matchday = { attendance: 0, attendancePct: 0, gateRevenue: 0 }
   if (playerPlayedThisWeek && playerWasHome) {
@@ -468,10 +485,55 @@ function advanceWeek(state) {
   return weekReturn
 }
 
-function seasonRollover(state) {
-  const clubIds = CLUBS.map((c) => c.id)
+// Bottom 3 of the Premier League go down; top 2 of the Championship go up
+// automatically, and the 3rd-6th placed Championship clubs contest a
+// single-match play-off (two semis, then a final) for the third promotion
+// spot - the real English pyramid's rule, simplified to instant results.
+function resolvePromotionRelegation(state, clubs) {
+  const oldPlIds = divisionClubIds(state.clubs, 'PL')
+  const oldChIds = divisionClubIds(state.clubs, 'CH')
+  const plTable = standingsToTable(state.standings, oldPlIds)
+  const chTable = standingsToTable(state.standings, oldChIds)
+
+  const relegatedIds = plTable.slice(-3).map((r) => r.clubId)
+  const autoPromotedIds = chTable.slice(0, 2).map((r) => r.clubId)
+
+  let playoffWinnerId = null
+  let playoffNotice = ''
+  const contenders = chTable.slice(2, 6).map((r) => r.clubId)
+  if (contenders.length === 4) {
+    const ctx = { clubs, squads: state.squads, lineups: state.lineups, playerClubId: state.playerClubId }
+    const [p3, p4, p5, p6] = contenders
+    const semi1 = simulateCupTie(p3, p6, ctx)
+    const semi2 = simulateCupTie(p4, p5, ctx)
+    const final = simulateCupTie(semi1.winner, semi2.winner, ctx)
+    playoffWinnerId = final.winner
+    playoffNotice = ` Championship play-off final: ${CLUB_BY_ID[semi1.winner].name} ${final.homeGoals}-${final.awayGoals} ${CLUB_BY_ID[semi2.winner].name} — ${CLUB_BY_ID[playoffWinnerId].name} are promoted.`
+  }
+
+  const promotedIds = playoffWinnerId ? [...autoPromotedIds, playoffWinnerId] : autoPromotedIds
+
+  for (const id of relegatedIds) clubs[id] = { ...clubs[id], division: 'CH' }
+  for (const id of promotedIds) clubs[id] = { ...clubs[id], division: 'PL' }
+
   const playerClubId = state.playerClubId
-  const finalPosition = leaguePositionOf(state.standings, clubIds, playerClubId)
+  let headline = ''
+  if (relegatedIds.includes(playerClubId)) headline = 'YOU HAVE BEEN RELEGATED TO THE CHAMPIONSHIP. '
+  else if (promotedIds.includes(playerClubId)) headline = 'YOU HAVE WON PROMOTION TO THE PREMIER LEAGUE! '
+
+  const notice =
+    `${headline}Relegated to the Championship: ${relegatedIds.map((id) => CLUB_BY_ID[id].name).join(', ')}. ` +
+    `Promoted to the Premier League: ${autoPromotedIds.map((id) => CLUB_BY_ID[id].name).join(', ')} (automatic)` +
+    `${playoffWinnerId ? ` and ${CLUB_BY_ID[playoffWinnerId].name} (play-offs)` : ''}.` +
+    playoffNotice
+
+  return { notice }
+}
+
+function seasonRollover(state) {
+  const leagueClubIds = playerLeagueClubIds(state)
+  const playerClubId = state.playerClubId
+  const finalPosition = leaguePositionOf(state.standings, leagueClubIds, playerClubId)
   const playerClubBefore = state.clubs[playerClubId]
   const objectiveResult = evaluateObjective(playerClubBefore.objective, finalPosition)
   const confidenceAfterObjective = Math.max(0, Math.min(100, playerClubBefore.boardConfidence + objectiveResult.confidenceDelta))
@@ -494,6 +556,7 @@ function seasonRollover(state) {
   }
 
   const clubs = { ...state.clubs }
+  const { notice: promotionRelegationNotice } = resolvePromotionRelegation(state, clubs)
   const squads = {}
   const season = state.season + 1
   let releasedFromPlayerClub = []
@@ -535,14 +598,16 @@ function seasonRollover(state) {
   }
 
   const standings = {}
-  for (const c of CLUBS) standings[c.id] = emptyStandingRow()
+  for (const id of Object.keys(clubs)) standings[id] = emptyStandingRow()
 
-  const fixtures = generateFixtures(clubIds)
+  const newPlIds = divisionClubIds(clubs, 'PL')
+  const newChIds = divisionClubIds(clubs, 'CH')
+  const fixtures = combineFixturesByWeek(generateFixtures(newPlIds), generateFixtures(newChIds))
   const playerClub = {
     ...clubs[playerClubId],
     boardConfidence: confidenceAfterObjective,
     objectiveMissedStreak,
-    objective: generateObjective(clubs[playerClubId].reputation),
+    objective: generateObjective(clubs[playerClubId].reputation, Math.random, clubs[playerClubId].division),
   }
   clubs[playerClubId] = playerClub
 
@@ -557,19 +622,19 @@ function seasonRollover(state) {
     freeAgents: [...generateFreeAgents(`${season}-1`), ...releasedFromPlayerClub],
     lastMatch: null,
     weekResults: [],
-    cup: initCupState(clubIds, season),
+    cup: initCupState([...newPlIds, ...newChIds], season),
     commercial: {
       sponsorshipOptions: generateSponsorshipOffers(playerClub.reputation),
       merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
     },
     screen: 'commercial',
-    notice: `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended — welcome to the new campaign.`,
+    notice: `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice}`,
   }
 }
 
 function handleRequestBudget(state, { amount, reason }) {
   const club = state.clubs[state.playerClubId]
-  const position = leaguePositionOf(state.standings, CLUBS.map((c) => c.id), state.playerClubId)
+  const position = leaguePositionOf(state.standings, playerLeagueClubIds(state), state.playerClubId)
   const result = evaluateBudgetRequest({
     club: { ...club, pendingReason: reason },
     boardConfidence: club.boardConfidence,

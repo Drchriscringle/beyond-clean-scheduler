@@ -1,13 +1,15 @@
-// A simple single-elimination cup (16 clubs, 4 rounds) played on four
-// designated matchweeks alongside the league. Ties are resolved with a
-// coin-flip weighted by squad ability if the scores are level - no replays,
-// no extra time, to keep the schedule simple.
+// A simple single-elimination cup (32 clubs drawn from both the Premier
+// League and the Championship, 5 rounds) played on five designated
+// matchweeks alongside the league. Ties are resolved with a coin-flip
+// weighted by squad ability if the scores are level - no replays, no extra
+// time, to keep the schedule simple.
 
-export const ROUND_NAMES = ['Round of 16', 'Quarter-Final', 'Semi-Final', 'Final']
-export const CUP_ROUND_WEEKS = [6, 14, 22, 30]
+export const ROUND_NAMES = ['Round of 32', 'Round of 16', 'Quarter-Final', 'Semi-Final', 'Final']
+export const CUP_ROUND_WEEKS = [4, 10, 16, 22, 30]
+export const CUP_SIZE = 32
 
-const PRIZE_MONEY = [250_000, 600_000, 1_400_000, 3_000_000]
-export const WINNER_BONUS = 5_000_000
+const PRIZE_MONEY = [150_000, 350_000, 700_000, 1_600_000, 3_200_000]
+export const WINNER_BONUS = 5_500_000
 
 function shuffle(arr, rng) {
   const copy = [...arr]
@@ -27,11 +29,11 @@ function pairUp(clubIds) {
 }
 
 export function initCupState(allClubIds, season, rng = Math.random) {
-  const sixteen = shuffle(allClubIds, rng).slice(0, 16)
+  const entrants = shuffle(allClubIds, rng).slice(0, CUP_SIZE)
   return {
     season,
     roundIndex: 0,
-    matches: pairUp(sixteen),
+    matches: pairUp(entrants),
     history: [],
     champion: null,
   }

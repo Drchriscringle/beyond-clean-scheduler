@@ -1,6 +1,19 @@
-import { CLUBS, CLUB_BY_ID } from '../data/clubs.js'
-import { standingsToTable } from '../state/gameReducer.js'
+import { useState } from 'react'
+import { CLUB_BY_ID } from '../data/clubs.js'
+import { standingsToTable, playerLeagueClubIds } from '../state/gameReducer.js'
 import { clubCupStatus, CUP_ROUND_WEEKS } from '../state/cup.js'
+
+function zoneClass(position, division) {
+  if (division === 'PL') {
+    if (position <= 4) return 'zone-europe'
+    if (position >= 18) return 'zone-relegation'
+    return ''
+  }
+  if (position <= 2) return 'zone-promotion'
+  if (position <= 6) return 'zone-playoff'
+  if (position >= 18) return 'zone-relegation'
+  return ''
+}
 
 function CupPanel({ state }) {
   const cup = state.cup
@@ -28,15 +41,28 @@ function CupPanel({ state }) {
 }
 
 export default function FixturesScreen({ state }) {
-  const clubIds = CLUBS.map((c) => c.id)
-  const table = standingsToTable(state.standings, clubIds)
+  const playerDivision = state.clubs[state.playerClubId].division
+  const [viewDivision, setViewDivision] = useState(playerDivision)
+  const allClubIds = Object.keys(state.clubs)
+  const viewClubIds = allClubIds.filter((id) => state.clubs[id].division === viewDivision)
+  const table = standingsToTable(state.standings, viewClubIds)
+  const ownClubIds = playerLeagueClubIds(state)
   const upcoming = state.fixtures.find((f) => f.week === state.week)
+  const ownFixtures = upcoming?.matches.filter((m) => ownClubIds.includes(m.home) && ownClubIds.includes(m.away)) ?? []
+  const ownResults = state.weekResults.filter((r) => ownClubIds.includes(r.home) && ownClubIds.includes(r.away))
 
   return (
     <div className="screen">
       <div className="grid-2">
         <div className="panel">
-          <div className="panel-title">LEAGUE TABLE</div>
+          <div className="tabs" style={{ marginBottom: 8 }}>
+            <button className={`tab${viewDivision === 'PL' ? ' active' : ''}`} onClick={() => setViewDivision('PL')}>
+              Premier League
+            </button>
+            <button className={`tab${viewDivision === 'CH' ? ' active' : ''}`} onClick={() => setViewDivision('CH')}>
+              Championship
+            </button>
+          </div>
           <div className="scrollbox">
             <table className="pm-table">
               <thead>
@@ -54,25 +80,44 @@ export default function FixturesScreen({ state }) {
                 </tr>
               </thead>
               <tbody>
-                {table.map((row, i) => (
-                  <tr key={row.clubId} className={row.clubId === state.playerClubId ? 'highlight-row' : ''}>
-                    <td>{i + 1}</td>
-                    <td>{CLUB_BY_ID[row.clubId].name}</td>
-                    <td>{row.played}</td>
-                    <td>{row.won}</td>
-                    <td>{row.drawn}</td>
-                    <td>{row.lost}</td>
-                    <td>{row.gf}</td>
-                    <td>{row.ga}</td>
-                    <td>{row.gf - row.ga}</td>
-                    <td>
-                      <strong>{row.points}</strong>
-                    </td>
-                  </tr>
-                ))}
+                {table.map((row, i) => {
+                  const position = i + 1
+                  const classes = [zoneClass(position, viewDivision)]
+                  if (row.clubId === state.playerClubId) classes.push('highlight-row')
+                  return (
+                    <tr key={row.clubId} className={classes.filter(Boolean).join(' ')}>
+                      <td>{position}</td>
+                      <td>{CLUB_BY_ID[row.clubId].name}</td>
+                      <td>{row.played}</td>
+                      <td>{row.won}</td>
+                      <td>{row.drawn}</td>
+                      <td>{row.lost}</td>
+                      <td>{row.gf}</td>
+                      <td>{row.ga}</td>
+                      <td>{row.gf - row.ga}</td>
+                      <td>
+                        <strong>{row.points}</strong>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
+          <p style={{ fontSize: 13, marginTop: 6 }}>
+            {viewDivision === 'PL' ? (
+              <>
+                <span className="zone-swatch zone-europe" /> Champions League/Europe &nbsp;
+                <span className="zone-swatch zone-relegation" /> Relegation
+              </>
+            ) : (
+              <>
+                <span className="zone-swatch zone-promotion" /> Automatic promotion &nbsp;
+                <span className="zone-swatch zone-playoff" /> Play-offs &nbsp;
+                <span className="zone-swatch zone-relegation" /> Relegation
+              </>
+            )}
+          </p>
           <CupPanel state={state} />
         </div>
 
@@ -81,7 +126,7 @@ export default function FixturesScreen({ state }) {
             <div className="panel-title">FIXTURES — WEEK {state.week}</div>
             {upcoming ? (
               <ul>
-                {upcoming.matches.map((m) => (
+                {ownFixtures.map((m) => (
                   <li key={m.id} style={m.home === state.playerClubId || m.away === state.playerClubId ? { fontWeight: 'bold' } : undefined}>
                     {CLUB_BY_ID[m.home].name} vs {CLUB_BY_ID[m.away].name}
                   </li>
@@ -92,11 +137,11 @@ export default function FixturesScreen({ state }) {
             )}
           </div>
 
-          {state.weekResults.length > 0 && (
+          {ownResults.length > 0 && (
             <div className="panel">
               <div className="panel-title">LAST WEEK'S RESULTS</div>
               <ul>
-                {state.weekResults.map((r, i) => (
+                {ownResults.map((r, i) => (
                   <li key={i}>
                     {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
                   </li>

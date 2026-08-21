@@ -35,3 +35,16 @@ export function generateFixtures(clubIds) {
     matches: matches.map((m, i) => ({ id: `${index + 1}-${i}`, ...m, played: false })),
   }))
 }
+
+// Merges two divisions' independent fixture lists into one shared weekly
+// calendar (both divisions play matchweek N on the same week N).
+export function combineFixturesByWeek(fixturesA, fixturesB) {
+  const weeks = Math.max(fixturesA.length, fixturesB.length)
+  const combined = []
+  for (let i = 0; i < weeks; i++) {
+    const a = fixturesA[i]?.matches ?? []
+    const b = fixturesB[i]?.matches ?? []
+    combined.push({ week: i + 1, matches: [...a, ...b] })
+  }
+  return combined
+}

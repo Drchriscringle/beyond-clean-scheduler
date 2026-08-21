@@ -23,8 +23,24 @@ const OBJECTIVE_POOL = {
   ],
 }
 
-export function generateObjective(reputation, rng = Math.random) {
-  const list = OBJECTIVE_POOL[reputation] ?? OBJECTIVE_POOL[3]
+// Championship clubs are judged on promotion, not on European qualification.
+const CHAMPIONSHIP_OBJECTIVE_POOL = {
+  3: [
+    { type: 'win-championship', label: 'Win the Championship (Automatic Promotion)', targetPosition: 1 },
+    { type: 'auto-promotion', label: 'Achieve Automatic Promotion (Top 2)', targetPosition: 2 },
+  ],
+  2: [
+    { type: 'playoffs', label: 'Reach the Promotion Play-offs (Top 6)', targetPosition: 6 },
+    { type: 'top-half-ch', label: 'Finish in the Top Half', targetPosition: 10 },
+  ],
+  1: [
+    { type: 'avoid-relegation-ch', label: 'Avoid Relegation to League One (17th or Better)', targetPosition: 17 },
+  ],
+}
+
+export function generateObjective(reputation, rng = Math.random, division = 'PL') {
+  const pool = division === 'CH' ? CHAMPIONSHIP_OBJECTIVE_POOL : OBJECTIVE_POOL
+  const list = pool[reputation] ?? pool[3] ?? pool[1]
   return list[Math.floor(rng() * list.length)]
 }
 

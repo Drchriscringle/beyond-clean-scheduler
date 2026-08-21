@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from 'react'
-import { gameReducer, makeInitialState, leaguePositionOf } from './state/gameReducer.js'
+import { gameReducer, makeInitialState, leaguePositionOf, playerLeagueClubIds } from './state/gameReducer.js'
 import { saveGame } from './state/persistence.js'
-import { CLUBS, CLUB_BY_ID } from './data/clubs.js'
+import { CLUB_BY_ID } from './data/clubs.js'
 import MenuBar from './components/MenuBar.jsx'
 import { NoticeBanner, Money } from './components/shared.jsx'
 import NewGameScreen from './components/NewGameScreen.jsx'
@@ -63,8 +63,9 @@ export default function App() {
   }
 
   const club = state.clubs[state.playerClubId]
-  const clubIds = CLUBS.map((c) => c.id)
+  const clubIds = playerLeagueClubIds(state)
   const position = leaguePositionOf(state.standings, clubIds, state.playerClubId)
+  const divisionName = club.division === 'CH' ? 'Championship' : 'Premier League'
 
   if (state.screen === 'commercial') {
     return (
@@ -88,7 +89,7 @@ export default function App() {
         <span>{state.managerName} — {CLUB_BY_ID[state.playerClubId].name}</span>
         <span>Season {state.season}/{String(state.season + 1).slice(2)}</span>
         <span>Week {Math.min(state.week, 38)}/38</span>
-        <span>League position: {position}</span>
+        <span>{divisionName}: {position}</span>
         <span>Bank: <Money value={club.bankBalance} /></span>
       </div>
       <NoticeBanner notice={state.notice} onClear={() => dispatch({ type: 'CLEAR_NOTICE' })} />
