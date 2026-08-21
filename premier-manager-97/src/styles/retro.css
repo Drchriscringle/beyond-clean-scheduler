@@ -329,6 +329,15 @@ table.pm-table tbody tr.zone-relegation {
   background: #f8d6d6;
 }
 
+.window-open {
+  color: var(--green);
+  font-weight: bold;
+}
+.window-closed {
+  color: var(--red);
+  font-weight: bold;
+}
+
 /* ---------- Attribute bars ---------- */
 .attr-row {
   display: flex;

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ALL_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
 import { formatWage, formatMoneyFull } from '../utils/format.js'
 import { Money, FormBadge } from './shared.jsx'
+import { windowStatus } from '../state/transferWindows.js'
 
 export default function TransfersScreen({ state, dispatch }) {
   const [tab, setTab] = useState('browse')
@@ -11,6 +12,7 @@ export default function TransfersScreen({ state, dispatch }) {
   const ownSquad = state.squads[state.playerClubId]
   const listed = ownSquad.filter((p) => p.listed)
   const browseSquad = state.squads[browseClubId] ?? []
+  const window_ = windowStatus(state.week)
 
   function viewPlayer(playerId, clubId) {
     dispatch({ type: 'NAVIGATE', payload: { screen: 'player-detail', playerId, clubId } })
@@ -21,6 +23,11 @@ export default function TransfersScreen({ state, dispatch }) {
       <div className="panel">
         <div className="panel-title">TRANSFERS</div>
         <p>Transfer budget: <Money value={club.budget} /> &nbsp; Bank balance: <Money value={club.bankBalance} /></p>
+        <p className={window_.open ? 'window-open' : 'window-closed'}>
+          {window_.open
+            ? `${window_.label} — closes after Week ${window_.closesAfterWeek}`
+            : `${window_.label}${window_.opensWeek ? ` — reopens Week ${window_.opensWeek}` : ' for the rest of the season'}`}
+        </p>
         <div className="tabs">
           {['browse', 'free-agents', 'listed', 'offers', 'activity'].map((t) => (
             <button key={t} className={`tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>

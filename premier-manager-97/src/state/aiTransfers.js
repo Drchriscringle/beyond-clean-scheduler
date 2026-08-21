@@ -8,7 +8,7 @@ const ACTIVITY_CHANCE = 0.08
 // a small chance to sign a free agent (if short in a position) or release an
 // ageing, out-of-form fringe player back into free agency. The player's own
 // club is untouched - that squad is managed by hand.
-export function aiTransferTick({ clubs, squads, freeAgents, playerClubId, week, rng = Math.random }) {
+export function aiTransferTick({ clubs, squads, freeAgents, playerClubId, week, windowOpen = true, rng = Math.random }) {
   let nextFreeAgents = [...freeAgents]
   const nextSquads = { ...squads }
   const events = []
@@ -23,7 +23,7 @@ export function aiTransferTick({ clubs, squads, freeAgents, playerClubId, week, 
     for (const p of squad) positionCounts[p.position] += 1
     const thinPosition = POSITIONS.find((pos) => positionCounts[pos] < TARGET_MIN[pos])
 
-    if (thinPosition && nextFreeAgents.length > 0 && rng() < 0.7) {
+    if (windowOpen && thinPosition && nextFreeAgents.length > 0 && rng() < 0.7) {
       const candidates = nextFreeAgents.filter((p) => p.position === thinPosition)
       const pool = candidates.length > 0 ? candidates : nextFreeAgents
       const pick = pool[Math.floor(rng() * pool.length)]

@@ -27,6 +27,7 @@ import { applyMatchStats, rollSeasonStatsIntoCareer } from './playerStats.js'
 import { maybeGenerateOffer } from './incomingOffers.js'
 import { maybeInjureStarters, tickInjuries } from './injuries.js'
 import { applyBookings, tickSuspensions } from './discipline.js'
+import { isTransferWindowOpen } from './transferWindows.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -245,7 +246,8 @@ function advanceWeek(state) {
   const freshInjuryIds = {}
   const freshSuspensionIds = {}
 
-  const aiResult = aiTransferTick({ clubs, squads, freeAgents: state.freeAgents, playerClubId: state.playerClubId, week: state.week })
+  const windowOpen = isTransferWindowOpen(state.week)
+  const aiResult = aiTransferTick({ clubs, squads, freeAgents: state.freeAgents, playerClubId: state.playerClubId, week: state.week, windowOpen })
   squads = aiResult.squads
   const freeAgents = aiResult.freeAgents
   const transferLog =
@@ -253,12 +255,14 @@ function advanceWeek(state) {
       ? [...aiResult.events.map((e) => ({ week: e.week, playerName: e.playerName, fee: e.fee, outcome: e.outcome, message: e.message })), ...state.transferLog].slice(0, 20)
       : state.transferLog
 
-  const newOffer = maybeGenerateOffer({
-    squad: squads[state.playerClubId],
-    clubIds: allClubIds,
-    playerClubId: state.playerClubId,
-    week: state.week,
-  })
+  const newOffer = windowOpen
+    ? maybeGenerateOffer({
+        squad: squads[state.playerClubId],
+        clubIds: allClubIds,
+        playerClubId: state.playerClubId,
+        week: state.week,
+      })
+    : null
   const incomingOffers = newOffer ? [...state.incomingOffers, newOffer].slice(-5) : state.incomingOffers
 
   let cup = state.cup
@@ -762,6 +766,9 @@ function handleRespondToOffer(state, { offerId, accept }) {
 }
 
 function handleMakeOffer(state, { playerId, fromClubId, fee }) {
+  if (!isTransferWindowOpen(state.week)) {
+    return { ...state, notice: 'The transfer window is closed — you cannot buy players until it reopens.' }
+  }
   const player = state.squads[fromClubId]?.find((p) => p.id === playerId)
   if (!player) return state
   const club = state.clubs[state.playerClubId]
