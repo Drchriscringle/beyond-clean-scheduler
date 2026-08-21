@@ -1,9 +1,9 @@
-name: Deploy Pocket Ledger
+name: Deploy Premier Manager '97
 
 on:
-  # Auto-deploy disabled: premier-manager-97 is now the main GitHub Pages
-  # site for this repo. Trigger manually (workflow_dispatch) if pocket-ledger
-  # ever needs to be redeployed on its own.
+  push:
+    branches: [main]
+    paths: [premier-manager-97/**, .github/workflows/deploy-premier-manager-97.yml]
   workflow_dispatch:
 
 permissions:
@@ -26,15 +26,12 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-        working-directory: pocket-ledger
+        working-directory: premier-manager-97
       - run: npm run build -- --base=${{ steps.pages.outputs.base_path }}
-        working-directory: pocket-ledger
-        env:
-          VITE_SUPABASE_URL: https://zbfsbutoivufqoedreax.supabase.co
-          VITE_SUPABASE_ANON_KEY: sb_publishable_Uk45y4_G3iaIR8UXwE_0OQ_Nnwmx8ue
+        working-directory: premier-manager-97
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: pocket-ledger/dist
+          path: premier-manager-97/dist
 
   deploy:
     needs: build
