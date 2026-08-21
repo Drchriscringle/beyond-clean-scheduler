@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { AttrBar, Money } from './shared.jsx'
+import { AttrBar, Money, FormBadge, FormDots } from './shared.jsx'
 import { formatWage } from '../utils/format.js'
 import { estimatePlayerValue } from '../state/finance.js'
+import { formLabel, currentForm } from '../state/form.js'
 
 function attrLabels(position) {
   if (position === 'GK') {
@@ -71,6 +72,7 @@ export default function PlayerDetail({ state, dispatch }) {
             <p>Contract: {player.contractYears === 0 ? 'Expired' : `${player.contractYears} year(s)`}</p>
             <p>Morale: {player.morale}/100</p>
             <p>Fitness: {player.fitness}/100 {player.injured ? `(injured, ${player.injuryWeeks} wks)` : ''}</p>
+            <p>Form: <FormBadge player={player} /> — {formLabel(currentForm(player))}</p>
             <p>Estimated value: <Money value={value} /></p>
           </div>
           <div className="panel-inset">
@@ -80,6 +82,13 @@ export default function PlayerDetail({ state, dispatch }) {
             <AttrBar label={labels.shooting} value={player.attributes.shooting} />
             <AttrBar label={labels.stamina} value={player.attributes.stamina} />
             <AttrBar label={labels.strength} value={player.attributes.strength} />
+          </div>
+        </div>
+
+        <div className="panel-inset" style={{ marginTop: 10 }}>
+          <strong>Recent form</strong>
+          <div style={{ marginTop: 6 }}>
+            <FormDots player={player} />
           </div>
         </div>
 

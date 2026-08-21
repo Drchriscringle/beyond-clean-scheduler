@@ -17,6 +17,7 @@ import {
 import { requestBudget as evaluateBudgetRequest, driftConfidence } from './boardroom.js'
 import { evaluateOffer, buildCost, buildWeeks } from './transfers.js'
 import { PITCH_LEVELS, TRAINING_LEVELS, YOUTH_LEVELS, nextLevel } from '../data/facilities.js'
+import { pushFormRating } from './form.js'
 
 const LEDGER_LIMIT = 30
 
@@ -123,6 +124,10 @@ function startNewGame(state, { clubId, managerName }) {
   }
 }
 
+function applyFormRatings(squad, ratings) {
+  return squad.map((p) => (ratings[p.id] != null ? pushFormRating(p, ratings[p.id]) : p))
+}
+
 function currentWeekFixtures(state) {
   return state.fixtures.find((f) => f.week === state.week)
 }
@@ -207,6 +212,9 @@ function advanceWeek(state) {
         : pickBestXI(awaySquad, state.lineups[match.away]?.formation ?? '4-4-2')
 
     const result = simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLineup, awayLineup })
+
+    squads[match.home] = applyFormRatings(squads[match.home], result.homeRatings)
+    squads[match.away] = applyFormRatings(squads[match.away], result.awayRatings)
 
     applyResultToStandings(standings, match.home, result.homeGoals, result.awayGoals)
     applyResultToStandings(standings, match.away, result.awayGoals, result.homeGoals)
