@@ -286,11 +286,56 @@ table.pm-table tbody tr:hover {
 }
 
 table.pm-table tbody tr.highlight-row {
-  background: #cce0ff;
+  background: #cce0ff !important;
+  font-weight: bold;
 }
 
 table.pm-table tbody tr.clickable {
   cursor: pointer;
+}
+
+/* League table promotion/relegation zones */
+table.pm-table tbody tr.zone-europe {
+  background: #d6e8ff;
+}
+table.pm-table tbody tr.zone-promotion {
+  background: #d3f2d3;
+}
+table.pm-table tbody tr.zone-playoff {
+  background: #fff3cc;
+}
+table.pm-table tbody tr.zone-relegation {
+  background: #f8d6d6;
+}
+
+.zone-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--black);
+  margin-right: 3px;
+  vertical-align: middle;
+}
+.zone-swatch.zone-europe {
+  background: #d6e8ff;
+}
+.zone-swatch.zone-promotion {
+  background: #d3f2d3;
+}
+.zone-swatch.zone-playoff {
+  background: #fff3cc;
+}
+.zone-swatch.zone-relegation {
+  background: #f8d6d6;
+}
+
+.window-open {
+  color: var(--green);
+  font-weight: bold;
+}
+.window-closed {
+  color: var(--red);
+  font-weight: bold;
 }
 
 /* ---------- Attribute bars ---------- */
@@ -349,6 +394,32 @@ table.pm-table tbody tr.clickable {
   border-color: var(--grey-light);
   position: relative;
   z-index: 1;
+}
+
+/* ---------- Stand backdrop (matchday flavour, no photos) ---------- */
+.stand-backdrop {
+  height: 46px;
+  position: relative;
+  border: 2px outset var(--grey-light);
+  border-bottom: 3px solid var(--black);
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: var(--grey);
+}
+.stand-backdrop .roof {
+  height: 12px;
+  background: var(--navy-dark);
+  border-bottom: 2px solid var(--black);
+}
+.stand-backdrop .crowd {
+  height: 34px;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--amber) 0 5px,
+    var(--red) 5px 10px,
+    var(--navy) 10px 15px,
+    var(--grey-light) 15px 20px
+  );
 }
 
 /* ---------- Commentary log ---------- */

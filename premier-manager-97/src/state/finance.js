@@ -20,7 +20,13 @@ export function sponsorshipIncome(club) {
 }
 
 // Full-season TV/broadcast pot amortised per matchweek (19 home games/season).
-export function tvIncomeForWeek(leaguePosition) {
+// Championship clubs earn a small fraction of Premier League broadcast money,
+// reflecting the real-world gulf between the two divisions.
+export function tvIncomeForWeek(leaguePosition, division = 'PL') {
+  if (division === 'CH') {
+    const seasonPot = 7_000_000 - (leaguePosition - 1) * 120_000
+    return Math.round(Math.max(seasonPot, 3_500_000) / 38)
+  }
   const seasonPot = 60_000_000 - (leaguePosition - 1) * 1_900_000
   return Math.round(Math.max(seasonPot, 22_000_000) / 38)
 }

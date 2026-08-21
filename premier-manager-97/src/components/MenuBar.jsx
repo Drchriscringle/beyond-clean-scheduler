@@ -4,11 +4,13 @@ import { saveGame, loadGame, hasSave, clearSave } from '../state/persistence.js'
 const MENU = [
   { key: 'squad', label: 'Squad' },
   { key: 'lineup', label: 'Team' },
+  { key: 'tactics', label: 'Tactics' },
   { key: 'transfers', label: 'Transfers' },
   { key: 'boardroom', label: 'Boardroom' },
   { key: 'finances', label: 'Finances' },
   { key: 'stadium', label: 'Stadium' },
   { key: 'fixtures', label: 'Fixtures' },
+  { key: 'news', label: 'News' },
 ]
 
 export default function MenuBar({ state, dispatch }) {

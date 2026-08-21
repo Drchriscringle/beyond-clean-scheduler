@@ -4,6 +4,7 @@ import { formatWage } from '../utils/format.js'
 import { estimatePlayerValue } from '../state/finance.js'
 import { formLabel, currentForm } from '../state/form.js'
 import { expectedWage } from '../state/contracts.js'
+import { windowStatus } from '../state/transferWindows.js'
 
 function attrLabels(position) {
   if (position === 'GK') {
@@ -39,6 +40,7 @@ export default function PlayerDetail({ state, dispatch }) {
   const labels = attrLabels(player.position)
   const value = estimatePlayerValue(player)
   const club = state.clubs[state.playerClubId]
+  const window_ = windowStatus(state.week)
 
   function back() {
     if (foreignSquad) dispatch({ type: 'NAVIGATE', payload: { screen: 'transfers' } })
@@ -190,14 +192,22 @@ export default function PlayerDetail({ state, dispatch }) {
 
         {!isOwn && !isFreeAgent && (
           <div className="panel-inset" style={{ marginTop: 10 }}>
-            <div className="field-row">
-              <label htmlFor="offer-fee">Offer fee (£)</label>
-              <input id="offer-fee" type="number" value={offerFee} onChange={(e) => setOfferFee(e.target.value)} />
-              <button className="btn btn-primary" onClick={makeOffer}>
-                Submit Offer
-              </button>
-            </div>
-            <p>Transfer budget remaining: <Money value={club.budget} /></p>
+            {window_.open ? (
+              <>
+                <div className="field-row">
+                  <label htmlFor="offer-fee">Offer fee (£)</label>
+                  <input id="offer-fee" type="number" value={offerFee} onChange={(e) => setOfferFee(e.target.value)} />
+                  <button className="btn btn-primary" onClick={makeOffer}>
+                    Submit Offer
+                  </button>
+                </div>
+                <p>Transfer budget remaining: <Money value={club.budget} /></p>
+              </>
+            ) : (
+              <p className="window-closed">
+                {window_.label}{window_.opensWeek ? ` — reopens Week ${window_.opensWeek}` : ' for the rest of the season'}. No offers can be made until then.
+              </p>
+            )}
           </div>
         )}
 
