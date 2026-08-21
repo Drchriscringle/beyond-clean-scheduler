@@ -1,0 +1,473 @@
+:root {
+  --navy: #000080;
+  --navy-dark: #00005a;
+  --grey: #c0c0c0;
+  --grey-dark: #808080;
+  --grey-darker: #404040;
+  --grey-light: #dfdfdf;
+  --white: #ffffff;
+  --black: #000000;
+  --teal: #008080;
+  --green: #008000;
+  --red: #800000;
+  --amber: #ffcc00;
+  --font-head: 'Press Start 2P', monospace;
+  --font-body: 'VT323', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--navy-dark);
+  color: var(--black);
+  font-family: var(--font-body);
+  font-size: 18px;
+  image-rendering: pixelated;
+}
+
+.pm97-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--navy);
+}
+
+/* ---------- Menu bar ---------- */
+.menubar {
+  display: flex;
+  align-items: stretch;
+  background: var(--grey);
+  border-bottom: 2px solid var(--black);
+  flex-wrap: wrap;
+}
+
+.menubar .brand {
+  font-family: var(--font-head);
+  font-size: 11px;
+  color: var(--navy);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  border-right: 2px solid var(--grey-dark);
+  white-space: nowrap;
+}
+
+.menu-item {
+  font-family: var(--font-body);
+  font-size: 18px;
+  background: var(--grey);
+  border: none;
+  border-right: 1px solid var(--grey-dark);
+  padding: 6px 14px;
+  cursor: pointer;
+  color: var(--black);
+}
+
+.menu-item:hover {
+  background: var(--grey-light);
+}
+
+.menu-item.active {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.menu-spacer {
+  flex: 1;
+}
+
+.continue-btn {
+  font-family: var(--font-head);
+  font-size: 11px;
+  background: var(--green);
+  color: var(--white);
+  border: 3px outset #00c000;
+  padding: 8px 16px;
+  cursor: pointer;
+  margin: 3px;
+}
+
+.continue-btn:active {
+  border-style: inset;
+}
+
+.continue-btn:disabled {
+  background: var(--grey-dark);
+  border-color: var(--grey);
+  color: var(--grey-light);
+  cursor: not-allowed;
+}
+
+/* ---------- Status strip ---------- */
+.statusbar {
+  background: var(--grey-darker);
+  color: var(--amber);
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 3px 10px;
+  border-bottom: 2px solid var(--black);
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Main content ---------- */
+.screen {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+}
+
+.panel {
+  background: var(--grey);
+  border: 2px outset var(--grey-light);
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.panel-title {
+  font-family: var(--font-head);
+  font-size: 12px;
+  background: var(--navy);
+  color: var(--white);
+  padding: 6px 8px;
+  margin: -10px -10px 10px -10px;
+  border-bottom: 2px solid var(--black);
+}
+
+.panel-inset {
+  background: var(--grey-light);
+  border: 2px inset var(--grey);
+  padding: 8px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  font-family: var(--font-body);
+  font-size: 17px;
+  background: var(--grey);
+  border: 2px outset var(--grey-light);
+  padding: 5px 12px;
+  cursor: pointer;
+  color: var(--black);
+}
+
+.btn:hover {
+  background: var(--grey-light);
+}
+
+.btn:active {
+  border-style: inset;
+}
+
+.btn:disabled {
+  color: var(--grey-dark);
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--navy);
+  color: var(--white);
+  border-color: #4040c0;
+}
+
+.btn-danger {
+  background: var(--red);
+  color: var(--white);
+  border-color: #c04040;
+}
+
+.btn-small {
+  font-size: 14px;
+  padding: 2px 7px;
+}
+
+/* ---------- Tables ---------- */
+table.pm-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+  font-size: 18px;
+}
+
+table.pm-table th {
+  background: var(--navy);
+  color: var(--white);
+  text-align: left;
+  padding: 4px 8px;
+  border: 1px solid var(--black);
+  font-weight: normal;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+table.pm-table td {
+  padding: 3px 8px;
+  border: 1px solid var(--grey-dark);
+  white-space: nowrap;
+}
+
+table.pm-table tbody tr:nth-child(even) {
+  background: var(--grey-light);
+}
+
+table.pm-table tbody tr:hover {
+  background: #ffffcc;
+}
+
+table.pm-table tbody tr.highlight-row {
+  background: #cce0ff;
+}
+
+table.pm-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+/* ---------- Attribute bars ---------- */
+.attr-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.attr-label {
+  width: 90px;
+  font-size: 16px;
+}
+
+.attr-bar-track {
+  flex: 1;
+  height: 12px;
+  background: var(--white);
+  border: 1px solid var(--black);
+  display: flex;
+}
+
+.attr-bar-fill {
+  background: var(--teal);
+  height: 100%;
+}
+
+.attr-value {
+  width: 26px;
+  text-align: right;
+  font-size: 16px;
+}
+
+/* ---------- Tabs ---------- */
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: -2px;
+}
+
+.tab {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 5px 12px;
+  background: var(--grey-dark);
+  color: var(--grey-light);
+  border: 2px outset var(--grey-dark);
+  border-bottom: none;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: var(--grey);
+  color: var(--black);
+  border-color: var(--grey-light);
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Commentary log ---------- */
+.commentary-log {
+  background: var(--black);
+  color: #33ff33;
+  font-family: var(--font-body);
+  font-size: 18px;
+  padding: 10px;
+  height: 260px;
+  overflow-y: auto;
+  border: 2px inset var(--grey);
+}
+
+.commentary-line {
+  margin: 0 0 2px 0;
+}
+
+.commentary-line.goal {
+  color: var(--amber);
+  font-weight: bold;
+}
+
+/* ---------- New Game screen ---------- */
+.club-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.club-tile {
+  border: 2px outset var(--grey-light);
+  background: var(--grey);
+  padding: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 17px;
+  color: var(--black);
+}
+
+.club-tile.selected {
+  background: var(--navy);
+  color: var(--white);
+  border-style: inset;
+}
+
+.rep-stars {
+  color: var(--amber);
+  letter-spacing: 1px;
+}
+
+/* ---------- Misc ---------- */
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.field-row label {
+  min-width: 140px;
+}
+
+input[type='text'],
+input[type='number'],
+select {
+  font-family: var(--font-body);
+  font-size: 17px;
+  background: var(--white);
+  border: 2px inset var(--grey);
+  padding: 3px 5px;
+}
+
+.money {
+  font-variant-numeric: tabular-nums;
+}
+
+.money.negative {
+  color: var(--red);
+  font-weight: bold;
+}
+
+.money.positive {
+  color: var(--green);
+}
+
+.confidence-meter {
+  height: 18px;
+  border: 2px inset var(--grey);
+  background: var(--white);
+  overflow: hidden;
+}
+
+.confidence-meter-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--red), var(--amber), var(--green));
+}
+
+.notice-banner {
+  background: var(--amber);
+  border: 2px outset #ffe680;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  font-size: 17px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-head);
+  font-size: 13px;
+  color: var(--navy);
+  margin: 0 0 10px 0;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+  border-bottom: 2px solid var(--black);
+  border-left: 2px solid var(--black);
+  padding: 4px;
+}
+
+.bar-chart-col {
+  flex: 1;
+  background: var(--teal);
+  min-width: 6px;
+}
+
+.bar-chart-col.negative {
+  background: var(--red);
+}
+
+.scrollbox {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.pitch-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pitch-slot {
+  border: 2px outset var(--grey-light);
+  background: var(--white);
+  padding: 4px 8px;
+  font-size: 15px;
+  cursor: pointer;
+  min-width: 130px;
+}
+
+.pitch-slot.filled {
+  background: #cce0ff;
+}
