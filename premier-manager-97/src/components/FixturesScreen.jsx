@@ -153,6 +153,10 @@ export default function FixturesScreen({ state }) {
           {state.lastMatch && (
             <div className="panel">
               <div className="panel-title">MATCH COMMENTARY</div>
+              <div className="stand-backdrop">
+                <div className="roof" />
+                <div className="crowd" />
+              </div>
               <p>
                 {CLUB_BY_ID[state.lastMatch.homeClubId].name} {state.lastMatch.homeGoals}-{state.lastMatch.awayGoals}{' '}
                 {CLUB_BY_ID[state.lastMatch.awayClubId].name}

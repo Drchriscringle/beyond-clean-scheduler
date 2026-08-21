@@ -15,15 +15,19 @@ import FixturesScreen from './components/FixturesScreen.jsx'
 import PlayerDetail from './components/PlayerDetail.jsx'
 import CommercialScreen from './components/CommercialScreen.jsx'
 import SackedScreen from './components/SackedScreen.jsx'
+import TacticsScreen from './components/TacticsScreen.jsx'
+import NewsScreen from './components/NewsScreen.jsx'
 
 const SCREENS = {
   squad: SquadScreen,
   lineup: LineupScreen,
+  tactics: TacticsScreen,
   transfers: TransfersScreen,
   boardroom: BoardroomScreen,
   finances: FinancesScreen,
   stadium: StadiumScreen,
   fixtures: FixturesScreen,
+  news: NewsScreen,
   'player-detail': PlayerDetail,
 }
 

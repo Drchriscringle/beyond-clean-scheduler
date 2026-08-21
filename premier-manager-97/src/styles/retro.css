@@ -396,6 +396,32 @@ table.pm-table tbody tr.zone-relegation {
   z-index: 1;
 }
 
+/* ---------- Stand backdrop (matchday flavour, no photos) ---------- */
+.stand-backdrop {
+  height: 46px;
+  position: relative;
+  border: 2px outset var(--grey-light);
+  border-bottom: 3px solid var(--black);
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: var(--grey);
+}
+.stand-backdrop .roof {
+  height: 12px;
+  background: var(--navy-dark);
+  border-bottom: 2px solid var(--black);
+}
+.stand-backdrop .crowd {
+  height: 34px;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--amber) 0 5px,
+    var(--red) 5px 10px,
+    var(--navy) 10px 15px,
+    var(--grey-light) 15px 20px
+  );
+}
+
 /* ---------- Commentary log ---------- */
 .commentary-log {
   background: var(--black);

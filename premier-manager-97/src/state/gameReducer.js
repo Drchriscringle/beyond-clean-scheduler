@@ -28,6 +28,7 @@ import { maybeGenerateOffer } from './incomingOffers.js'
 import { maybeInjureStarters, tickInjuries } from './injuries.js'
 import { applyBookings, tickSuspensions } from './discipline.js'
 import { isTransferWindowOpen } from './transferWindows.js'
+import { defaultTactics } from './tactics.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -46,6 +47,7 @@ export function makeInitialState() {
     standings: {},
     fixtures: [],
     lineups: {},
+    tactics: {},
     freeAgents: [],
     transferLog: [],
     boardroomLog: [],
@@ -112,6 +114,7 @@ function startNewGame(state, { clubId, managerName }) {
   const squads = {}
   const standings = {}
   const lineups = {}
+  const tactics = {}
   const season = 2025
 
   for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS]) {
@@ -135,6 +138,7 @@ function startNewGame(state, { clubId, managerName }) {
     squads[staticClub.id] = generateSquadForClub(staticClub)
     standings[staticClub.id] = emptyStandingRow()
     lineups[staticClub.id] = { formation: '4-4-2', startingXI: pickBestXI(squads[staticClub.id], '4-4-2') }
+    tactics[staticClub.id] = defaultTactics(squads[staticClub.id], lineups[staticClub.id].startingXI)
   }
 
   const plIds = CLUBS.map((c) => c.id)
@@ -155,6 +159,7 @@ function startNewGame(state, { clubId, managerName }) {
     standings,
     fixtures,
     lineups,
+    tactics,
     freeAgents: generateFreeAgents(`${season}-1`),
     transferLog: [],
     boardroomLog: [],
@@ -209,7 +214,7 @@ function facilityInjuryMultiplier(facilities) {
   return pitch.injuryRate * training.injuryRate
 }
 
-function simulateCupTie(homeId, awayId, { clubs, squads, lineups, playerClubId }) {
+function simulateCupTie(homeId, awayId, { clubs, squads, lineups, tactics, playerClubId }) {
   const homeSquad = squads[homeId]
   const awaySquad = squads[awayId]
   const homeLineup =
@@ -221,7 +226,16 @@ function simulateCupTie(homeId, awayId, { clubs, squads, lineups, playerClubId }
       ? availablePlayerLineup(lineups[awayId]?.startingXI, awaySquad, lineups[awayId]?.formation)
       : pickBestXI(awaySquad, lineups[awayId]?.formation ?? '4-4-2')
 
-  const result = simulateMatch({ homeClub: clubs[homeId], awayClub: clubs[awayId], homeSquad, awaySquad, homeLineup, awayLineup })
+  const result = simulateMatch({
+    homeClub: clubs[homeId],
+    awayClub: clubs[awayId],
+    homeSquad,
+    awaySquad,
+    homeLineup,
+    awayLineup,
+    homeTactics: tactics?.[homeId],
+    awayTactics: tactics?.[awayId],
+  })
   const winner =
     result.homeGoals === result.awayGoals ? (Math.random() < 0.5 ? homeId : awayId) : result.homeGoals > result.awayGoals ? homeId : awayId
   return { winner, homeGoals: result.homeGoals, awayGoals: result.awayGoals }
@@ -270,7 +284,7 @@ function advanceWeek(state) {
   if (cup && !cup.champion && isCupWeek(state.week) && roundIndexForWeek(state.week) === cup.roundIndex) {
     const involvedBefore = cup.matches.some((m) => m.home === state.playerClubId || m.away === state.playerClubId)
     const roundIndexPlayed = cup.roundIndex
-    const nextCup = playCupRound(cup, (h, a) => simulateCupTie(h, a, { clubs, squads, lineups: state.lineups, playerClubId: state.playerClubId }))
+    const nextCup = playCupRound(cup, (h, a) => simulateCupTie(h, a, { clubs, squads, lineups: state.lineups, tactics: state.tactics, playerClubId: state.playerClubId }))
     if (involvedBefore) {
       const playedRound = nextCup.history[nextCup.history.length - 1]
       const tie = playedRound.matches.find((m) => m.home === state.playerClubId || m.away === state.playerClubId)
@@ -309,7 +323,16 @@ function advanceWeek(state) {
         ? availablePlayerLineup(state.lineups[match.away]?.startingXI, awaySquad, state.lineups[match.away]?.formation)
         : pickBestXI(awaySquad, state.lineups[match.away]?.formation ?? '4-4-2')
 
-    const result = simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLineup, awayLineup })
+    const result = simulateMatch({
+      homeClub,
+      awayClub,
+      homeSquad,
+      awaySquad,
+      homeLineup,
+      awayLineup,
+      homeTactics: state.tactics[match.home],
+      awayTactics: state.tactics[match.away],
+    })
 
     squads[match.home] = applyFormRatings(squads[match.home], result.homeRatings)
     squads[match.away] = applyFormRatings(squads[match.away], result.awayRatings)
@@ -506,7 +529,7 @@ function resolvePromotionRelegation(state, clubs) {
   let playoffNotice = ''
   const contenders = chTable.slice(2, 6).map((r) => r.clubId)
   if (contenders.length === 4) {
-    const ctx = { clubs, squads: state.squads, lineups: state.lineups, playerClubId: state.playerClubId }
+    const ctx = { clubs, squads: state.squads, lineups: state.lineups, tactics: state.tactics, playerClubId: state.playerClubId }
     const [p3, p4, p5, p6] = contenders
     const semi1 = simulateCupTie(p3, p6, ctx)
     const semi2 = simulateCupTie(p4, p5, ctx)
@@ -904,6 +927,14 @@ export function gameReducer(state, action) {
         lineups: {
           ...state.lineups,
           [state.playerClubId]: { ...state.lineups[state.playerClubId], startingXI: action.payload.ids },
+        },
+      }
+    case 'SET_TACTICS':
+      return {
+        ...state,
+        tactics: {
+          ...state.tactics,
+          [state.playerClubId]: { ...state.tactics[state.playerClubId], ...action.payload },
         },
       }
     case 'TOGGLE_LISTED':

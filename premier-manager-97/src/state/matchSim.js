@@ -1,4 +1,5 @@
 import { ratePerformance } from './form.js'
+import { PLAYING_STYLES } from './tactics.js'
 
 function poissonRandom(lambda, rng) {
   const L = Math.exp(-lambda)
@@ -58,6 +59,10 @@ const SCORER_WEIGHT = { FW: 5, MF: 2.5, DF: 0.6, GK: 0.05 }
 const ASSIST_WEIGHT = { FW: 1.5, MF: 3, DF: 1, GK: 0.1 }
 const YELLOW_CARD_CHANCE = 0.11
 const RED_CARD_CHANCE = 0.006
+const PENALTY_CHANCE = 0.1
+const FREE_KICK_CHANCE = 0.06
+const CORNER_CHANCE = 0.16
+const CAPTAIN_BOOST = 1.02
 
 function pickWeighted(xi, weightTable, rng, exclude = null) {
   const candidates = xi.filter((p) => p.id !== exclude)
@@ -89,7 +94,17 @@ function generateBookings(xi, side, rng) {
   return bookings
 }
 
-export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLineup, awayLineup, rng = Math.random }) {
+export function simulateMatch({
+  homeClub,
+  awayClub,
+  homeSquad,
+  awaySquad,
+  homeLineup,
+  awayLineup,
+  homeTactics,
+  awayTactics,
+  rng = Math.random,
+}) {
   const home = lineupRatings(homeSquad, homeLineup)
   const away = lineupRatings(awaySquad, awayLineup)
 
@@ -99,14 +114,24 @@ export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLi
   const homeAdvantage = 0.28
   const baseGoals = 1.3
 
-  const homeLambda = Math.max(
+  const homeStyle = PLAYING_STYLES[homeTactics?.playingStyle] ?? PLAYING_STYLES.balanced
+  const awayStyle = PLAYING_STYLES[awayTactics?.playingStyle] ?? PLAYING_STYLES.balanced
+  const homeHasCaptain = Boolean(homeTactics?.captainId && homeLineup.includes(homeTactics.captainId))
+  const awayHasCaptain = Boolean(awayTactics?.captainId && awayLineup.includes(awayTactics.captainId))
+
+  let homeLambda = Math.max(
     0.15,
     baseGoals + (home.attack - away.defense) / 45 + homeAdvantage + homeMoraleBoost,
   )
-  const awayLambda = Math.max(
+  let awayLambda = Math.max(
     0.1,
     baseGoals + (away.attack - home.defense) / 45 - homeAdvantage * 0.4 + awayMoraleBoost,
   )
+
+  homeLambda *= homeStyle.forMult * awayStyle.againstMult
+  awayLambda *= awayStyle.forMult * homeStyle.againstMult
+  if (homeHasCaptain) homeLambda *= CAPTAIN_BOOST
+  if (awayHasCaptain) awayLambda *= CAPTAIN_BOOST
 
   const homeGoals = poissonRandom(homeLambda, rng)
   const awayGoals = poissonRandom(awayLambda, rng)
@@ -118,26 +143,50 @@ export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLi
   const goalMinutes = new Set()
   const goals = []
 
-  function addGoals(count, side, xi, clubName) {
+  function addGoals(count, side, xi, clubName, tactics) {
     for (let i = 0; i < count; i++) {
       let m
       do { m = 1 + Math.floor(rng() * 90) } while (goalMinutes.has(m))
       goalMinutes.add(m)
-      const scorer = pickWeighted(xi, SCORER_WEIGHT, rng)
-      const assister = rng() < 0.8 ? pickWeighted(xi, ASSIST_WEIGHT, rng, scorer?.id) : null
+
+      let scorer
+      let assister = null
+      let note = ''
+
+      if (rng() < PENALTY_CHANCE) {
+        const designated = tactics?.penaltyTakerId ? xi.find((p) => p.id === tactics.penaltyTakerId) : null
+        scorer = designated ?? pickWeighted(xi, SCORER_WEIGHT, rng)
+        note = ' (penalty)'
+      } else if (rng() < FREE_KICK_CHANCE) {
+        const designated = tactics?.freeKickTakerId ? xi.find((p) => p.id === tactics.freeKickTakerId) : null
+        scorer = designated ?? pickWeighted(xi, SCORER_WEIGHT, rng)
+        note = ' direct from the free-kick'
+      } else {
+        scorer = pickWeighted(xi, SCORER_WEIGHT, rng)
+        const cornerGoal = rng() < CORNER_CHANCE
+        if (cornerGoal && tactics?.cornerTakerId) {
+          assister = xi.find((p) => p.id === tactics.cornerTakerId && p.id !== scorer?.id) ?? null
+        }
+        if (!assister) {
+          assister = rng() < 0.8 ? pickWeighted(xi, ASSIST_WEIGHT, rng, scorer?.id) : null
+        } else {
+          note = ' (from a corner)'
+        }
+      }
+
       goals.push({ minute: m, side, scorerId: scorer?.id, assistId: assister?.id })
       const assistText = assister ? ` (assist: ${assister.name})` : ''
       events.push({
         minute: m,
-        text: scorer ? `GOAL! ${scorer.name} scores for ${clubName}!${assistText}` : `GOAL! ${clubName} score!`,
+        text: scorer ? `GOAL! ${scorer.name} scores for ${clubName}!${assistText}${note}` : `GOAL! ${clubName} score!`,
         isGoal: true,
         side,
       })
     }
   }
 
-  addGoals(homeGoals, 'home', homeXI, homeClub.name)
-  addGoals(awayGoals, 'away', awayXI, awayClub.name)
+  addGoals(homeGoals, 'home', homeXI, homeClub.name, homeTactics)
+  addGoals(awayGoals, 'away', awayXI, awayClub.name, awayTactics)
 
   const bookings = [...generateBookings(homeXI, 'home', rng), ...generateBookings(awayXI, 'away', rng)]
   for (const b of bookings) {
