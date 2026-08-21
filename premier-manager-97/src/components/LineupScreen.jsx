@@ -1,4 +1,5 @@
 import { FORMATION_NAMES } from '../data/formations.js'
+import PitchView from './PitchView.jsx'
 
 export default function LineupScreen({ state, dispatch }) {
   const squad = state.squads[state.playerClubId]
@@ -42,24 +43,33 @@ export default function LineupScreen({ state, dispatch }) {
           <span>Selected: {startingXI.length}/11</span>
         </div>
 
-        {grouped.map(({ pos, players }) => (
-          <div key={pos} className="panel-inset" style={{ marginBottom: 8 }}>
-            <strong>{pos}</strong>
-            <div className="pitch-list" style={{ marginTop: 6 }}>
-              {players.map((p) => (
-                <button
-                  key={p.id}
-                  className={`pitch-slot${startingXI.includes(p.id) ? ' filled' : ''}`}
-                  onClick={() => toggle(p.id)}
-                  disabled={p.injured || p.suspended}
-                  title={p.injured ? `${p.injuryType} (${p.injuryWeeks} wk)` : p.suspended ? `Suspended (${p.suspensionMatches} match)` : ''}
-                >
-                  #{p.squadNumber} {p.name} ({p.ability}){p.injured ? ' 🩹' : ''}{p.suspended ? ' 🟥' : ''}
-                </button>
-              ))}
-            </div>
+        <div className="grid-2">
+          <div>
+            <PitchView squad={squad} startingXI={startingXI} onRemove={toggle} />
+            <p style={{ fontSize: 14, textAlign: 'center' }}>Click a player on the pitch to drop them back to the bench.</p>
           </div>
-        ))}
+
+          <div className="scrollbox" style={{ maxHeight: 640 }}>
+            {grouped.map(({ pos, players }) => (
+              <div key={pos} className="panel-inset" style={{ marginBottom: 8 }}>
+                <strong>{pos}</strong>
+                <div className="pitch-list" style={{ marginTop: 6 }}>
+                  {players.map((p) => (
+                    <button
+                      key={p.id}
+                      className={`pitch-slot${startingXI.includes(p.id) ? ' filled' : ''}`}
+                      onClick={() => toggle(p.id)}
+                      disabled={p.injured || p.suspended}
+                      title={p.injured ? `${p.injuryType} (${p.injuryWeeks} wk)` : p.suspended ? `Suspended (${p.suspensionMatches} match)` : ''}
+                    >
+                      #{p.squadNumber} {p.name} ({p.ability}){p.injured ? ' 🩹' : ''}{p.suspended ? ' 🟥' : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )

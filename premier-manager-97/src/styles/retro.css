@@ -519,6 +519,112 @@ h3 {
   background: #cce0ff;
 }
 
+/* ---------- Pitch view ---------- */
+.pitch-view {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 2 / 3;
+  background: #0b6b2f;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #0b6b2f 0,
+    #0b6b2f 10%,
+    #0a6129 10%,
+    #0a6129 20%
+  );
+  border: 3px solid var(--black);
+  margin: 0 auto 12px auto;
+}
+
+.pitch-halfway {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: #ffffffb0;
+}
+
+.pitch-circle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70px;
+  height: 70px;
+  border: 2px solid #ffffffb0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pitch-box {
+  position: absolute;
+  left: 25%;
+  width: 50%;
+  height: 14%;
+  border: 2px solid #ffffffb0;
+}
+
+.pitch-box-top {
+  top: 0;
+  border-top: none;
+}
+
+.pitch-box-bottom {
+  bottom: 0;
+  border-bottom: none;
+}
+
+.pitch-chip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 56px;
+  padding: 2px 4px;
+  background: var(--grey);
+  border: 2px outset var(--grey-light);
+  border-top: 4px solid var(--navy);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.15;
+  cursor: pointer;
+  color: var(--black);
+}
+
+.pitch-chip:hover {
+  background: var(--grey-light);
+}
+
+.pitch-chip:active {
+  border-style: inset;
+}
+
+.pitch-chip-GK {
+  border-top-color: var(--amber);
+}
+
+.pitch-chip-DF {
+  border-top-color: var(--teal);
+}
+
+.pitch-chip-MF {
+  border-top-color: var(--green);
+}
+
+.pitch-chip-FW {
+  border-top-color: var(--red);
+}
+
+.pitch-chip-number {
+  font-weight: bold;
+}
+
+.pitch-chip-name {
+  white-space: nowrap;
+}
+
 /* ---------- Form ---------- */
 .form-badge {
   font-weight: bold;
