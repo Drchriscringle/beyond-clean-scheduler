@@ -11,6 +11,8 @@ const COLUMNS = [
   { key: 'ability', label: 'CA' },
   { key: 'potential', label: 'PA' },
   { key: 'form', label: 'Form' },
+  { key: 'goals', label: 'G' },
+  { key: 'assists', label: 'A' },
   { key: 'wage', label: 'Wage' },
   { key: 'contractYears', label: 'Contract' },
   { key: 'morale', label: 'Morale' },
@@ -25,7 +27,10 @@ export default function SquadScreen({ state, dispatch }) {
   const squad = state.squads[state.playerClubId]
   const club = state.clubs[state.playerClubId]
 
-  const withForm = useMemo(() => squad.map((p) => ({ ...p, form: currentForm(p) })), [squad])
+  const withForm = useMemo(
+    () => squad.map((p) => ({ ...p, form: currentForm(p), goals: p.stats.goals, assists: p.stats.assists })),
+    [squad],
+  )
 
   const sorted = useMemo(() => {
     const copy = [...withForm]
@@ -79,6 +84,8 @@ export default function SquadScreen({ state, dispatch }) {
                   <td>{p.ability}</td>
                   <td>{p.potential}</td>
                   <td><FormBadge player={p} /></td>
+                  <td>{p.stats.goals}</td>
+                  <td>{p.stats.assists}</td>
                   <td>{formatWage(p.wage)}</td>
                   <td style={p.contractYears <= 1 ? { color: '#800000', fontWeight: 'bold' } : undefined}>
                     {p.contractYears === 0 ? 'Expiring!' : `${p.contractYears} yr`}

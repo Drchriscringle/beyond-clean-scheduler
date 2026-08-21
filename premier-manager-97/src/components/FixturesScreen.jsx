@@ -119,6 +119,11 @@ export default function FixturesScreen({ state }) {
                   </p>
                 ))}
               </div>
+              {state.lastMatch.motmName && (
+                <p style={{ marginTop: 8 }}>
+                  <strong>Man of the Match:</strong> {state.lastMatch.motmName} ({CLUB_BY_ID[state.lastMatch.motmClubId].name})
+                </p>
+              )}
             </div>
           )}
         </div>

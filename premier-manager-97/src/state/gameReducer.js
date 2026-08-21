@@ -23,6 +23,8 @@ import { initCupState, isCupWeek, roundIndexForWeek, playCupRound, prizeMoneyFor
 import { aiTransferTick } from './aiTransfers.js'
 import { generateYouthIntake, assignFreeSquadNumbers } from './youthIntake.js'
 import { evaluateContractOffer } from './contracts.js'
+import { applyMatchStats, rollSeasonStatsIntoCareer } from './playerStats.js'
+import { maybeGenerateOffer } from './incomingOffers.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -52,6 +54,7 @@ export function makeInitialState() {
     cup: null,
     commercial: null,
     sackedInfo: null,
+    incomingOffers: [],
   }
 }
 
@@ -246,6 +249,14 @@ function advanceWeek(state) {
       ? [...aiResult.events.map((e) => ({ week: e.week, playerName: e.playerName, fee: e.fee, outcome: e.outcome, message: e.message })), ...state.transferLog].slice(0, 20)
       : state.transferLog
 
+  const newOffer = maybeGenerateOffer({
+    squad: squads[state.playerClubId],
+    clubIds,
+    playerClubId: state.playerClubId,
+    week: state.week,
+  })
+  const incomingOffers = newOffer ? [...state.incomingOffers, newOffer].slice(-5) : state.incomingOffers
+
   let cup = state.cup
   let cupNotice = null
   if (cup && !cup.champion && isCupWeek(state.week) && roundIndexForWeek(state.week) === cup.roundIndex) {
@@ -294,6 +305,8 @@ function advanceWeek(state) {
 
     squads[match.home] = applyFormRatings(squads[match.home], result.homeRatings)
     squads[match.away] = applyFormRatings(squads[match.away], result.awayRatings)
+    squads[match.home] = applyMatchStats(squads[match.home], { lineupIds: homeLineup, goals: result.goals, motmId: result.motmId })
+    squads[match.away] = applyMatchStats(squads[match.away], { lineupIds: awayLineup, goals: result.goals, motmId: result.motmId })
 
     applyResultToStandings(standings, match.home, result.homeGoals, result.awayGoals)
     applyResultToStandings(standings, match.away, result.awayGoals, result.homeGoals)
@@ -307,12 +320,15 @@ function advanceWeek(state) {
 
     const involvesPlayer = match.home === state.playerClubId || match.away === state.playerClubId
     if (involvesPlayer) {
+      const motmPlayer = result.motmClubId ? squads[result.motmClubId]?.find((p) => p.id === result.motmId) : null
       lastMatch = {
         homeClubId: match.home,
         awayClubId: match.away,
         homeGoals: result.homeGoals,
         awayGoals: result.awayGoals,
         commentary: result.commentary,
+        motmName: motmPlayer?.name ?? null,
+        motmClubId: result.motmClubId,
       }
       playerPlayedThisWeek = true
       playerWasHome = match.home === state.playerClubId
@@ -414,6 +430,7 @@ function advanceWeek(state) {
     standings,
     freeAgents,
     transferLog,
+    incomingOffers,
     cup,
     week: nextWeek,
     lastMatch,
@@ -483,14 +500,14 @@ function seasonRollover(state) {
       } else if (age >= 32) {
         ability = Math.max(30, p.ability - (2 + Math.floor(Math.random() * 3)))
       }
-      return {
+      return rollSeasonStatsIntoCareer({
         ...p,
         age,
         ability,
         contractYears: Math.max(0, p.contractYears - 1),
         fitness: 90,
         morale: Math.max(40, Math.min(80, p.morale)),
-      }
+      })
     })
 
     if (id === playerClubId) {
@@ -614,6 +631,56 @@ function handleOfferContract(state, { playerId, wage, years }) {
       [state.playerClubId]: squad.map((p) => (p.id === playerId ? { ...p, wage, contractYears: years } : p)),
     },
     notice: result.message,
+  }
+}
+
+function handleReleasePlayer(state, { playerId }) {
+  const squad = state.squads[state.playerClubId]
+  const player = squad.find((p) => p.id === playerId)
+  if (!player) return state
+
+  return {
+    ...state,
+    squads: {
+      ...state.squads,
+      [state.playerClubId]: squad.filter((p) => p.id !== playerId),
+    },
+    freeAgents: [...state.freeAgents, { ...player, contractYears: 0, listed: false }],
+    notice: `${player.name} has been released and joins the free agent pool.`,
+  }
+}
+
+function handleRespondToOffer(state, { offerId, accept }) {
+  const offer = state.incomingOffers.find((o) => o.id === offerId)
+  if (!offer) return state
+  const remaining = state.incomingOffers.filter((o) => o.id !== offerId)
+
+  if (!accept) {
+    return { ...state, incomingOffers: remaining, notice: `Offer for ${offer.playerName} turned down.` }
+  }
+
+  const squad = state.squads[state.playerClubId]
+  const player = squad.find((p) => p.id === offer.playerId)
+  if (!player) {
+    return { ...state, incomingOffers: remaining }
+  }
+
+  const club = state.clubs[state.playerClubId]
+  const buyerClub = state.clubs[offer.fromClubId]
+
+  return {
+    ...state,
+    squads: {
+      ...state.squads,
+      [state.playerClubId]: squad.filter((p) => p.id !== offer.playerId),
+    },
+    clubs: {
+      ...state.clubs,
+      [state.playerClubId]: { ...club, bankBalance: club.bankBalance + offer.fee },
+      [offer.fromClubId]: { ...buyerClub, bankBalance: buyerClub.bankBalance - offer.fee },
+    },
+    incomingOffers: remaining,
+    notice: `Sold ${player.name} to ${CLUB_BY_ID[offer.fromClubId].name} for ${offer.fee.toLocaleString('en-GB')}.`,
   }
 }
 
@@ -781,6 +848,10 @@ export function gameReducer(state, action) {
       return handleOfferContract(state, action.payload)
     case 'MAKE_OFFER':
       return handleMakeOffer(state, action.payload)
+    case 'RELEASE_PLAYER':
+      return handleReleasePlayer(state, action.payload)
+    case 'RESPOND_TO_OFFER':
+      return handleRespondToOffer(state, action.payload)
     case 'SIGN_FREE_AGENT':
       return handleSignFreeAgent(state, action.payload)
     case 'BUILD_STAND':
