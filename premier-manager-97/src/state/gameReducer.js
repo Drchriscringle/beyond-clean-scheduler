@@ -30,6 +30,7 @@ import { applyBookings, tickSuspensions } from './discipline.js'
 import { isTransferWindowOpen } from './transferWindows.js'
 import { defaultTactics } from './tactics.js'
 import { computeSeasonAwards } from './awards.js'
+import { generateJobOffers } from './jobOffers.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -68,6 +69,7 @@ export function makeInitialState() {
     liveMatch: null,
     matchSpeed: 'instant',
     lastSeasonAwards: null,
+    jobOffers: null,
   }
 }
 
@@ -796,6 +798,14 @@ function seasonRollover(state) {
     PL: computeSeasonAwards(state.squads, clubs, 'PL'),
     CH: computeSeasonAwards(state.squads, clubs, 'CH'),
   }
+  const jobOfferClubIds = generateJobOffers({
+    club: state.clubs[playerClubId],
+    objectiveMet: objectiveResult.met,
+    finalPosition,
+    divisionSize: leagueClubIds.length,
+    allClubs: state.clubs,
+    playerClubId,
+  })
   const { notice: promotionRelegationNotice } = resolvePromotionRelegation(state, clubs)
   const squads = {}
   const season = state.season + 1
@@ -868,7 +878,8 @@ function seasonRollover(state) {
       merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
     },
     lastSeasonAwards: { season: state.season, ...seasonAwards },
-    screen: 'commercial',
+    jobOffers: jobOfferClubIds.length > 0 ? jobOfferClubIds : null,
+    screen: jobOfferClubIds.length > 0 ? 'job-offers' : 'commercial',
     notice: `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice}`,
   }
 }
@@ -929,6 +940,33 @@ function handleConfirmCommercialDeals(state, { sponsorshipId, merchandiseId }) {
     commercial: null,
     screen: 'squad',
     notice: `Signed with ${sponsorshipDeal.partner} (shirt sponsor) and ${merchandiseDeal.partner} (merchandise).`,
+  }
+}
+
+function handleRespondToJobOffer(state, { clubId }) {
+  if (!clubId) {
+    return { ...state, jobOffers: null, screen: 'commercial' }
+  }
+
+  const oldClubId = state.playerClubId
+  const newClub = state.clubs[clubId]
+  const clubs = {
+    ...state.clubs,
+    [oldClubId]: { ...state.clubs[oldClubId], boardConfidence: 60 },
+    [clubId]: { ...newClub, boardConfidence: Math.max(65, newClub.boardConfidence) },
+  }
+
+  return {
+    ...state,
+    clubs,
+    playerClubId: clubId,
+    jobOffers: null,
+    commercial: {
+      sponsorshipOptions: generateSponsorshipOffers(clubs[clubId].reputation),
+      merchandiseOptions: generateMerchandiseOffers(clubs[clubId].reputation),
+    },
+    screen: 'commercial',
+    notice: `You have been appointed the new manager of ${CLUB_BY_ID[clubId].name}.`,
   }
 }
 
@@ -1173,6 +1211,8 @@ export function gameReducer(state, action) {
       return handleRequestBudget(state, action.payload)
     case 'CONFIRM_COMMERCIAL_DEALS':
       return handleConfirmCommercialDeals(state, action.payload)
+    case 'RESPOND_TO_JOB_OFFER':
+      return handleRespondToJobOffer(state, action.payload)
     case 'OFFER_CONTRACT':
       return handleOfferContract(state, action.payload)
     case 'MAKE_OFFER':
