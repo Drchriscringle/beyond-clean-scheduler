@@ -67,14 +67,17 @@ test('ADVANCE_WEEK on deadline day can populate multiple incoming offers and men
     payload: { sponsorshipId: state.commercial.sponsorshipOptions[0].id, merchandiseId: state.commercial.merchandiseOptions[0].id },
   })
 
+  // advanceWeek resolves whichever week is *currently* in state.week (it
+  // only advances state.week to the next value afterward), so the state
+  // must already sit on deadline day itself, not the week before it.
   const listedIds = state.squads.arsenal.slice(0, 6).map((p) => p.id)
   state = {
     ...state,
-    week: SUMMER_WINDOW_WEEKS[SUMMER_WINDOW_WEEKS.length - 1] - 1,
+    week: SUMMER_WINDOW_WEEKS[SUMMER_WINDOW_WEEKS.length - 1],
     squads: { ...state.squads, arsenal: state.squads.arsenal.map((p) => (listedIds.includes(p.id) ? { ...p, listed: true } : p)) },
   }
-  assert.ok(isTransferWindowOpen(state.week + 1))
-  assert.ok(isDeadlineDay(state.week + 1))
+  assert.ok(isTransferWindowOpen(state.week))
+  assert.ok(isDeadlineDay(state.week))
 
   const originalRandom = Math.random
   try {
@@ -82,9 +85,8 @@ test('ADVANCE_WEEK on deadline day can populate multiple incoming offers and men
     const after = gameReducer(state, { type: 'ADVANCE_WEEK' })
     assert.equal(after.week, state.week + 1)
     assert.ok(after.incomingOffers.length <= 5, 'incoming offers should stay capped at 5')
-    if (after.incomingOffers.length > state.incomingOffers.length) {
-      assert.match(after.notice, /DEADLINE DAY/, 'a new offer arriving on deadline day should be flagged in the notice')
-    }
+    assert.ok(after.incomingOffers.length > state.incomingOffers.length, 'seed 42 with 6 listed players should draw at least one deadline-day offer')
+    assert.match(after.notice, /DEADLINE DAY/, 'a new offer arriving on deadline day should be flagged in the notice')
   } finally {
     Math.random = originalRandom
   }

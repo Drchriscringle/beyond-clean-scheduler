@@ -37,10 +37,16 @@ import { evaluateResponse } from './pressConference.js'
 import { evaluateLoanOffer, evaluateLoanRequest, tickLoans } from './loans.js'
 import { moraleSwingMultiplier, isLeader } from './personality.js'
 import { qualificationForPosition, initEuropeanCampaign, playEuropeanRound, EURO_ROUND_WEEKS } from './europe.js'
+import { aiAbilityMultiplier, sackConfidenceThreshold, objectiveFailStreakLimit } from './difficulty.js'
+import {
+  INTERNATIONAL_WEEKS,
+  isEligibleForInternationalJob,
+  maybeOfferInternationalJob,
+  initInternationalJob,
+  playInternationalFixture,
+} from './international.js'
 
 const LEDGER_LIMIT = 30
-const SACK_CONFIDENCE_THRESHOLD = 5
-const OBJECTIVE_FAIL_STREAK_LIMIT = 2
 const MATCH_TICK_MINUTES = 3
 const MATCH_HALF_TIME_MINUTE = 45
 const MATCH_FULL_TIME_MINUTE = 90
@@ -79,6 +85,10 @@ export function makeInitialState() {
     careerHistory: [],
     pressConferenceHandled: true,
     europe: null,
+    difficulty: 'normal',
+    saveSlot: 1,
+    international: null,
+    internationalOffer: false,
   }
 }
 
@@ -128,13 +138,14 @@ export function playerLeagueClubIds(state) {
   return divisionClubIds(state.clubs, division)
 }
 
-function startNewGame(state, { clubId, managerName }) {
+function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveSlot = 1 }) {
   const clubs = {}
   const squads = {}
   const standings = {}
   const lineups = {}
   const tactics = {}
   const season = 2025
+  const abilityMultiplier = aiAbilityMultiplier(difficulty)
 
   for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS]) {
     const sponsorshipDeal = generateSponsorshipOffers(staticClub.reputation)[0]
@@ -155,7 +166,7 @@ function startNewGame(state, { clubId, managerName }) {
       sponsorshipDeal,
       merchandiseDeal,
     }
-    squads[staticClub.id] = generateSquadForClub(staticClub)
+    squads[staticClub.id] = generateSquadForClub(staticClub, { abilityMultiplier: staticClub.id === clubId ? 1 : abilityMultiplier })
     standings[staticClub.id] = emptyStandingRow()
     lineups[staticClub.id] = { formation: '4-4-2', startingXI: pickBestXI(squads[staticClub.id], '4-4-2') }
     tactics[staticClub.id] = defaultTactics(squads[staticClub.id], lineups[staticClub.id].startingXI)
@@ -195,6 +206,8 @@ function startNewGame(state, { clubId, managerName }) {
       merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
     },
     sackedInfo: null,
+    difficulty,
+    saveSlot,
     notice: `You have been appointed manager of ${CLUB_BY_ID[clubId].name}. Objective: ${playerClub.objective.label}.`,
   }
 }
@@ -567,6 +580,23 @@ function advanceWeek(state, precomputed = null) {
     europeNotice = roundResult.notice
   }
 
+  let international = state.international
+  let internationalNotice = null
+  if (international && INTERNATIONAL_WEEKS.includes(state.week)) {
+    const playerLineup = availablePlayerLineup(
+      state.lineups[state.playerClubId]?.startingXI,
+      squads[state.playerClubId],
+      state.lineups[state.playerClubId]?.formation,
+    )
+    const fixtureResult = playInternationalFixture(international, {
+      playerSquad: squads[state.playerClubId],
+      playerLineup,
+      playerTactics: state.tactics[state.playerClubId],
+    })
+    international = fixtureResult.international
+    internationalNotice = fixtureResult.notice
+  }
+
   for (const match of week.matches) {
     const isLiveMatch = precomputed && precomputed.matchId === match.id
     const homeClub = clubs[match.home]
@@ -756,6 +786,7 @@ function advanceWeek(state, precomputed = null) {
     incomingOffers,
     cup,
     europe,
+    international,
     week: nextWeek,
     lastMatch,
     weekResults,
@@ -765,10 +796,12 @@ function advanceWeek(state, precomputed = null) {
         europeNotice ??
         (playerPlayedThisWeek
           ? `Full-time: ${CLUB_BY_ID[lastMatch.homeClubId].name} ${lastMatch.homeGoals}-${lastMatch.awayGoals} ${CLUB_BY_ID[lastMatch.awayClubId].name}`
-          : 'A quiet week — no fixture for your side.')) + (deadlineDayNotice ? ` ${deadlineDayNotice}` : ''),
+          : 'A quiet week — no fixture for your side.')) +
+      (deadlineDayNotice ? ` ${deadlineDayNotice}` : '') +
+      (internationalNotice ? ` ${internationalNotice}` : ''),
   }
 
-  if (boardConfidence <= SACK_CONFIDENCE_THRESHOLD) {
+  if (boardConfidence <= sackConfidenceThreshold(state.difficulty)) {
     return {
       ...weekReturn,
       careerHistory: recordSeason(state.careerHistory, {
@@ -848,7 +881,7 @@ function seasonRollover(state) {
   const confidenceAfterObjective = Math.max(0, Math.min(100, playerClubBefore.boardConfidence + objectiveResult.confidenceDelta))
   const objectiveMissedStreak = objectiveResult.met ? 0 : playerClubBefore.objectiveMissedStreak + 1
 
-  if (confidenceAfterObjective <= SACK_CONFIDENCE_THRESHOLD || objectiveMissedStreak >= OBJECTIVE_FAIL_STREAK_LIMIT) {
+  if (confidenceAfterObjective <= sackConfidenceThreshold(state.difficulty) || objectiveMissedStreak >= objectiveFailStreakLimit(state.difficulty)) {
     return {
       ...state,
       clubs: {
@@ -886,6 +919,13 @@ function seasonRollover(state) {
     divisionSize: leagueClubIds.length,
     allClubs: state.clubs,
     playerClubId,
+  })
+  const internationalOffer = maybeOfferInternationalJob({
+    alreadyHasJob: !!state.international,
+    eligible: isEligibleForInternationalJob({
+      reputation: state.clubs[playerClubId].reputation,
+      wonLeagueTitle: playerClubBefore.division === 'PL' && finalPosition === 1,
+    }),
   })
   const { notice: promotionRelegationNotice } = resolvePromotionRelegation(state, clubs)
   const squads = {}
@@ -972,11 +1012,13 @@ function seasonRollover(state) {
     }),
     jobOffers: jobOfferClubIds.length > 0 ? jobOfferClubIds : null,
     screen: jobOfferClubIds.length > 0 ? 'job-offers' : 'commercial',
+    internationalOffer,
     notice:
       `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice}` +
       (europeanQualification
         ? ` You've qualified for the ${europeanQualification === 'UCL' ? 'Champions League' : 'Europa League'} next season!`
-        : ''),
+        : '') +
+      (internationalOffer ? ' The FA have been in touch about the England job.' : ''),
   }
 }
 
@@ -1519,6 +1561,15 @@ export function gameReducer(state, action) {
       return handleConfirmCommercialDeals(state, action.payload)
     case 'RESPOND_TO_JOB_OFFER':
       return handleRespondToJobOffer(state, action.payload)
+    case 'RESPOND_TO_INTERNATIONAL_OFFER':
+      return {
+        ...state,
+        internationalOffer: false,
+        international: action.payload.accept ? initInternationalJob(state.season) : state.international,
+        notice: action.payload.accept ? 'You have been appointed England manager!' : 'You turned down the England job.',
+      }
+    case 'RESIGN_INTERNATIONAL':
+      return { ...state, international: null, notice: 'You have resigned as England manager.' }
     case 'OFFER_CONTRACT':
       return handleOfferContract(state, action.payload)
     case 'MAKE_OFFER':
