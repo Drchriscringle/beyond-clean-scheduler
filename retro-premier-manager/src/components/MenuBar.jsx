@@ -26,6 +26,7 @@ const MENU_GROUPS = [
     label: 'League',
     items: [
       { key: 'fixtures', label: 'Fixtures' },
+      { key: 'season-fixtures', label: 'Season Fixtures' },
       { key: 'news', label: 'News' },
       { key: 'career', label: 'Career' },
       { key: 'international', label: 'International' },

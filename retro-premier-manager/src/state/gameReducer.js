@@ -2,6 +2,8 @@ import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, DIVISION_LABELS, totalCapacity }
 import { FOREIGN_CLUBS } from '../data/foreignClubs.js'
 import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
 import { LA_LIGA_CLUBS } from '../data/laLigaClubs.js'
+import { SEGUNDA_CLUBS } from '../data/segundaClubs.js'
+import { rollWeather } from '../data/weather.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
 import { generateSeasonFixtures, combineFixturesByWeek } from './fixtures.js'
@@ -137,6 +139,23 @@ export function standingsToTable(standings, clubIds) {
     .sort((a, b) => b.points - a.points || b.gf - b.ga - (a.gf - a.ga) || b.gf - a.gf)
 }
 
+// A club's last `count` results ('W'/'D'/'L'), oldest first - reads straight
+// off the season-long fixtures list (see advanceWeek, which stamps each
+// played match's score onto it) rather than needing any separate history,
+// so it works for any club in any division, not just the player's own.
+export function recentFormForClub(fixtures, clubId, count = 5) {
+  const results = []
+  for (const wk of fixtures) {
+    const match = wk.matches.find((m) => m.home === clubId || m.away === clubId)
+    if (!match || match.homeGoals == null) continue
+    const isHome = match.home === clubId
+    const gf = isHome ? match.homeGoals : match.awayGoals
+    const ga = isHome ? match.awayGoals : match.homeGoals
+    results.push(gf > ga ? 'W' : gf < ga ? 'L' : 'D')
+  }
+  return results.slice(-count)
+}
+
 function leaguePositionOf(standings, clubIds, clubId) {
   const table = standingsToTable(standings, clubIds)
   return table.findIndex((row) => row.clubId === clubId) + 1
@@ -165,7 +184,7 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const season = 2025
   const abilityMultiplier = aiAbilityMultiplier(difficulty)
 
-  for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS, ...LA_LIGA_CLUBS]) {
+  for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS, ...LA_LIGA_CLUBS, ...SEGUNDA_CLUBS]) {
     const sponsorshipDeal = generateSponsorshipOffers(staticClub.reputation)[0]
     const merchandiseDeal = generateMerchandiseOffers(staticClub.reputation)[0]
     clubs[staticClub.id] = {
@@ -203,12 +222,14 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const splIds = SCOTTISH_PREMIERSHIP_CLUBS.map((c) => c.id)
   const schIds = SCOTTISH_CHAMPIONSHIP_CLUBS.map((c) => c.id)
   const laLigaIds = LA_LIGA_CLUBS.map((c) => c.id)
+  const segundaIds = SEGUNDA_CLUBS.map((c) => c.id)
   const fixtures = combineFixturesByWeek(
     generateSeasonFixtures(plIds, SEASON_WEEKS),
     generateSeasonFixtures(chIds, SEASON_WEEKS),
     generateSeasonFixtures(splIds, SEASON_WEEKS),
     generateSeasonFixtures(schIds, SEASON_WEEKS),
     generateSeasonFixtures(laLigaIds, SEASON_WEEKS),
+    generateSeasonFixtures(segundaIds, SEASON_WEEKS),
   )
   const playerClub = clubs[clubId]
 
@@ -312,6 +333,10 @@ function simulateCupTie(homeId, awayId, { clubs, squads, lineups, tactics, playe
     awayLineup,
     homeTactics: tactics?.[homeId],
     awayTactics: tactics?.[awayId],
+    homeFormation: lineups[homeId]?.formation,
+    awayFormation: lineups[awayId]?.formation,
+    weather: rollWeather(),
+    homePitchLevel: clubs[homeId]?.facilities?.pitch,
   })
   const winner =
     result.homeGoals === result.awayGoals ? (Math.random() < 0.5 ? homeId : awayId) : result.homeGoals > result.awayGoals ? homeId : awayId
@@ -357,6 +382,9 @@ function startMatchday(state) {
       awayLineup,
       homeTactics: state.tactics[match.home],
       awayTactics: state.tactics[match.away],
+      // Rolled once at kick-off and held fixed for the rest of the match -
+      // every later tick (see tickLiveMatch below) reuses this same value.
+      weather: rollWeather(),
       homeFeatured: [...homeLineup],
       awayFeatured: [...awayLineup],
       homeSubsUsed: 0,
@@ -400,6 +428,10 @@ function tickLiveMatch(state, { instant = false } = {}) {
       awayLineup: lm.awayLineup,
       homeTactics: lm.homeTactics,
       awayTactics: lm.awayTactics,
+      homeFormation: state.lineups[lm.homeId]?.formation,
+      awayFormation: state.lineups[lm.awayId]?.formation,
+      weather: lm.weather,
+      homePitchLevel: clubs[lm.homeId]?.facilities?.pitch,
       startMinute: fromMin,
       endMinute: toMin,
     })
@@ -526,6 +558,7 @@ function advanceWeek(state, precomputed = null) {
   const allClubIds = Object.keys(state.squads)
   const leagueClubIds = playerLeagueClubIds(state)
   const weekResults = []
+  const matchResultsById = {}
   let lastMatch = state.lastMatch
   let playerResultPoints = null
   let playerPlayedThisWeek = false
@@ -696,6 +729,10 @@ function advanceWeek(state, precomputed = null) {
           awayLineup,
           homeTactics: state.tactics[match.home],
           awayTactics: state.tactics[match.away],
+          homeFormation: state.lineups[match.home]?.formation,
+          awayFormation: state.lineups[match.away]?.formation,
+          weather: rollWeather(),
+          homePitchLevel: homeClub?.facilities?.pitch,
         })
 
     squads[match.home] = applyFormRatings(squads[match.home], result.homeRatings)
@@ -730,6 +767,7 @@ function advanceWeek(state, precomputed = null) {
       homeGoals: result.homeGoals,
       awayGoals: result.awayGoals,
     })
+    matchResultsById[match.id] = { homeGoals: result.homeGoals, awayGoals: result.awayGoals }
 
     const involvesPlayer = match.home === state.playerClubId || match.away === state.playerClubId
     if (involvesPlayer) {
@@ -848,6 +886,16 @@ function advanceWeek(state, precomputed = null) {
 
   const nextWeek = state.week + 1
 
+  // Stamp this week's results onto the season-long fixtures list (rather
+  // than only ever exposing the most recent week's results, as weekResults
+  // does) so a "season fixtures & results" view can show every match a club
+  // has played, not just last week's - see CareerFixturesScreen.jsx.
+  const fixtures = state.fixtures.map((wk) =>
+    wk.week === state.week
+      ? { ...wk, matches: wk.matches.map((m) => (matchResultsById[m.id] ? { ...m, ...matchResultsById[m.id] } : m)) }
+      : wk,
+  )
+
   const weekReturn = {
     ...state,
     clubs,
@@ -861,6 +909,7 @@ function advanceWeek(state, precomputed = null) {
     europe,
     international,
     week: nextWeek,
+    fixtures,
     lastMatch,
     weekResults,
     pressConferenceHandled: playerPlayedThisWeek ? false : state.pressConferenceHandled,
@@ -979,6 +1028,18 @@ function resolveScottishPromotionRelegation(state, clubs) {
   })
 }
 
+// Same shape as the English pyramid: bottom 3 of La Liga go down, top 2 of
+// the Segunda División go up automatically, and 3rd-6th contest a play-off
+// for the third promotion spot.
+function resolveLaLigaPromotionRelegation(state, clubs) {
+  return resolveDivisionPromotionRelegation(state, clubs, {
+    topDivision: 'LALIGA',
+    bottomDivision: 'SEGUNDA',
+    relegationCount: 3,
+    autoPromoteCount: 2,
+  })
+}
+
 function seasonRollover(state) {
   const leagueClubIds = playerLeagueClubIds(state)
   const playerClubId = state.playerClubId
@@ -1043,6 +1104,7 @@ function seasonRollover(state) {
   })
   const { notice: promotionRelegationNotice } = resolvePromotionRelegation(state, clubs)
   const { notice: scottishPromotionRelegationNotice } = resolveScottishPromotionRelegation(state, clubs)
+  const { notice: laLigaPromotionRelegationNotice } = resolveLaLigaPromotionRelegation(state, clubs)
   const squads = {}
   const season = state.season + 1
   let releasedFromPlayerClub = []
@@ -1098,12 +1160,14 @@ function seasonRollover(state) {
   const newSplIds = divisionClubIds(clubs, 'SPL')
   const newSchIds = divisionClubIds(clubs, 'SCH')
   const newLaLigaIds = divisionClubIds(clubs, 'LALIGA')
+  const newSegundaIds = divisionClubIds(clubs, 'SEGUNDA')
   const fixtures = combineFixturesByWeek(
     generateSeasonFixtures(newPlIds, SEASON_WEEKS),
     generateSeasonFixtures(newChIds, SEASON_WEEKS),
     generateSeasonFixtures(newSplIds, SEASON_WEEKS),
     generateSeasonFixtures(newSchIds, SEASON_WEEKS),
     generateSeasonFixtures(newLaLigaIds, SEASON_WEEKS),
+    generateSeasonFixtures(newSegundaIds, SEASON_WEEKS),
   )
   const playerClub = {
     ...clubs[playerClubId],
@@ -1147,7 +1211,7 @@ function seasonRollover(state) {
     screen: jobOfferClubIds.length > 0 ? 'job-offers' : 'commercial',
     internationalOffer,
     notice:
-      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice} ${scottishPromotionRelegationNotice}` +
+      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice} ${scottishPromotionRelegationNotice} ${laLigaPromotionRelegationNotice}` +
       (europeanQualification
         ? ` You've qualified for the ${europeanQualification === 'UCL' ? 'Champions League' : 'Europa League'} next season!`
         : '') +
@@ -1768,4 +1832,4 @@ export function gameReducer(state, action) {
   }
 }
 
-export { estimatePlayerValue, leaguePositionOf, resolvePromotionRelegation, resolveScottishPromotionRelegation }
+export { estimatePlayerValue, leaguePositionOf, resolvePromotionRelegation, resolveScottishPromotionRelegation, resolveLaLigaPromotionRelegation }

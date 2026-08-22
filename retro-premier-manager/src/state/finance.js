@@ -40,6 +40,10 @@ export function tvIncomeForWeek(leaguePosition, division = 'PL') {
     const seasonPot = 48_000_000 - (leaguePosition - 1) * 1_500_000
     return Math.round(Math.max(seasonPot, 17_000_000) / 38)
   }
+  if (division === 'SEGUNDA') {
+    const seasonPot = 5_500_000 - (leaguePosition - 1) * 100_000
+    return Math.round(Math.max(seasonPot, 2_800_000) / 38)
+  }
   const seasonPot = 60_000_000 - (leaguePosition - 1) * 1_900_000
   return Math.round(Math.max(seasonPot, 22_000_000) / 38)
 }

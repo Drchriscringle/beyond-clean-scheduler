@@ -1,6 +1,8 @@
 import { ratePerformance } from './form.js'
-import { PLAYING_STYLES } from './tactics.js'
+import { PLAYING_STYLES, formationShapeMultiplier } from './tactics.js'
 import { cardChanceMultiplier } from './personality.js'
+import { WEATHER_TYPES } from '../data/weather.js'
+import { isDerbyMatch, derbyLabel } from '../data/rivalries.js'
 
 function poissonRandom(lambda, rng) {
   const L = Math.exp(-lambda)
@@ -67,6 +69,12 @@ const PENALTY_CHANCE = 0.1
 const FREE_KICK_CHANCE = 0.06
 const CORNER_CHANCE = 0.16
 const CAPTAIN_BOOST = 1.02
+const DERBY_CARD_MULT = 1.4
+const DERBY_VARIANCE_BOOST = 0.06
+
+export function pitchWeatherPenalty(pitchLevel = 1) {
+  return 1 + (4 - pitchLevel) * 0.06
+}
 
 function pickWeighted(xi, weightTable, rng, exclude = null) {
   const candidates = xi.filter((p) => p.id !== exclude)
@@ -120,6 +128,10 @@ export function simulateMatchSegment({
   awayLineup,
   homeTactics,
   awayTactics,
+  homeFormation = null,
+  awayFormation = null,
+  weather = 'clear',
+  homePitchLevel = 1,
   startMinute = 1,
   endMinute = 90,
   rng = Math.random,
@@ -153,6 +165,28 @@ export function simulateMatchSegment({
   awayLambda *= awayStyle.forMult * homeStyle.againstMult
   if (homeHasCaptain) homeLambda *= CAPTAIN_BOOST
   if (awayHasCaptain) awayLambda *= CAPTAIN_BOOST
+
+  if (homeFormation && awayFormation) {
+    homeLambda *= formationShapeMultiplier(homeFormation, awayFormation)
+    awayLambda *= formationShapeMultiplier(awayFormation, homeFormation)
+  }
+
+  const weatherEffect = WEATHER_TYPES[weather] ?? WEATHER_TYPES.clear
+  homeLambda *= weatherEffect.goalMult
+  awayLambda *= weatherEffect.goalMult
+
+  // A poor home pitch makes bad weather's levelling effect worse - pitch
+  // investment pays off beyond just the injury-rate discount it already
+  // gives (see facilities.js).
+  const pitchPenalty = pitchWeatherPenalty(homePitchLevel)
+  const isDerby = isDerbyMatch(homeClub.id, awayClub.id)
+  let varianceBoost = weatherEffect.varianceBoost * pitchPenalty
+  if (isDerby) varianceBoost += DERBY_VARIANCE_BOOST
+  if (varianceBoost > 0) {
+    const avgLambda = (homeLambda + awayLambda) / 2
+    homeLambda = homeLambda * (1 - varianceBoost) + avgLambda * varianceBoost
+    awayLambda = awayLambda * (1 - varianceBoost) + avgLambda * varianceBoost
+  }
 
   homeLambda *= fraction
   awayLambda *= fraction
@@ -216,9 +250,10 @@ export function simulateMatchSegment({
   addGoals(homeGoals, 'home', homeXI, homeClub.name, homeTactics)
   addGoals(awayGoals, 'away', awayXI, awayClub.name, awayTactics)
 
+  const cardChanceMult = fraction * (isDerby ? DERBY_CARD_MULT : 1)
   const bookings = [
-    ...generateBookings(homeXI, 'home', rng, fraction, startMinute, endMinute),
-    ...generateBookings(awayXI, 'away', rng, fraction, startMinute, endMinute),
+    ...generateBookings(homeXI, 'home', rng, cardChanceMult, startMinute, endMinute),
+    ...generateBookings(awayXI, 'away', rng, cardChanceMult, startMinute, endMinute),
   ]
   for (const b of bookings) {
     const clubName = b.side === 'home' ? homeClub.name : awayClub.name
@@ -237,10 +272,18 @@ export function simulateMatchSegment({
     events.push({ minute: m, text: `${side}${filler}`, isGoal: false })
   }
 
+  if (startMinute === 1) {
+    if (weather !== 'clear') events.unshift({ minute: 1, text: `Conditions: ${weatherEffect.label} at kick-off.`, isGoal: false })
+    if (isDerby) {
+      const label = derbyLabel(homeClub.id, awayClub.id)
+      events.unshift({ minute: 1, text: `${label ? `${label}! ` : ''}A fierce local rivalry — form counts for little today.`, isGoal: false })
+    }
+  }
+
   events.sort((a, b) => a.minute - b.minute)
   const commentary = events.map((e) => `${pad(e.minute)} — ${e.text}`)
 
-  return { homeGoals, awayGoals, commentary, goals, bookings }
+  return { homeGoals, awayGoals, commentary, goals, bookings, weather, isDerby }
 }
 
 // Performance ratings and Man of the Match, computed once the full-time
@@ -282,7 +325,21 @@ export function finalizeRatings({ homeLineup, awayLineup, homeGoals, awayGoals, 
   return { homeRatings, awayRatings, motmId, motmClubId }
 }
 
-export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLineup, awayLineup, homeTactics, awayTactics, rng = Math.random }) {
+export function simulateMatch({
+  homeClub,
+  awayClub,
+  homeSquad,
+  awaySquad,
+  homeLineup,
+  awayLineup,
+  homeTactics,
+  awayTactics,
+  homeFormation,
+  awayFormation,
+  weather,
+  homePitchLevel,
+  rng = Math.random,
+}) {
   const segment = simulateMatchSegment({
     homeClub,
     awayClub,
@@ -292,6 +349,10 @@ export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLi
     awayLineup,
     homeTactics,
     awayTactics,
+    homeFormation,
+    awayFormation,
+    weather,
+    homePitchLevel,
     startMinute: 1,
     endMinute: 90,
     rng,
@@ -308,5 +369,14 @@ export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLi
     rng,
   })
 
-  return { homeGoals: segment.homeGoals, awayGoals: segment.awayGoals, commentary, goals: segment.goals, bookings: segment.bookings, ...ratings }
+  return {
+    homeGoals: segment.homeGoals,
+    awayGoals: segment.awayGoals,
+    commentary,
+    goals: segment.goals,
+    bookings: segment.bookings,
+    weather: segment.weather,
+    isDerby: segment.isDerby,
+    ...ratings,
+  }
 }

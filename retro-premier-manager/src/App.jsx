@@ -12,6 +12,7 @@ import BoardroomScreen from './components/BoardroomScreen.jsx'
 import FinancesScreen from './components/FinancesScreen.jsx'
 import StadiumScreen from './components/StadiumScreen.jsx'
 import FixturesScreen from './components/FixturesScreen.jsx'
+import SeasonFixturesScreen from './components/SeasonFixturesScreen.jsx'
 import PlayerDetail from './components/PlayerDetail.jsx'
 import CommercialScreen from './components/CommercialScreen.jsx'
 import SackedScreen from './components/SackedScreen.jsx'
@@ -32,6 +33,7 @@ const SCREENS = {
   finances: FinancesScreen,
   stadium: StadiumScreen,
   fixtures: FixturesScreen,
+  'season-fixtures': SeasonFixturesScreen,
   news: NewsScreen,
   career: CareerScreen,
   international: InternationalScreen,

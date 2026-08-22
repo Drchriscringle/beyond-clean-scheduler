@@ -62,6 +62,15 @@ body {
   z-index: 1;
 }
 
+/* The menu bar's dropdown panels are position:absolute inside it, escaping
+   downward over whatever sits below - now that every pm97-app child above
+   is its own stacking context (for the watermark's sake), the menu bar
+   needs a higher z-index than its siblings or a same-level later sibling
+   (the status bar) would paint over its open dropdown instead of under it. */
+.pm97-app > .menubar {
+  z-index: 2;
+}
+
 /* ---------- Menu bar ---------- */
 .menubar {
   display: flex;
@@ -372,6 +381,34 @@ table.pm-table tbody tr.zone-relegation {
   padding: 2px 8px;
   margin-left: 8px;
   border: 2px outset #c00000;
+}
+
+.result-badge {
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  font-weight: bold;
+  padding: 1px 6px;
+  border: 1px solid var(--black);
+}
+.result-badge.result-w {
+  background: #d3f2d3;
+}
+.result-badge.result-d {
+  background: #fff3cc;
+}
+.result-badge.result-l {
+  background: #f8d6d6;
+}
+
+.form-guide {
+  display: flex;
+  gap: 2px;
+}
+.form-guide .result-badge {
+  min-width: 14px;
+  font-size: 12px;
+  padding: 1px 3px;
 }
 
 /* ---------- Matchday screen ---------- */
