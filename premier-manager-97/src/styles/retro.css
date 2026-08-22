@@ -338,6 +338,45 @@ table.pm-table tbody tr.zone-relegation {
   font-weight: bold;
 }
 
+/* ---------- Matchday screen ---------- */
+.matchday-screen {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--navy-dark);
+  color: #ffffff;
+  padding: 14px;
+  border: 2px inset var(--grey);
+}
+
+.scoreboard-club {
+  font-size: 20px;
+  flex: 1;
+  text-align: center;
+}
+
+.scoreboard-score {
+  font-family: var(--font-body);
+  font-size: 32px;
+  color: var(--amber);
+  min-width: 120px;
+  text-align: center;
+}
+
+.scoreboard-clock {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 20px;
+  color: var(--red);
+  margin: 6px 0 4px 0;
+}
+
 /* ---------- Attribute bars ---------- */
 .attr-row {
   display: flex;

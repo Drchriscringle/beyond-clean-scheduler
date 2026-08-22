@@ -17,6 +17,7 @@ import CommercialScreen from './components/CommercialScreen.jsx'
 import SackedScreen from './components/SackedScreen.jsx'
 import TacticsScreen from './components/TacticsScreen.jsx'
 import NewsScreen from './components/NewsScreen.jsx'
+import MatchdayScreen from './components/MatchdayScreen.jsx'
 
 const SCREENS = {
   squad: SquadScreen,
@@ -56,6 +57,10 @@ export default function App() {
 
   if (state.screen === 'sacked') {
     return <SackedScreen state={state} dispatch={dispatch} />
+  }
+
+  if (state.screen === 'matchday') {
+    return <MatchdayScreen state={state} dispatch={dispatch} />
   }
 
   if (!state.started) {

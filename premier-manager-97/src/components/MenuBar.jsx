@@ -83,7 +83,10 @@ export default function MenuBar({ state, dispatch }) {
         </button>
       ))}
       <div className="menu-spacer" />
-      <button className="continue-btn" onClick={() => dispatch({ type: 'ADVANCE_WEEK' })}>
+      <button
+        className="continue-btn"
+        onClick={() => dispatch({ type: seasonOver ? 'ADVANCE_WEEK' : 'START_MATCHDAY' })}
+      >
         {seasonOver ? 'New Season ▶' : 'Continue Week ▶'}
       </button>
     </div>

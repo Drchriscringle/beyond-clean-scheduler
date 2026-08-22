@@ -3,7 +3,7 @@ import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
 import { generateFixtures, combineFixturesByWeek } from './fixtures.js'
 import { pickBestXI } from './lineup.js'
-import { simulateMatch } from './matchSim.js'
+import { simulateMatch, simulateMatchSegment, finalizeRatings } from './matchSim.js'
 import {
   weeklyWageBill,
   staffWageBill,
@@ -33,6 +33,10 @@ import { defaultTactics } from './tactics.js'
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
 const OBJECTIVE_FAIL_STREAK_LIMIT = 2
+const MATCH_TICK_MINUTES = 3
+const MATCH_HALF_TIME_MINUTE = 45
+const MATCH_FULL_TIME_MINUTE = 90
+const MATCH_MAX_SUBS = 5
 
 export function makeInitialState() {
   return {
@@ -60,6 +64,8 @@ export function makeInitialState() {
     commercial: null,
     sackedInfo: null,
     incomingOffers: [],
+    liveMatch: null,
+    matchSpeed: 'instant',
   }
 }
 
@@ -241,7 +247,203 @@ function simulateCupTie(homeId, awayId, { clubs, squads, lineups, tactics, playe
   return { winner, homeGoals: result.homeGoals, awayGoals: result.awayGoals }
 }
 
-function advanceWeek(state) {
+// --- Live matchday (watch-at-speed, with half-time/manual pauses for subs
+// and tactical changes) ---------------------------------------------------
+//
+// Only the player's own league fixture is ever watched live; every other
+// match that week, and any cup tie, is resolved instantly exactly as before.
+// The live match is simulated a few minutes at a time via
+// simulateMatchSegment (see matchSim.js) so a substitution or style change
+// made at a pause takes effect for the rest of the match; once it reaches
+// full-time, finishMatchday folds the accumulated result back into the
+// normal advanceWeek pipeline via the `precomputed` parameter above, so
+// finance/injuries/standings/etc. are computed exactly as they always were.
+
+function startMatchday(state) {
+  const week = currentWeekFixtures(state)
+  const match = week?.matches.find((m) => m.home === state.playerClubId || m.away === state.playerClubId)
+  if (!match) return advanceWeek(state)
+
+  const homeSquad = state.squads[match.home]
+  const awaySquad = state.squads[match.away]
+  const homeLineup =
+    match.home === state.playerClubId
+      ? availablePlayerLineup(state.lineups[match.home]?.startingXI, homeSquad, state.lineups[match.home]?.formation)
+      : pickBestXI(homeSquad, state.lineups[match.home]?.formation ?? '4-4-2')
+  const awayLineup =
+    match.away === state.playerClubId
+      ? availablePlayerLineup(state.lineups[match.away]?.startingXI, awaySquad, state.lineups[match.away]?.formation)
+      : pickBestXI(awaySquad, state.lineups[match.away]?.formation ?? '4-4-2')
+
+  return {
+    ...state,
+    screen: 'matchday',
+    liveMatch: {
+      matchId: match.id,
+      homeId: match.home,
+      awayId: match.away,
+      homeLineup,
+      awayLineup,
+      homeTactics: state.tactics[match.home],
+      awayTactics: state.tactics[match.away],
+      homeFeatured: [...homeLineup],
+      awayFeatured: [...awayLineup],
+      homeSubsUsed: 0,
+      awaySubsUsed: 0,
+      currentMinute: 0,
+      homeGoals: 0,
+      awayGoals: 0,
+      commentary: [],
+      goals: [],
+      bookings: [],
+      speed: state.matchSpeed ?? 'instant',
+      paused: false,
+      halfTimeHandled: false,
+    },
+  }
+}
+
+function tickLiveMatch(state, { instant = false } = {}) {
+  const lm = state.liveMatch
+  if (!lm || lm.currentMinute >= MATCH_FULL_TIME_MINUTE) return state
+
+  const clubs = state.clubs
+  const squads = state.squads
+
+  let currentMinute = lm.currentMinute
+  let homeGoals = lm.homeGoals
+  let awayGoals = lm.awayGoals
+  let commentary = lm.commentary
+  let goals = lm.goals
+  let bookings = lm.bookings
+  let halfTimeHandled = lm.halfTimeHandled
+  let paused = false
+
+  function runSegment(fromMin, toMin) {
+    const segment = simulateMatchSegment({
+      homeClub: clubs[lm.homeId],
+      awayClub: clubs[lm.awayId],
+      homeSquad: squads[lm.homeId],
+      awaySquad: squads[lm.awayId],
+      homeLineup: lm.homeLineup,
+      awayLineup: lm.awayLineup,
+      homeTactics: lm.homeTactics,
+      awayTactics: lm.awayTactics,
+      startMinute: fromMin,
+      endMinute: toMin,
+    })
+    currentMinute = toMin
+    homeGoals += segment.homeGoals
+    awayGoals += segment.awayGoals
+    commentary = [...commentary, ...segment.commentary]
+    goals = [...goals, ...segment.goals]
+    bookings = [...bookings, ...segment.bookings]
+  }
+
+  if (instant) {
+    let from = currentMinute + 1
+    while (from <= MATCH_FULL_TIME_MINUTE) {
+      const to = Math.min(from + MATCH_TICK_MINUTES - 1, MATCH_FULL_TIME_MINUTE)
+      runSegment(from, to)
+      from = to + 1
+    }
+    halfTimeHandled = true
+  } else {
+    const from = currentMinute + 1
+    const to = Math.min(from + MATCH_TICK_MINUTES - 1, MATCH_FULL_TIME_MINUTE)
+    runSegment(from, to)
+    if (currentMinute >= MATCH_HALF_TIME_MINUTE && !halfTimeHandled) {
+      paused = true
+      halfTimeHandled = true
+    }
+  }
+
+  return {
+    ...state,
+    liveMatch: { ...lm, currentMinute, homeGoals, awayGoals, commentary, goals, bookings, halfTimeHandled, paused },
+  }
+}
+
+function setLiveMatchPaused(state, paused) {
+  if (!state.liveMatch) return state
+  return { ...state, liveMatch: { ...state.liveMatch, paused } }
+}
+
+function setLiveMatchSpeed(state, speed) {
+  if (!state.liveMatch) return state
+  return { ...state, matchSpeed: speed, liveMatch: { ...state.liveMatch, speed } }
+}
+
+function liveSubstitution(state, { outId, inId }) {
+  const lm = state.liveMatch
+  if (!lm || !lm.paused) return state
+  const isHome = lm.homeId === state.playerClubId
+  const lineupKey = isHome ? 'homeLineup' : 'awayLineup'
+  const featuredKey = isHome ? 'homeFeatured' : 'awayFeatured'
+  const subsKey = isHome ? 'homeSubsUsed' : 'awaySubsUsed'
+
+  if (lm[subsKey] >= MATCH_MAX_SUBS) return { ...state, notice: 'No substitutions remaining.' }
+  if (!lm[lineupKey].includes(outId)) return state
+
+  const newLineup = lm[lineupKey].map((id) => (id === outId ? inId : id))
+  return {
+    ...state,
+    liveMatch: {
+      ...lm,
+      [lineupKey]: newLineup,
+      [featuredKey]: [...new Set([...lm[featuredKey], inId])],
+      [subsKey]: lm[subsKey] + 1,
+    },
+  }
+}
+
+function liveSetTactics(state, payload) {
+  const lm = state.liveMatch
+  if (!lm || !lm.paused) return state
+  const isHome = lm.homeId === state.playerClubId
+  const tacticsKey = isHome ? 'homeTactics' : 'awayTactics'
+  return { ...state, liveMatch: { ...lm, [tacticsKey]: { ...lm[tacticsKey], ...payload } } }
+}
+
+function finishMatchday(state) {
+  const lm = state.liveMatch
+  if (!lm) return state
+
+  const commentary = [
+    ...lm.commentary,
+    `90' — Full-time: ${state.clubs[lm.homeId].name} ${lm.homeGoals}-${lm.awayGoals} ${state.clubs[lm.awayId].name}`,
+  ]
+  const ratings = finalizeRatings({
+    homeLineup: lm.homeFeatured,
+    awayLineup: lm.awayFeatured,
+    homeGoals: lm.homeGoals,
+    awayGoals: lm.awayGoals,
+    goals: lm.goals,
+    homeClubId: lm.homeId,
+    awayClubId: lm.awayId,
+  })
+  const result = {
+    homeGoals: lm.homeGoals,
+    awayGoals: lm.awayGoals,
+    commentary,
+    goals: lm.goals,
+    bookings: lm.bookings,
+    ...ratings,
+  }
+
+  const nextState = advanceWeek(
+    { ...state, liveMatch: null, screen: 'fixtures' },
+    { matchId: lm.matchId, result, homeFeaturedIds: lm.homeFeatured, awayFeaturedIds: lm.awayFeatured },
+  )
+  return { ...nextState, liveMatch: null }
+}
+
+// `precomputed`, when supplied, is the already-simulated result of a match
+// watched live on the Matchday screen (see finishMatchday below) - the match
+// with that id is not re-simulated, and its featured-player lists (starters
+// plus any subs brought on) stand in for the normal starting XI wherever
+// appearances/injuries/morale are applied for that fixture.
+function advanceWeek(state, precomputed = null) {
   const week = currentWeekFixtures(state)
   if (!week) {
     return seasonRollover(state)
@@ -309,30 +511,35 @@ function advanceWeek(state) {
   }
 
   for (const match of week.matches) {
+    const isLiveMatch = precomputed && precomputed.matchId === match.id
     const homeClub = clubs[match.home]
     const awayClub = clubs[match.away]
     const homeSquad = squads[match.home]
     const awaySquad = squads[match.away]
 
-    const homeLineup =
-      match.home === state.playerClubId
+    const homeLineup = isLiveMatch
+      ? precomputed.homeFeaturedIds
+      : match.home === state.playerClubId
         ? availablePlayerLineup(state.lineups[match.home]?.startingXI, homeSquad, state.lineups[match.home]?.formation)
         : pickBestXI(homeSquad, state.lineups[match.home]?.formation ?? '4-4-2')
-    const awayLineup =
-      match.away === state.playerClubId
+    const awayLineup = isLiveMatch
+      ? precomputed.awayFeaturedIds
+      : match.away === state.playerClubId
         ? availablePlayerLineup(state.lineups[match.away]?.startingXI, awaySquad, state.lineups[match.away]?.formation)
         : pickBestXI(awaySquad, state.lineups[match.away]?.formation ?? '4-4-2')
 
-    const result = simulateMatch({
-      homeClub,
-      awayClub,
-      homeSquad,
-      awaySquad,
-      homeLineup,
-      awayLineup,
-      homeTactics: state.tactics[match.home],
-      awayTactics: state.tactics[match.away],
-    })
+    const result = isLiveMatch
+      ? precomputed.result
+      : simulateMatch({
+          homeClub,
+          awayClub,
+          homeSquad,
+          awaySquad,
+          homeLineup,
+          awayLineup,
+          homeTactics: state.tactics[match.home],
+          awayTactics: state.tactics[match.away],
+        })
 
     squads[match.home] = applyFormRatings(squads[match.home], result.homeRatings)
     squads[match.away] = applyFormRatings(squads[match.away], result.awayRatings)
@@ -975,6 +1182,22 @@ export function gameReducer(state, action) {
       return handleUpgradeFacility(state, action.payload)
     case 'ADVANCE_WEEK':
       return advanceWeek(state)
+    case 'START_MATCHDAY':
+      return startMatchday(state)
+    case 'TICK_MATCH':
+      return tickLiveMatch(state, action.payload ?? {})
+    case 'PAUSE_MATCH':
+      return setLiveMatchPaused(state, true)
+    case 'RESUME_MATCH':
+      return setLiveMatchPaused(state, false)
+    case 'SET_MATCH_SPEED':
+      return setLiveMatchSpeed(state, action.payload.speed)
+    case 'LIVE_SUBSTITUTION':
+      return liveSubstitution(state, action.payload)
+    case 'LIVE_SET_TACTICS':
+      return liveSetTactics(state, action.payload)
+    case 'FINISH_MATCHDAY':
+      return finishMatchday(state)
     case 'CLEAR_NOTICE':
       return { ...state, notice: null }
     case 'NOTICE':
