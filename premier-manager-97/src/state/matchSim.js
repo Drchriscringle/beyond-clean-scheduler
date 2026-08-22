@@ -57,6 +57,9 @@ const COMMENTARY_FILLER = [
 
 const SCORER_WEIGHT = { FW: 5, MF: 2.5, DF: 0.6, GK: 0.05 }
 const ASSIST_WEIGHT = { FW: 1.5, MF: 3, DF: 1, GK: 0.1 }
+// Card/penalty/set-piece rates below are all "per 90 minutes" (or "per goal",
+// for the set-piece ones) - simulateMatchSegment scales the per-90 ones down
+// to whatever share of the match the segment covers.
 const YELLOW_CARD_CHANCE = 0.11
 const RED_CARD_CHANCE = 0.006
 const PENALTY_CHANCE = 0.1
@@ -81,20 +84,32 @@ function pad(n) {
   return `${n}'`
 }
 
-function generateBookings(xi, side, rng) {
+function minuteInRange(startMinute, endMinute, rng) {
+  return startMinute + Math.floor(rng() * (endMinute - startMinute + 1))
+}
+
+function generateBookings(xi, side, rng, chanceMultiplier, startMinute, endMinute) {
   const bookings = []
   for (const p of xi) {
     const roll = rng()
-    if (roll < RED_CARD_CHANCE) {
-      bookings.push({ playerId: p.id, side, type: 'red', minute: 1 + Math.floor(rng() * 90), name: p.name })
-    } else if (roll < RED_CARD_CHANCE + YELLOW_CARD_CHANCE) {
-      bookings.push({ playerId: p.id, side, type: 'yellow', minute: 1 + Math.floor(rng() * 90), name: p.name })
+    if (roll < RED_CARD_CHANCE * chanceMultiplier) {
+      bookings.push({ playerId: p.id, side, type: 'red', minute: minuteInRange(startMinute, endMinute, rng), name: p.name })
+    } else if (roll < (RED_CARD_CHANCE + YELLOW_CARD_CHANCE) * chanceMultiplier) {
+      bookings.push({ playerId: p.id, side, type: 'yellow', minute: minuteInRange(startMinute, endMinute, rng), name: p.name })
     }
   }
   return bookings
 }
 
-export function simulateMatch({
+// Simulates only the [startMinute, endMinute] slice of a match. Goal
+// expectancy (and card chance) is scaled down to that slice's share of the
+// full 90 minutes, so calling this repeatedly over consecutive slices with
+// the same lineups/tactics composes into the same distribution as simulating
+// the whole match in one call - which is what lets the live matchday screen
+// tick through a match a few minutes at a time (and use updated lineups/
+// tactics after a substitution or a tactical change) while AI-only fixtures
+// still resolve in a single call via simulateMatch below.
+export function simulateMatchSegment({
   homeClub,
   awayClub,
   homeSquad,
@@ -103,8 +118,12 @@ export function simulateMatch({
   awayLineup,
   homeTactics,
   awayTactics,
+  startMinute = 1,
+  endMinute = 90,
   rng = Math.random,
 }) {
+  const fraction = (endMinute - startMinute + 1) / 90
+
   const home = lineupRatings(homeSquad, homeLineup)
   const away = lineupRatings(awaySquad, awayLineup)
 
@@ -133,6 +152,9 @@ export function simulateMatch({
   if (homeHasCaptain) homeLambda *= CAPTAIN_BOOST
   if (awayHasCaptain) awayLambda *= CAPTAIN_BOOST
 
+  homeLambda *= fraction
+  awayLambda *= fraction
+
   const homeGoals = poissonRandom(homeLambda, rng)
   const awayGoals = poissonRandom(awayLambda, rng)
 
@@ -145,8 +167,12 @@ export function simulateMatch({
 
   function addGoals(count, side, xi, clubName, tactics) {
     for (let i = 0; i < count; i++) {
-      let m
-      do { m = 1 + Math.floor(rng() * 90) } while (goalMinutes.has(m))
+      let m = minuteInRange(startMinute, endMinute, rng)
+      let attempts = 0
+      while (goalMinutes.has(m) && attempts < 10) {
+        m = minuteInRange(startMinute, endMinute, rng)
+        attempts += 1
+      }
       goalMinutes.add(m)
 
       let scorer
@@ -188,7 +214,10 @@ export function simulateMatch({
   addGoals(homeGoals, 'home', homeXI, homeClub.name, homeTactics)
   addGoals(awayGoals, 'away', awayXI, awayClub.name, awayTactics)
 
-  const bookings = [...generateBookings(homeXI, 'home', rng), ...generateBookings(awayXI, 'away', rng)]
+  const bookings = [
+    ...generateBookings(homeXI, 'home', rng, fraction, startMinute, endMinute),
+    ...generateBookings(awayXI, 'away', rng, fraction, startMinute, endMinute),
+  ]
   for (const b of bookings) {
     const clubName = b.side === 'home' ? homeClub.name : awayClub.name
     events.push({
@@ -198,9 +227,9 @@ export function simulateMatch({
     })
   }
 
-  const fillerCount = 6 + Math.floor(rng() * 5)
+  const fillerCount = Math.round((6 + Math.floor(rng() * 5)) * fraction)
   for (let i = 0; i < fillerCount; i++) {
-    const m = 1 + Math.floor(rng() * 90)
+    const m = minuteInRange(startMinute, endMinute, rng)
     const side = rng() < 0.5 ? homeClub.name : awayClub.name
     const filler = COMMENTARY_FILLER[Math.floor(rng() * COMMENTARY_FILLER.length)]
     events.push({ minute: m, text: `${side}${filler}`, isGoal: false })
@@ -208,8 +237,15 @@ export function simulateMatch({
 
   events.sort((a, b) => a.minute - b.minute)
   const commentary = events.map((e) => `${pad(e.minute)} — ${e.text}`)
-  commentary.push(`90' — Full-time: ${homeClub.name} ${homeGoals}-${awayGoals} ${awayClub.name}`)
 
+  return { homeGoals, awayGoals, commentary, goals, bookings }
+}
+
+// Performance ratings and Man of the Match, computed once the full-time
+// score and every goal (across however many segments were simulated) are
+// known. homeLineup/awayLineup here should be everyone who featured at some
+// point (starters plus any substitutes brought on), not just who kicked off.
+export function finalizeRatings({ homeLineup, awayLineup, homeGoals, awayGoals, goals, homeClubId, awayClubId, rng = Math.random }) {
   const homeResultPoints = homeGoals > awayGoals ? 3 : homeGoals === awayGoals ? 1 : 0
   const awayResultPoints = awayGoals > homeGoals ? 3 : homeGoals === awayGoals ? 1 : 0
   const homeRatings = {}
@@ -230,16 +266,45 @@ export function simulateMatch({
     if (rating > bestRating) {
       bestRating = rating
       motmId = id
-      motmClubId = homeClub.id
+      motmClubId = homeClubId
     }
   }
   for (const [id, rating] of Object.entries(awayRatings)) {
     if (rating > bestRating) {
       bestRating = rating
       motmId = id
-      motmClubId = awayClub.id
+      motmClubId = awayClubId
     }
   }
 
-  return { homeGoals, awayGoals, commentary, homeRatings, awayRatings, goals, motmId, motmClubId, bookings }
+  return { homeRatings, awayRatings, motmId, motmClubId }
+}
+
+export function simulateMatch({ homeClub, awayClub, homeSquad, awaySquad, homeLineup, awayLineup, homeTactics, awayTactics, rng = Math.random }) {
+  const segment = simulateMatchSegment({
+    homeClub,
+    awayClub,
+    homeSquad,
+    awaySquad,
+    homeLineup,
+    awayLineup,
+    homeTactics,
+    awayTactics,
+    startMinute: 1,
+    endMinute: 90,
+    rng,
+  })
+  const commentary = [...segment.commentary, `90' — Full-time: ${homeClub.name} ${segment.homeGoals}-${segment.awayGoals} ${awayClub.name}`]
+  const ratings = finalizeRatings({
+    homeLineup,
+    awayLineup,
+    homeGoals: segment.homeGoals,
+    awayGoals: segment.awayGoals,
+    goals: segment.goals,
+    homeClubId: homeClub.id,
+    awayClubId: awayClub.id,
+    rng,
+  })
+
+  return { homeGoals: segment.homeGoals, awayGoals: segment.awayGoals, commentary, goals: segment.goals, bookings: segment.bookings, ...ratings }
 }

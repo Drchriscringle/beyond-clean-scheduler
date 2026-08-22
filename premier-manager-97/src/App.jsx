@@ -17,6 +17,9 @@ import CommercialScreen from './components/CommercialScreen.jsx'
 import SackedScreen from './components/SackedScreen.jsx'
 import TacticsScreen from './components/TacticsScreen.jsx'
 import NewsScreen from './components/NewsScreen.jsx'
+import MatchdayScreen from './components/MatchdayScreen.jsx'
+import JobOfferScreen from './components/JobOfferScreen.jsx'
+import CareerScreen from './components/CareerScreen.jsx'
 
 const SCREENS = {
   squad: SquadScreen,
@@ -28,6 +31,7 @@ const SCREENS = {
   stadium: StadiumScreen,
   fixtures: FixturesScreen,
   news: NewsScreen,
+  career: CareerScreen,
   'player-detail': PlayerDetail,
 }
 
@@ -56,6 +60,14 @@ export default function App() {
 
   if (state.screen === 'sacked') {
     return <SackedScreen state={state} dispatch={dispatch} />
+  }
+
+  if (state.screen === 'matchday') {
+    return <MatchdayScreen state={state} dispatch={dispatch} />
+  }
+
+  if (state.screen === 'job-offers') {
+    return <JobOfferScreen state={state} dispatch={dispatch} />
   }
 
   if (!state.started) {

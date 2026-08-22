@@ -1,10 +1,48 @@
 import { CLUB_BY_ID } from '../data/clubs.js'
 
-export default function NewsScreen({ state }) {
+function AwardsPanel({ title, awards, onView }) {
+  if (!awards) return null
+  return (
+    <div className="panel-inset">
+      <h3>{title}</h3>
+      {awards.goldenBoot ? (
+        <p className="clickable" onClick={() => onView(awards.goldenBoot.playerId, awards.goldenBoot.clubId)}>
+          <strong>Golden Boot:</strong> {awards.goldenBoot.name} ({CLUB_BY_ID[awards.goldenBoot.clubId].name}) — {awards.goldenBoot.goals} goals
+        </p>
+      ) : (
+        <p>Golden Boot: not awarded.</p>
+      )}
+      {awards.playerOfSeason && (
+        <p className="clickable" onClick={() => onView(awards.playerOfSeason.playerId, awards.playerOfSeason.clubId)}>
+          <strong>Player of the Season:</strong> {awards.playerOfSeason.name} ({CLUB_BY_ID[awards.playerOfSeason.clubId].name}) — {awards.playerOfSeason.motm} MOTM, {awards.playerOfSeason.goals}g {awards.playerOfSeason.assists}a
+        </p>
+      )}
+      {awards.teamOfSeason.length > 0 && (
+        <>
+          <strong>Team of the Season:</strong>
+          <ul>
+            {awards.teamOfSeason.map((p) => (
+              <li key={p.playerId} className="clickable" onClick={() => onView(p.playerId, p.clubId)}>
+                {p.position} — {p.name} ({CLUB_BY_ID[p.clubId].name})
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function NewsScreen({ state, dispatch }) {
   const results = state.weekResults
   const plResults = results.filter((r) => state.clubs[r.home]?.division === 'PL')
   const chResults = results.filter((r) => state.clubs[r.home]?.division === 'CH')
   const lastCupRound = state.cup?.history?.[state.cup.history.length - 1]
+  const awards = state.lastSeasonAwards
+
+  function viewPlayer(playerId, clubId) {
+    dispatch({ type: 'NAVIGATE', payload: { screen: 'player-detail', playerId, clubId } })
+  }
 
   return (
     <div className="screen">
@@ -12,6 +50,16 @@ export default function NewsScreen({ state }) {
         <div className="panel-title">LEAGUE NEWS — WEEK {Math.min(state.week, 38)}</div>
         <p style={{ fontSize: 14 }}>Everything that happened across both divisions last time round.</p>
       </div>
+
+      {awards && (
+        <div className="panel">
+          <div className="panel-title">SEASON AWARDS — {awards.season}/{String(awards.season + 1).slice(2)}</div>
+          <div className="grid-2">
+            <AwardsPanel title="Premier League" awards={awards.PL} onView={viewPlayer} />
+            <AwardsPanel title="Championship" awards={awards.CH} onView={viewPlayer} />
+          </div>
+        </div>
+      )}
 
       <div className="grid-2">
         <div className="panel">
