@@ -5,14 +5,7 @@ import { EUROPEAN_CLUBS } from './europeanClubs.js'
 // need this), it's only used here for display and to group the transfer
 // market's foreign pool by league.
 const EURO_LEAGUE_BY_ID = {
-  'euro-bayern-munich': 'Bundesliga',
-  'euro-dortmund': 'Bundesliga',
-  'euro-rb-leipzig': 'Bundesliga',
   'euro-psg': 'Ligue 1',
-  'euro-inter-milan': 'Serie A',
-  'euro-ac-milan': 'Serie A',
-  'euro-juventus': 'Serie A',
-  'euro-napoli': 'Serie A',
   'euro-ajax': 'Eredivisie',
   'euro-porto': 'Primeira Liga',
   'euro-benfica': 'Primeira Liga',

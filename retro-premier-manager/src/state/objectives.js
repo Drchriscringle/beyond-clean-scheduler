@@ -106,6 +106,85 @@ const SEGUNDA_OBJECTIVE_POOL = {
   ],
 }
 
+// Serie A is another 20-club top flight, so it reuses the same target
+// positions as La Liga - only the label text changes.
+const SERIEA_OBJECTIVE_POOL = {
+  5: [
+    { type: 'win-league', label: 'Win Serie A', targetPosition: 1 },
+    { type: 'top4', label: 'Finish in the Top 4', targetPosition: 4 },
+  ],
+  4: [
+    { type: 'top6', label: 'Qualify for Europe (Top 6)', targetPosition: 6 },
+    { type: 'top8', label: 'Finish in the Top 8', targetPosition: 8 },
+  ],
+  3: [
+    { type: 'top-half', label: 'Finish in the Top Half', targetPosition: 10 },
+    { type: 'top12', label: 'Finish 12th or Better', targetPosition: 12 },
+  ],
+  2: [
+    { type: 'mid-table', label: 'A Secure Mid-Table Finish (14th or Better)', targetPosition: 14 },
+  ],
+  1: [
+    { type: 'avoid-relegation', label: 'Avoid Relegation (17th or Better)', targetPosition: 17 },
+  ],
+}
+
+// Serie B clubs are judged on promotion, not on European qualification -
+// same shape as the Segunda División pool.
+const SERIEB_OBJECTIVE_POOL = {
+  3: [
+    { type: 'win-serieb', label: 'Win Serie B (Automatic Promotion)', targetPosition: 1 },
+    { type: 'auto-promotion-serieb', label: 'Achieve Automatic Promotion (Top 2)', targetPosition: 2 },
+  ],
+  2: [
+    { type: 'playoffs-serieb', label: 'Reach the Promotion Play-offs (Top 6)', targetPosition: 6 },
+    { type: 'top-half-serieb', label: 'Finish in the Top Half', targetPosition: 10 },
+  ],
+  1: [
+    { type: 'avoid-relegation-serieb', label: 'Avoid Relegation (17th or Better)', targetPosition: 17 },
+  ],
+}
+
+// The Bundesliga is an 18-club top flight, so its target positions are
+// scaled down a little from the 20-club leagues above.
+const BUNDESLIGA_OBJECTIVE_POOL = {
+  5: [
+    { type: 'win-league', label: 'Win the Bundesliga', targetPosition: 1 },
+    { type: 'top4', label: 'Finish in the Top 4', targetPosition: 4 },
+  ],
+  4: [
+    { type: 'top6', label: 'Qualify for Europe (Top 6)', targetPosition: 6 },
+    { type: 'top8', label: 'Finish in the Top 8', targetPosition: 8 },
+  ],
+  3: [
+    { type: 'top-half', label: 'Finish in the Top Half', targetPosition: 9 },
+    { type: 'top11', label: 'Finish 11th or Better', targetPosition: 11 },
+  ],
+  2: [
+    { type: 'mid-table', label: 'A Secure Mid-Table Finish (12th or Better)', targetPosition: 12 },
+  ],
+  1: [
+    { type: 'avoid-relegation', label: 'Avoid Relegation (15th or Better)', targetPosition: 15 },
+  ],
+}
+
+// 2. Bundesliga clubs are judged on promotion, not on European
+// qualification - same shape as the Segunda División/Serie B pools, scaled
+// down to an 18-club division.
+const BUNDESLIGA2_OBJECTIVE_POOL = {
+  3: [
+    { type: 'win-bundesliga2', label: 'Win 2. Bundesliga (Automatic Promotion)', targetPosition: 1 },
+    { type: 'auto-promotion-bundesliga2', label: 'Achieve Automatic Promotion (Top 2)', targetPosition: 2 },
+  ],
+  2: [
+    { type: 'playoffs-bundesliga2', label: 'Reach the Promotion Play-offs (Top 6)', targetPosition: 6 },
+    { type: 'top-half-bundesliga2', label: 'Finish in the Top Half', targetPosition: 9 },
+  ],
+  1: [
+    { type: 'avoid-relegation-bundesliga2', label: 'Avoid Relegation (15th or Better)', targetPosition: 15 },
+  ],
+}
+
 export function generateObjective(reputation, rng = Math.random, division = 'PL') {
   const pool =
     division === 'CH'
@@ -118,7 +197,15 @@ export function generateObjective(reputation, rng = Math.random, division = 'PL'
             ? LALIGA_OBJECTIVE_POOL
             : division === 'SEGUNDA'
               ? SEGUNDA_OBJECTIVE_POOL
-              : OBJECTIVE_POOL
+              : division === 'SERIEA'
+                ? SERIEA_OBJECTIVE_POOL
+                : division === 'SERIEB'
+                  ? SERIEB_OBJECTIVE_POOL
+                  : division === 'BUNDESLIGA'
+                    ? BUNDESLIGA_OBJECTIVE_POOL
+                    : division === 'BUNDESLIGA2'
+                      ? BUNDESLIGA2_OBJECTIVE_POOL
+                      : OBJECTIVE_POOL
   const list = pool[reputation] ?? pool[3] ?? pool[1]
   return list[Math.floor(rng() * list.length)]
 }
