@@ -1,3 +1,5 @@
+import { injuryChanceMultiplier } from './personality.js'
+
 // Named injury types with a weighted severity spread - most injuries are
 // minor knocks, a few are season-disrupting.
 export const INJURY_TYPES = [
@@ -30,7 +32,7 @@ export function maybeInjureStarters(squad, starterIds, injuryRateMultiplier, rng
   const freshIds = []
   const next = squad.map((p) => {
     if (!starterIds.includes(p.id) || p.injured) return p
-    const chance = 0.012 * injuryRateMultiplier
+    const chance = 0.012 * injuryRateMultiplier * injuryChanceMultiplier(p.personality)
     if (rng() < chance) {
       const { type, weeks } = rollInjury(rng)
       freshIds.push(p.id)

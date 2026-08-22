@@ -35,6 +35,8 @@ import { recordSeason } from './careerHistory.js'
 import { SCOUT_COST } from './scouting.js'
 import { evaluateResponse } from './pressConference.js'
 import { evaluateLoanOffer, evaluateLoanRequest, tickLoans } from './loans.js'
+import { moraleSwingMultiplier, isLeader } from './personality.js'
+import { qualificationForPosition, initEuropeanCampaign, playEuropeanRound, EURO_ROUND_WEEKS } from './europe.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -76,6 +78,7 @@ export function makeInitialState() {
     jobOffers: null,
     careerHistory: [],
     pressConferenceHandled: true,
+    europe: null,
   }
 }
 
@@ -140,6 +143,7 @@ function startNewGame(state, { clubId, managerName }) {
       ...staticClub,
       budget: staticClub.startingBudget,
       bankBalance: staticClub.bankBalance,
+      concessionPrice: Math.round(staticClub.ticketPrice * 0.35),
       boardConfidence: 60,
       lastRequestWeek: null,
       pendingReason: 'general',
@@ -203,20 +207,24 @@ function currentWeekFixtures(state) {
   return state.fixtures.find((f) => f.week === state.week)
 }
 
-function driftMoraleAndFitness(squad, resultPoints, starterIds) {
+function driftMoraleAndFitness(squad, resultPoints, starterIds, captainId = null) {
+  const captainIsLeader = resultPoints === 3 && isLeader(squad.find((p) => p.id === captainId)?.personality)
   return squad.map((p) => {
     let fitness = p.fitness
     let morale = p.morale
+    const swing = moraleSwingMultiplier(p.personality)
 
     if (starterIds.includes(p.id)) {
       fitness = Math.max(35, fitness - (6 + Math.floor(Math.random() * 8)))
-      if (resultPoints === 3) morale = Math.min(99, morale + 4)
-      else if (resultPoints === 1) morale = Math.min(99, morale + 1)
-      else morale = Math.max(5, morale - 5)
+      if (resultPoints === 3) morale = Math.min(99, morale + Math.round(4 * swing))
+      else if (resultPoints === 1) morale = Math.min(99, morale + Math.round(1 * swing))
+      else morale = Math.max(5, morale - Math.round(5 * swing))
     } else {
       fitness = Math.min(100, fitness + 10)
       morale = morale + (morale < 60 ? 1 : morale > 60 ? -1 : 0)
     }
+
+    if (captainIsLeader) morale = Math.min(99, morale + 1)
 
     return { ...p, fitness, morale }
   })
@@ -525,6 +533,28 @@ function advanceWeek(state, precomputed = null) {
     cup = nextCup
   }
 
+  let europe = state.europe
+  let europeNotice = null
+  if (europe && !europe.eliminated && !europe.champion && EURO_ROUND_WEEKS.includes(state.week)) {
+    const playerLineup = availablePlayerLineup(
+      state.lineups[state.playerClubId]?.startingXI,
+      squads[state.playerClubId],
+      state.lineups[state.playerClubId]?.formation,
+    )
+    const roundResult = playEuropeanRound(europe, {
+      playerClub: clubs[state.playerClubId],
+      playerSquad: squads[state.playerClubId],
+      playerLineup,
+      playerTactics: state.tactics[state.playerClubId],
+    })
+    clubs[state.playerClubId] = {
+      ...clubs[state.playerClubId],
+      bankBalance: clubs[state.playerClubId].bankBalance + roundResult.prize,
+    }
+    europe = roundResult.europe
+    europeNotice = roundResult.notice
+  }
+
   for (const match of week.matches) {
     const isLiveMatch = precomputed && precomputed.matchId === match.id
     const homeClub = clubs[match.home]
@@ -608,7 +638,8 @@ function advanceWeek(state, precomputed = null) {
       playerResultPoints = gf > ga ? 3 : gf === ga ? 1 : 0
 
       const starterIds = playerWasHome ? homeLineup : awayLineup
-      squads[state.playerClubId] = driftMoraleAndFitness(squads[state.playerClubId], playerResultPoints, starterIds)
+      const captainId = state.tactics[state.playerClubId]?.captainId
+      squads[state.playerClubId] = driftMoraleAndFitness(squads[state.playerClubId], playerResultPoints, starterIds, captainId)
       bonusPayout = computeBonusPayout(squads[state.playerClubId], result.goals)
     }
   }
@@ -656,19 +687,20 @@ function advanceWeek(state, precomputed = null) {
   const merchandise = club.merchandiseDeal?.weeklyIncome ?? 0
   const tv = tvIncomeForWeek(position, club.division)
 
-  let matchday = { attendance: 0, attendancePct: 0, gateRevenue: 0 }
+  let matchday = { attendance: 0, attendancePct: 0, gateRevenue: 0, concessionRevenue: 0 }
   if (playerPlayedThisWeek && playerWasHome) {
     const formGoodwill = (playerResultPoints === 3 ? 0.02 : playerResultPoints === 0 ? -0.02 : 0)
     matchday = matchdayIncome({
       club,
       capacity: availableCapacity(club, stadiumProjects),
       ticketPrice: club.ticketPrice,
+      concessionPrice: club.concessionPrice,
       leaguePosition: position,
       formGoodwill,
     })
   }
 
-  const income = sponsorship + merchandise + tv + matchday.gateRevenue
+  const income = sponsorship + merchandise + tv + matchday.gateRevenue + matchday.concessionRevenue
   const expenditure = wages + staff + maintenance + constructionSpend + interest + bonusPayout
   const net = income - expenditure
   const bankBalance = club.bankBalance + net
@@ -686,7 +718,7 @@ function advanceWeek(state, precomputed = null) {
   const ledgerEntry = {
     week: state.week,
     season: state.season,
-    income: { matchday: matchday.gateRevenue, tv, sponsorship, merchandise },
+    income: { matchday: matchday.gateRevenue, concessions: matchday.concessionRevenue, tv, sponsorship, merchandise },
     expenditure: { wages, staff, maintenance, construction: constructionSpend, interest, bonuses: bonusPayout },
     net,
     balance: bankBalance,
@@ -711,12 +743,14 @@ function advanceWeek(state, precomputed = null) {
     transferLog,
     incomingOffers,
     cup,
+    europe,
     week: nextWeek,
     lastMatch,
     weekResults,
     pressConferenceHandled: playerPlayedThisWeek ? false : state.pressConferenceHandled,
     notice:
       cupNotice ??
+      europeNotice ??
       (playerPlayedThisWeek
         ? `Full-time: ${CLUB_BY_ID[lastMatch.homeClubId].name} ${lastMatch.homeGoals}-${lastMatch.awayGoals} ${CLUB_BY_ID[lastMatch.awayClubId].name}`
         : 'A quiet week — no fixture for your side.'),
@@ -797,6 +831,7 @@ function seasonRollover(state) {
   const playerClubId = state.playerClubId
   const finalPosition = leaguePositionOf(state.standings, leagueClubIds, playerClubId)
   const playerClubBefore = state.clubs[playerClubId]
+  const europeanQualification = playerClubBefore.division === 'PL' ? qualificationForPosition(finalPosition) : null
   const objectiveResult = evaluateObjective(playerClubBefore.objective, finalPosition)
   const confidenceAfterObjective = Math.max(0, Math.min(100, playerClubBefore.boardConfidence + objectiveResult.confidenceDelta))
   const objectiveMissedStreak = objectiveResult.met ? 0 : playerClubBefore.objectiveMissedStreak + 1
@@ -907,6 +942,7 @@ function seasonRollover(state) {
     lastMatch: null,
     weekResults: [],
     cup: initCupState([...newPlIds, ...newChIds], season),
+    europe: europeanQualification ? initEuropeanCampaign(europeanQualification) : null,
     commercial: {
       sponsorshipOptions: generateSponsorshipOffers(playerClub.reputation),
       merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
@@ -924,7 +960,11 @@ function seasonRollover(state) {
     }),
     jobOffers: jobOfferClubIds.length > 0 ? jobOfferClubIds : null,
     screen: jobOfferClubIds.length > 0 ? 'job-offers' : 'commercial',
-    notice: `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice}`,
+    notice:
+      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice}` +
+      (europeanQualification
+        ? ` You've qualified for the ${europeanQualification === 'UCL' ? 'Champions League' : 'Europa League'} next season!`
+        : ''),
   }
 }
 
@@ -1453,6 +1493,14 @@ export function gameReducer(state, action) {
           [state.playerClubId]: { ...state.clubs[state.playerClubId], ticketPrice: action.payload.price },
         },
       }
+    case 'SET_CONCESSION_PRICE':
+      return {
+        ...state,
+        clubs: {
+          ...state.clubs,
+          [state.playerClubId]: { ...state.clubs[state.playerClubId], concessionPrice: action.payload.price },
+        },
+      }
     case 'REQUEST_BUDGET':
       return handleRequestBudget(state, action.payload)
     case 'CONFIRM_COMMERCIAL_DEALS':
@@ -1523,4 +1571,4 @@ export function gameReducer(state, action) {
   }
 }
 
-export { estimatePlayerValue, leaguePositionOf }
+export { estimatePlayerValue, leaguePositionOf, resolvePromotionRelegation }

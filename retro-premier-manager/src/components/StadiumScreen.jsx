@@ -31,6 +31,7 @@ function FacilityBlock({ title, levels, currentLevel, onUpgrade, bankBalance }) 
 export default function StadiumScreen({ state, dispatch }) {
   const club = state.clubs[state.playerClubId]
   const [ticketPrice, setTicketPrice] = useState(club.ticketPrice)
+  const [concessionPrice, setConcessionPrice] = useState(club.concessionPrice)
 
   function build(standId, add) {
     dispatch({ type: 'BUILD_STAND', payload: { standId, capacityAdd: add } })
@@ -38,6 +39,10 @@ export default function StadiumScreen({ state, dispatch }) {
 
   function applyTicketPrice() {
     dispatch({ type: 'SET_TICKET_PRICE', payload: { price: Number(ticketPrice) } })
+  }
+
+  function applyConcessionPrice() {
+    dispatch({ type: 'SET_CONCESSION_PRICE', payload: { price: Number(concessionPrice) } })
   }
 
   return (
@@ -89,6 +94,23 @@ export default function StadiumScreen({ state, dispatch }) {
             </button>
           </div>
           <p>Higher prices raise revenue per fan but dampen attendance.</p>
+        </div>
+
+        <div className="panel-inset" style={{ marginTop: 10 }}>
+          <h3>Matchday Hospitality</h3>
+          <div className="field-row">
+            <label htmlFor="concession-price">Food &amp; drink price (£)</label>
+            <input
+              id="concession-price"
+              type="number"
+              value={concessionPrice}
+              onChange={(e) => setConcessionPrice(e.target.value)}
+            />
+            <button className="btn" onClick={applyConcessionPrice}>
+              Set Price
+            </button>
+          </div>
+          <p>Roughly 65% of fans buy food or drink at that price - push it too high and it dents attendance too.</p>
         </div>
 
         <div className="grid-3" style={{ marginTop: 10 }}>

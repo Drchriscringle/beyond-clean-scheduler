@@ -3,6 +3,8 @@
 // are kept and averaged. Transfer valuations lean on this so an in-form
 // player costs more to buy and an out-of-form one is worth less to sell.
 
+import { formVarianceMultiplier } from './personality.js'
+
 export const FORM_HISTORY_LIMIT = 5
 const BASELINE_FORM = 6.0
 
@@ -23,7 +25,10 @@ export function formTrend(player) {
 }
 
 export function pushFormRating(player, rating) {
-  const history = [...(player.formHistory ?? []), rating].slice(-FORM_HISTORY_LIMIT)
+  const spread = formVarianceMultiplier(player.personality)
+  const adjusted = spread === 1 ? rating : BASELINE_FORM + (rating - BASELINE_FORM) * spread
+  const clamped = Math.round(Math.max(2, Math.min(10, adjusted)) * 10) / 10
+  const history = [...(player.formHistory ?? []), clamped].slice(-FORM_HISTORY_LIMIT)
   return { ...player, formHistory: history }
 }
 

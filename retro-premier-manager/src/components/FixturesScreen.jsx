@@ -3,6 +3,7 @@ import { CLUB_BY_ID } from '../data/clubs.js'
 import { standingsToTable, playerLeagueClubIds } from '../state/gameReducer.js'
 import { clubCupStatus, CUP_ROUND_WEEKS } from '../state/cup.js'
 import { RESPONSE_TYPES } from '../state/pressConference.js'
+import { EURO_ROUND_WEEKS, EURO_ROUND_NAMES } from '../state/europe.js'
 
 function zoneClass(position, division) {
   if (division === 'PL') {
@@ -37,6 +38,39 @@ function CupPanel({ state }) {
         <p>Eliminated in the {status.roundLabel}.</p>
       )}
       {status.roundLabel === 'Did not enter' && <p>Not involved in this season's competition.</p>}
+    </div>
+  )
+}
+
+function EuropePanel({ state }) {
+  const europe = state.europe
+  if (!europe) return null
+  const compName = europe.competition === 'UCL' ? 'Champions League' : 'Europa League'
+  const nextWeek = EURO_ROUND_WEEKS[europe.roundIndex]
+  const lastTie = europe.history[europe.history.length - 1]
+
+  return (
+    <div className="panel">
+      <div className="panel-title">{compName.toUpperCase()}</div>
+      {europe.champion && <p>You are Champions of Europe! 🏆</p>}
+      {!europe.champion && !europe.eliminated && (
+        <p>
+          Your status: {EURO_ROUND_NAMES[europe.roundIndex]}
+          {nextWeek ? ` — next tie in Week ${nextWeek}` : ''}
+        </p>
+      )}
+      {europe.eliminated && lastTie && (
+        <p>Eliminated in the {lastTie.round} by {lastTie.opponent} ({lastTie.playerGoals}-{lastTie.opponentGoals}).</p>
+      )}
+      {europe.history.length > 0 && (
+        <ul style={{ marginTop: 6 }}>
+          {europe.history.map((h, i) => (
+            <li key={i}>
+              {h.round}: {h.won ? 'Won' : 'Lost'} {h.playerGoals}-{h.opponentGoals} {h.won ? 'vs' : 'to'} {h.opponent}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
@@ -143,6 +177,7 @@ export default function FixturesScreen({ state, dispatch }) {
             )}
           </p>
           <CupPanel state={state} />
+          <EuropePanel state={state} />
         </div>
 
         <div>

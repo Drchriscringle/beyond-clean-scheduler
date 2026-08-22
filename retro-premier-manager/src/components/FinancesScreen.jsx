@@ -11,6 +11,7 @@ export default function FinancesScreen({ state }) {
   const totals = seasonLedger.reduce(
     (acc, e) => {
       acc.matchday += e.income.matchday
+      acc.concessions += e.income.concessions ?? 0
       acc.tv += e.income.tv
       acc.sponsorship += e.income.sponsorship
       acc.merchandise += e.income.merchandise ?? 0
@@ -23,7 +24,7 @@ export default function FinancesScreen({ state }) {
       acc.net += e.net
       return acc
     },
-    { matchday: 0, tv: 0, sponsorship: 0, merchandise: 0, wages: 0, staff: 0, maintenance: 0, construction: 0, interest: 0, bonuses: 0, net: 0 },
+    { matchday: 0, concessions: 0, tv: 0, sponsorship: 0, merchandise: 0, wages: 0, staff: 0, maintenance: 0, construction: 0, interest: 0, bonuses: 0, net: 0 },
   )
 
   const chartData = [...ledger].slice(0, 12).reverse()
@@ -53,6 +54,10 @@ export default function FinancesScreen({ state }) {
                 <tr>
                   <td>Matchday income</td>
                   <td>{formatMoneyFull(totals.matchday)}</td>
+                </tr>
+                <tr>
+                  <td>Concessions</td>
+                  <td>{formatMoneyFull(totals.concessions)}</td>
                 </tr>
                 <tr>
                   <td>TV / broadcast</td>
@@ -149,6 +154,7 @@ export default function FinancesScreen({ state }) {
                 <tr>
                   <th>Wk</th>
                   <th>Matchday</th>
+                  <th>Concess.</th>
                   <th>TV</th>
                   <th>Sponsor</th>
                   <th>Merch</th>
@@ -166,6 +172,7 @@ export default function FinancesScreen({ state }) {
                   <tr key={i}>
                     <td>{e.week}</td>
                     <td>{formatMoneyFull(e.income.matchday)}</td>
+                    <td>{formatMoneyFull(e.income.concessions ?? 0)}</td>
                     <td>{formatMoneyFull(e.income.tv)}</td>
                     <td>{formatMoneyFull(e.income.sponsorship)}</td>
                     <td>{formatMoneyFull(e.income.merchandise ?? 0)}</td>
