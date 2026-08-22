@@ -127,6 +127,11 @@ body {
   cursor: not-allowed;
 }
 
+.dropdown-item.active {
+  background: var(--navy);
+  color: var(--white);
+}
+
 .continue-btn {
   font-family: var(--font-head);
   font-size: 11px;
