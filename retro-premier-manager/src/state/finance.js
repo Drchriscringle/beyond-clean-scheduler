@@ -41,18 +41,26 @@ export function availableCapacity(club, stadiumProjects) {
   }, 0)
 }
 
-export function matchdayIncome({ club, capacity, ticketPrice, leaguePosition, formGoodwill, rng = Math.random }) {
+// Concession spend is per attendee (not everyone buys food/drink, so it's
+// dialled back by a fixed uptake rate) and, like ticket price, pricing it
+// too high above a reasonable baseline dampens attendance a little too -
+// fans weigh the whole matchday cost, not just the ticket.
+const CONCESSION_UPTAKE = 0.65
+
+export function matchdayIncome({ club, capacity, ticketPrice, concessionPrice = 0, leaguePosition, formGoodwill, rng = Math.random }) {
   const reputationBase = 0.55 + club.reputation * 0.06
   const positionBonus = (21 - leaguePosition) * 0.004
   const priceDrag = Math.max(0, (ticketPrice - 40) * 0.0025)
+  const concessionDrag = Math.max(0, (concessionPrice - 12) * 0.003)
   const attendancePct = Math.min(
     0.99,
-    Math.max(0.35, reputationBase + positionBonus - priceDrag + formGoodwill + (rng() - 0.5) * 0.08),
+    Math.max(0.35, reputationBase + positionBonus - priceDrag - concessionDrag + formGoodwill + (rng() - 0.5) * 0.08),
   )
   const attendance = Math.round(capacity * attendancePct)
   const gateRevenue = attendance * ticketPrice
   const seasonTicketBase = Math.round(capacity * 0.28 * (ticketPrice * 0.6))
-  return { attendance, attendancePct, gateRevenue: gateRevenue + seasonTicketBase }
+  const concessionRevenue = Math.round(attendance * concessionPrice * CONCESSION_UPTAKE)
+  return { attendance, attendancePct, gateRevenue: gateRevenue + seasonTicketBase, concessionRevenue }
 }
 
 export function squadValue(squad) {

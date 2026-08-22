@@ -140,6 +140,7 @@ function startNewGame(state, { clubId, managerName }) {
       ...staticClub,
       budget: staticClub.startingBudget,
       bankBalance: staticClub.bankBalance,
+      concessionPrice: Math.round(staticClub.ticketPrice * 0.35),
       boardConfidence: 60,
       lastRequestWeek: null,
       pendingReason: 'general',
@@ -656,19 +657,20 @@ function advanceWeek(state, precomputed = null) {
   const merchandise = club.merchandiseDeal?.weeklyIncome ?? 0
   const tv = tvIncomeForWeek(position, club.division)
 
-  let matchday = { attendance: 0, attendancePct: 0, gateRevenue: 0 }
+  let matchday = { attendance: 0, attendancePct: 0, gateRevenue: 0, concessionRevenue: 0 }
   if (playerPlayedThisWeek && playerWasHome) {
     const formGoodwill = (playerResultPoints === 3 ? 0.02 : playerResultPoints === 0 ? -0.02 : 0)
     matchday = matchdayIncome({
       club,
       capacity: availableCapacity(club, stadiumProjects),
       ticketPrice: club.ticketPrice,
+      concessionPrice: club.concessionPrice,
       leaguePosition: position,
       formGoodwill,
     })
   }
 
-  const income = sponsorship + merchandise + tv + matchday.gateRevenue
+  const income = sponsorship + merchandise + tv + matchday.gateRevenue + matchday.concessionRevenue
   const expenditure = wages + staff + maintenance + constructionSpend + interest + bonusPayout
   const net = income - expenditure
   const bankBalance = club.bankBalance + net
@@ -686,7 +688,7 @@ function advanceWeek(state, precomputed = null) {
   const ledgerEntry = {
     week: state.week,
     season: state.season,
-    income: { matchday: matchday.gateRevenue, tv, sponsorship, merchandise },
+    income: { matchday: matchday.gateRevenue, concessions: matchday.concessionRevenue, tv, sponsorship, merchandise },
     expenditure: { wages, staff, maintenance, construction: constructionSpend, interest, bonuses: bonusPayout },
     net,
     balance: bankBalance,
@@ -1451,6 +1453,14 @@ export function gameReducer(state, action) {
         clubs: {
           ...state.clubs,
           [state.playerClubId]: { ...state.clubs[state.playerClubId], ticketPrice: action.payload.price },
+        },
+      }
+    case 'SET_CONCESSION_PRICE':
+      return {
+        ...state,
+        clubs: {
+          ...state.clubs,
+          [state.playerClubId]: { ...state.clubs[state.playerClubId], concessionPrice: action.payload.price },
         },
       }
     case 'REQUEST_BUDGET':
