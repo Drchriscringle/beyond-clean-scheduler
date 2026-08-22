@@ -538,6 +538,7 @@ function advanceWeek(state, precomputed = null) {
   const allClubIds = Object.keys(state.squads)
   const leagueClubIds = playerLeagueClubIds(state)
   const weekResults = []
+  const matchResultsById = {}
   let lastMatch = state.lastMatch
   let playerResultPoints = null
   let playerPlayedThisWeek = false
@@ -746,6 +747,7 @@ function advanceWeek(state, precomputed = null) {
       homeGoals: result.homeGoals,
       awayGoals: result.awayGoals,
     })
+    matchResultsById[match.id] = { homeGoals: result.homeGoals, awayGoals: result.awayGoals }
 
     const involvesPlayer = match.home === state.playerClubId || match.away === state.playerClubId
     if (involvesPlayer) {
@@ -864,6 +866,16 @@ function advanceWeek(state, precomputed = null) {
 
   const nextWeek = state.week + 1
 
+  // Stamp this week's results onto the season-long fixtures list (rather
+  // than only ever exposing the most recent week's results, as weekResults
+  // does) so a "season fixtures & results" view can show every match a club
+  // has played, not just last week's - see CareerFixturesScreen.jsx.
+  const fixtures = state.fixtures.map((wk) =>
+    wk.week === state.week
+      ? { ...wk, matches: wk.matches.map((m) => (matchResultsById[m.id] ? { ...m, ...matchResultsById[m.id] } : m)) }
+      : wk,
+  )
+
   const weekReturn = {
     ...state,
     clubs,
@@ -877,6 +889,7 @@ function advanceWeek(state, precomputed = null) {
     europe,
     international,
     week: nextWeek,
+    fixtures,
     lastMatch,
     weekResults,
     pressConferenceHandled: playerPlayedThisWeek ? false : state.pressConferenceHandled,

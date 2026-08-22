@@ -32,7 +32,12 @@ export function generateFixtures(clubIds) {
   const allRounds = [...rounds, ...secondHalf]
   return allRounds.map((matches, index) => ({
     week: index + 1,
-    matches: matches.map((m, i) => ({ id: `${index + 1}-${i}`, ...m, played: false })),
+    // home/away club ids are globally unique across every division, so
+    // this id stays unique even once combineFixturesByWeek merges several
+    // divisions' matches into one week - a plain week-index id would
+    // collide between divisions the moment two of them both had a "first
+    // match of the week".
+    matches: matches.map((m) => ({ id: `${index + 1}-${m.home}-${m.away}`, ...m, played: false })),
   }))
 }
 
@@ -59,7 +64,7 @@ export function generateSeasonFixtures(clubIds, targetWeeks = 38) {
   const weeks = []
   for (let week = 1; week <= targetWeeks; week++) {
     const source = cycle[(week - 1) % cycle.length]
-    weeks.push({ week, matches: source.matches.map((m, i) => ({ ...m, id: `${week}-${i}` })) })
+    weeks.push({ week, matches: source.matches.map((m) => ({ ...m, id: `${week}-${m.home}-${m.away}` })) })
   }
   return weeks
 }

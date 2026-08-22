@@ -383,6 +383,24 @@ table.pm-table tbody tr.zone-relegation {
   border: 2px outset #c00000;
 }
 
+.result-badge {
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  font-weight: bold;
+  padding: 1px 6px;
+  border: 1px solid var(--black);
+}
+.result-badge.result-w {
+  background: #d3f2d3;
+}
+.result-badge.result-d {
+  background: #fff3cc;
+}
+.result-badge.result-l {
+  background: #f8d6d6;
+}
+
 /* ---------- Matchday screen ---------- */
 .matchday-screen {
   max-width: 900px;
