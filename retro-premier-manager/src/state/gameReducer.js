@@ -1,4 +1,5 @@
 import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, totalCapacity } from '../data/clubs.js'
+import { FOREIGN_CLUBS } from '../data/foreignClubs.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
 import { generateFixtures, combineFixturesByWeek } from './fixtures.js'
@@ -170,6 +171,14 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
     standings[staticClub.id] = emptyStandingRow()
     lineups[staticClub.id] = { formation: '4-4-2', startingXI: pickBestXI(squads[staticClub.id], '4-4-2') }
     tactics[staticClub.id] = defaultTactics(squads[staticClub.id], lineups[staticClub.id].startingXI)
+  }
+
+  // Foreign clubs get a real, persistent squad and bank balance so they can
+  // be bought from and sold to like any other club, but no fixtures/table
+  // entry of their own - they never field a lineup or contest a league.
+  for (const foreignClub of FOREIGN_CLUBS) {
+    clubs[foreignClub.id] = { ...foreignClub }
+    squads[foreignClub.id] = generateSquadForClub(foreignClub)
   }
 
   const plIds = CLUBS.map((c) => c.id)
@@ -571,6 +580,7 @@ function advanceWeek(state, precomputed = null) {
       playerSquad: squads[state.playerClubId],
       playerLineup,
       playerTactics: state.tactics[state.playerClubId],
+      allSquads: squads,
     })
     clubs[state.playerClubId] = {
       ...clubs[state.playerClubId],

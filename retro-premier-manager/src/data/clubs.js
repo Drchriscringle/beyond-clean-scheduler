@@ -1,6 +1,7 @@
 // Fictionalised 2025/26 Premier League. Real club names/grounds used for
 // flavour; all financial figures, squads and results in this game are
 // simulated and should not be read as real-world data.
+import { FOREIGN_CLUBS } from './foreignClubs.js'
 
 // reputation tier: 5 = "Big Six", 4 = strong mid-table / European chasers,
 // 3 = comfortable mid-table, 2 = lower mid-table, 1 = newly promoted / bottom
@@ -615,7 +616,12 @@ const CHAMPIONSHIP_CLUBS_RAW = [
 
 export const CLUBS = PL_CLUBS_RAW.map((c) => ({ ...c, division: 'PL' }))
 export const CHAMPIONSHIP_CLUBS = CHAMPIONSHIP_CLUBS_RAW.map((c) => ({ ...c, division: 'CH' }))
-export const ALL_CLUBS = [...CLUBS, ...CHAMPIONSHIP_CLUBS]
+// ALL_CLUBS also includes foreign clubs (division: 'FOREIGN') so they show
+// up alongside domestic clubs everywhere a browse/offer-to/loan-to target
+// list is built (Transfers screen, Player Detail) - everything that needs
+// only English clubs (fixtures, standings, the new-game club picker) reads
+// CLUBS/CHAMPIONSHIP_CLUBS directly instead.
+export const ALL_CLUBS = [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...FOREIGN_CLUBS]
 
 export const CLUB_BY_ID = Object.fromEntries(ALL_CLUBS.map((c) => [c.id, c]))
 

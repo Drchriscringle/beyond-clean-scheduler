@@ -10,7 +10,10 @@ export function generateJobOffers({ club, objectiveMet, finalPosition, divisionS
   if (!strongSeason) return []
   if (rng() > OFFER_CHANCE) return []
 
-  const candidates = Object.values(allClubs).filter((c) => c.id !== playerClubId && c.reputation > club.reputation)
+  // Foreign clubs (division 'FOREIGN') never offer the player a job - they
+  // have no fixtures or league position of their own for a manager to take
+  // charge of, only a persistent squad for the transfer market.
+  const candidates = Object.values(allClubs).filter((c) => c.id !== playerClubId && c.division !== 'FOREIGN' && c.reputation > club.reputation)
   if (candidates.length === 0) return []
 
   const pool = candidates.map((c) => ({ id: c.id, weight: 1 / (c.reputation - club.reputation) }))

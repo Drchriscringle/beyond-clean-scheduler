@@ -1,4 +1,4 @@
-import { EUROPEAN_CLUBS } from '../data/europeanClubs.js'
+import { FOREIGN_CLUBS } from '../data/foreignClubs.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { pickBestXI } from './lineup.js'
 import { simulateMatch } from './matchSim.js'
@@ -30,17 +30,20 @@ export function initEuropeanCampaign(competition) {
 function pickOpponent(roundIndex, rng) {
   // Later rounds draw from tougher (higher-reputation) opposition.
   const minRep = Math.min(5, 2 + roundIndex)
-  const pool = EUROPEAN_CLUBS.filter((c) => c.reputation >= minRep)
-  const candidates = pool.length > 0 ? pool : EUROPEAN_CLUBS
+  const pool = FOREIGN_CLUBS.filter((c) => c.reputation >= minRep)
+  const candidates = pool.length > 0 ? pool : FOREIGN_CLUBS
   return candidates[Math.floor(rng() * candidates.length)]
 }
 
 // Plays exactly one round of the player's European campaign - a single match
 // against a freshly drawn opponent, decided on penalties if level, since
 // this is a single-elimination abstraction rather than a two-legged tie.
-export function playEuropeanRound(europe, { playerClub, playerSquad, playerLineup, playerTactics }, rng = Math.random) {
+// `allSquads`, when supplied, is used to pull the opponent's persistent
+// squad (so a player weakened by a transfer-window sale shows up weakened
+// here too) - it falls back to a freshly generated one otherwise.
+export function playEuropeanRound(europe, { playerClub, playerSquad, playerLineup, playerTactics, allSquads }, rng = Math.random) {
   const opponentClub = pickOpponent(europe.roundIndex, rng)
-  const opponentSquad = generateSquadForClub(opponentClub)
+  const opponentSquad = allSquads?.[opponentClub.id] ?? generateSquadForClub(opponentClub)
   const opponentLineup = pickBestXI(opponentSquad, '4-4-2')
   const playerIsHome = rng() < 0.5
 
