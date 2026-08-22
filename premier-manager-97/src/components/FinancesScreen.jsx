@@ -19,10 +19,11 @@ export default function FinancesScreen({ state }) {
       acc.maintenance += e.expenditure.maintenance
       acc.construction += e.expenditure.construction
       acc.interest += e.expenditure.interest ?? 0
+      acc.bonuses += e.expenditure.bonuses ?? 0
       acc.net += e.net
       return acc
     },
-    { matchday: 0, tv: 0, sponsorship: 0, merchandise: 0, wages: 0, staff: 0, maintenance: 0, construction: 0, interest: 0, net: 0 },
+    { matchday: 0, tv: 0, sponsorship: 0, merchandise: 0, wages: 0, staff: 0, maintenance: 0, construction: 0, interest: 0, bonuses: 0, net: 0 },
   )
 
   const chartData = [...ledger].slice(0, 12).reverse()
@@ -84,6 +85,10 @@ export default function FinancesScreen({ state }) {
                 <tr>
                   <td>Loan interest</td>
                   <td>-{formatMoneyFull(totals.interest)}</td>
+                </tr>
+                <tr>
+                  <td>Contract bonuses</td>
+                  <td>-{formatMoneyFull(totals.bonuses)}</td>
                 </tr>
                 <tr>
                   <td><strong>Net</strong></td>
@@ -151,6 +156,7 @@ export default function FinancesScreen({ state }) {
                   <th>Staff</th>
                   <th>Maint.</th>
                   <th>Constr.</th>
+                  <th>Bonus</th>
                   <th>Net</th>
                   <th>Balance</th>
                 </tr>
@@ -167,6 +173,7 @@ export default function FinancesScreen({ state }) {
                     <td>-{formatMoneyFull(e.expenditure.staff)}</td>
                     <td>-{formatMoneyFull(e.expenditure.maintenance)}</td>
                     <td>-{formatMoneyFull(e.expenditure.construction)}</td>
+                    <td>-{formatMoneyFull(e.expenditure.bonuses ?? 0)}</td>
                     <td><Money value={e.net} /></td>
                     <td>{formatMoneyFull(e.balance)}</td>
                   </tr>
