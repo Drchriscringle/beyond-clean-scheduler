@@ -29,6 +29,7 @@ import { maybeInjureStarters, tickInjuries } from './injuries.js'
 import { applyBookings, tickSuspensions } from './discipline.js'
 import { isTransferWindowOpen } from './transferWindows.js'
 import { defaultTactics } from './tactics.js'
+import { computeSeasonAwards } from './awards.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -66,6 +67,7 @@ export function makeInitialState() {
     incomingOffers: [],
     liveMatch: null,
     matchSpeed: 'instant',
+    lastSeasonAwards: null,
   }
 }
 
@@ -790,6 +792,10 @@ function seasonRollover(state) {
   }
 
   const clubs = { ...state.clubs }
+  const seasonAwards = {
+    PL: computeSeasonAwards(state.squads, clubs, 'PL'),
+    CH: computeSeasonAwards(state.squads, clubs, 'CH'),
+  }
   const { notice: promotionRelegationNotice } = resolvePromotionRelegation(state, clubs)
   const squads = {}
   const season = state.season + 1
@@ -861,6 +867,7 @@ function seasonRollover(state) {
       sponsorshipOptions: generateSponsorshipOffers(playerClub.reputation),
       merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
     },
+    lastSeasonAwards: { season: state.season, ...seasonAwards },
     screen: 'commercial',
     notice: `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice}`,
   }
