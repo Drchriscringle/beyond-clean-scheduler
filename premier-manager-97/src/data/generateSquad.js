@@ -97,6 +97,7 @@ export function buildPlayer({ id, name, position, age, ability, potential, reput
     suspensionMatches: 0,
     yellowCards: 0,
     attributes: abilityToAttributes(position, ability, rng),
+    scouted: false,
   }
 }
 

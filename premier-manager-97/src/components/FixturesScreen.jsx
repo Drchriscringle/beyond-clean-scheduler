@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CLUB_BY_ID } from '../data/clubs.js'
 import { standingsToTable, playerLeagueClubIds } from '../state/gameReducer.js'
 import { clubCupStatus, CUP_ROUND_WEEKS } from '../state/cup.js'
+import { RESPONSE_TYPES } from '../state/pressConference.js'
 
 function zoneClass(position, division) {
   if (division === 'PL') {
@@ -40,7 +41,30 @@ function CupPanel({ state }) {
   )
 }
 
-export default function FixturesScreen({ state }) {
+function PressConferencePanel({ state, dispatch }) {
+  if (!state.lastMatch || state.pressConferenceHandled) return null
+
+  return (
+    <div className="panel">
+      <div className="panel-title">POST-MATCH PRESS CONFERENCE</div>
+      <p>The press want your reaction to the result. How do you respond?</p>
+      <div className="field-row">
+        {Object.entries(RESPONSE_TYPES).map(([key, { label, quote }]) => (
+          <button
+            key={key}
+            className="btn btn-small"
+            title={quote}
+            onClick={() => dispatch({ type: 'RESPOND_TO_PRESS', payload: { responseType: key } })}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function FixturesScreen({ state, dispatch }) {
   const playerDivision = state.clubs[state.playerClubId].division
   const [viewDivision, setViewDivision] = useState(playerDivision)
   const allClubIds = Object.keys(state.clubs)
@@ -178,6 +202,8 @@ export default function FixturesScreen({ state }) {
               )}
             </div>
           )}
+
+          <PressConferencePanel state={state} dispatch={dispatch} />
         </div>
       </div>
     </div>

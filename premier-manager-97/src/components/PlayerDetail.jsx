@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { AttrBar, Money, FormBadge, FormDots } from './shared.jsx'
-import { formatWage } from '../utils/format.js'
+import { formatWage, formatMoney } from '../utils/format.js'
 import { estimatePlayerValue } from '../state/finance.js'
 import { formLabel, currentForm } from '../state/form.js'
 import { expectedWage } from '../state/contracts.js'
 import { windowStatus } from '../state/transferWindows.js'
+import { isRevealed, SCOUT_COST } from '../state/scouting.js'
 
 function attrLabels(position) {
   if (position === 'GK') {
@@ -41,6 +42,12 @@ export default function PlayerDetail({ state, dispatch }) {
   const value = estimatePlayerValue(player)
   const club = state.clubs[state.playerClubId]
   const window_ = windowStatus(state.week)
+  const revealed = isRevealed(player)
+  const scoutClubId = isOwn ? state.playerClubId : foreignSquad ? viewingClubId : null
+
+  function scoutPlayer() {
+    dispatch({ type: 'SCOUT_PLAYER', payload: { playerId: player.id, clubId: scoutClubId } })
+  }
 
   function back() {
     if (foreignSquad) dispatch({ type: 'NAVIGATE', payload: { screen: 'transfers' } })
@@ -86,8 +93,8 @@ export default function PlayerDetail({ state, dispatch }) {
           <div className="panel-inset">
             <p>Position: {player.position}</p>
             <p>Age: {player.age}</p>
-            <p>Current ability: {player.ability}/99</p>
-            <p>Potential ability: {player.potential}/99</p>
+            <p>Current ability: {revealed ? `${player.ability}/99` : 'Unknown — scout to reveal'}</p>
+            <p>Potential ability: {revealed ? `${player.potential}/99` : 'Unknown — scout to reveal'}</p>
             <p>Wage: {formatWage(player.wage)}</p>
             <p>Contract: {player.contractYears === 0 ? 'Expired' : `${player.contractYears} year(s)`}</p>
             <p>Morale: {player.morale}/100</p>
@@ -107,12 +114,23 @@ export default function PlayerDetail({ state, dispatch }) {
             <p>Estimated value: <Money value={value} /></p>
           </div>
           <div className="panel-inset">
-            <AttrBar label={labels.pace} value={player.attributes.pace} />
-            <AttrBar label={labels.tackling} value={player.attributes.tackling} />
-            <AttrBar label={labels.passing} value={player.attributes.passing} />
-            <AttrBar label={labels.shooting} value={player.attributes.shooting} />
-            <AttrBar label={labels.stamina} value={player.attributes.stamina} />
-            <AttrBar label={labels.strength} value={player.attributes.strength} />
+            {revealed ? (
+              <>
+                <AttrBar label={labels.pace} value={player.attributes.pace} />
+                <AttrBar label={labels.tackling} value={player.attributes.tackling} />
+                <AttrBar label={labels.passing} value={player.attributes.passing} />
+                <AttrBar label={labels.shooting} value={player.attributes.shooting} />
+                <AttrBar label={labels.stamina} value={player.attributes.stamina} />
+                <AttrBar label={labels.strength} value={player.attributes.strength} />
+              </>
+            ) : (
+              <>
+                <p>Attributes not yet known.</p>
+                <button className="btn btn-primary btn-small" onClick={scoutPlayer}>
+                  Commission Scouting Report ({formatMoney(SCOUT_COST)})
+                </button>
+              </>
+            )}
           </div>
         </div>
 

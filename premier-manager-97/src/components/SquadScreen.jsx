@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { formatWage } from '../utils/format.js'
 import { currentForm } from '../state/form.js'
-import { FormBadge } from './shared.jsx'
+import { FormBadge, AbilityCell } from './shared.jsx'
 
 const COLUMNS = [
   { key: 'squadNumber', label: '#' },
@@ -88,8 +88,8 @@ export default function SquadScreen({ state, dispatch }) {
                   <td>{p.name}{p.injured ? ' 🩹' : ''}{p.suspended ? ' 🟥' : ''}</td>
                   <td>{p.position}</td>
                   <td>{p.age}</td>
-                  <td>{p.ability}</td>
-                  <td>{p.potential}</td>
+                  <td><AbilityCell player={p} value={p.ability} /></td>
+                  <td><AbilityCell player={p} value={p.potential} /></td>
                   <td><FormBadge player={p} /></td>
                   <td>{p.stats.goals}</td>
                   <td>{p.stats.assists}</td>
