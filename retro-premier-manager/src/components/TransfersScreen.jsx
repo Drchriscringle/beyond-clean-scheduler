@@ -60,7 +60,7 @@ export default function TransfersScreen({ state, dispatch }) {
                 <select id="browse-club" value={browseClubId} onChange={(e) => setBrowseClubId(e.target.value)}>
                   {ALL_CLUBS.filter((c) => c.id !== state.playerClubId).map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} {c.division === 'CH' ? '(Championship)' : ''}
+                      {c.name} {c.division === 'CH' ? '(Championship)' : c.league ? `(${c.league})` : ''}
                     </option>
                   ))}
                 </select>

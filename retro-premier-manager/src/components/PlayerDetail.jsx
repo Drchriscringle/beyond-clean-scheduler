@@ -299,7 +299,7 @@ export default function PlayerDetail({ state, dispatch }) {
                 <select id="shop-club" value={shopClubId ?? otherClubs[0]?.id} onChange={(e) => setShopClubId(e.target.value)}>
                   {otherClubs.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} {c.division === 'CH' ? '(Championship)' : ''}
+                      {c.name} {c.division === 'CH' ? '(Championship)' : c.league ? `(${c.league})` : ''}
                     </option>
                   ))}
                 </select>
