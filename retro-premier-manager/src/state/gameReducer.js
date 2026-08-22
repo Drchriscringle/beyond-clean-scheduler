@@ -2,6 +2,7 @@ import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, DIVISION_LABELS, totalCapacity }
 import { FOREIGN_CLUBS } from '../data/foreignClubs.js'
 import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
 import { LA_LIGA_CLUBS } from '../data/laLigaClubs.js'
+import { rollWeather } from '../data/weather.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
 import { generateSeasonFixtures, combineFixturesByWeek } from './fixtures.js'
@@ -312,6 +313,10 @@ function simulateCupTie(homeId, awayId, { clubs, squads, lineups, tactics, playe
     awayLineup,
     homeTactics: tactics?.[homeId],
     awayTactics: tactics?.[awayId],
+    homeFormation: lineups[homeId]?.formation,
+    awayFormation: lineups[awayId]?.formation,
+    weather: rollWeather(),
+    homePitchLevel: clubs[homeId]?.facilities?.pitch,
   })
   const winner =
     result.homeGoals === result.awayGoals ? (Math.random() < 0.5 ? homeId : awayId) : result.homeGoals > result.awayGoals ? homeId : awayId
@@ -357,6 +362,9 @@ function startMatchday(state) {
       awayLineup,
       homeTactics: state.tactics[match.home],
       awayTactics: state.tactics[match.away],
+      // Rolled once at kick-off and held fixed for the rest of the match -
+      // every later tick (see tickLiveMatch below) reuses this same value.
+      weather: rollWeather(),
       homeFeatured: [...homeLineup],
       awayFeatured: [...awayLineup],
       homeSubsUsed: 0,
@@ -400,6 +408,10 @@ function tickLiveMatch(state, { instant = false } = {}) {
       awayLineup: lm.awayLineup,
       homeTactics: lm.homeTactics,
       awayTactics: lm.awayTactics,
+      homeFormation: state.lineups[lm.homeId]?.formation,
+      awayFormation: state.lineups[lm.awayId]?.formation,
+      weather: lm.weather,
+      homePitchLevel: clubs[lm.homeId]?.facilities?.pitch,
       startMinute: fromMin,
       endMinute: toMin,
     })
@@ -696,6 +708,10 @@ function advanceWeek(state, precomputed = null) {
           awayLineup,
           homeTactics: state.tactics[match.home],
           awayTactics: state.tactics[match.away],
+          homeFormation: state.lineups[match.home]?.formation,
+          awayFormation: state.lineups[match.away]?.formation,
+          weather: rollWeather(),
+          homePitchLevel: homeClub?.facilities?.pitch,
         })
 
     squads[match.home] = applyFormRatings(squads[match.home], result.homeRatings)

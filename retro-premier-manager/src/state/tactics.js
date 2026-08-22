@@ -1,3 +1,5 @@
+import { FORMATIONS } from '../data/formations.js'
+
 // Playing styles nudge the match engine's goal expectancy: forMult scales a
 // team's own scoring, againstMult scales what the opponent scores against
 // them (an aggressive style leaks more at the back; a defensive one concedes
@@ -11,6 +13,26 @@ export const PLAYING_STYLES = {
 }
 
 export const PLAYING_STYLE_NAMES = Object.keys(PLAYING_STYLES)
+
+const FORMATION_MID_WEIGHT = 0.02
+const FORMATION_ATT_WEIGHT = 0.018
+const FORMATION_SHAPE_CAP = 0.15
+
+// A team's formation nudges its own goal expectancy a little based on how
+// its midfield/attack numbers compare to the opponent's shape - an extra
+// midfielder (e.g. 3-5-2 vs 4-4-2) can overload the opposition's engine
+// room, and a lone striker (e.g. 4-5-1) has fewer outlets against a back
+// three. Deliberately a simple formula rather than a hand-authored matchup
+// table for every formation pair, which would only get harder to keep
+// balanced as more formations are added.
+export function formationShapeMultiplier(ownFormation, oppFormation) {
+  const own = FORMATIONS[ownFormation]
+  const opp = FORMATIONS[oppFormation]
+  if (!own || !opp) return 1
+  const midEdge = (own.MF - opp.MF) * FORMATION_MID_WEIGHT
+  const attEdge = (own.FW - opp.DF) * FORMATION_ATT_WEIGHT
+  return 1 + Math.max(-FORMATION_SHAPE_CAP, Math.min(FORMATION_SHAPE_CAP, midEdge + attEdge))
+}
 
 function bestOf(players, attr) {
   if (players.length === 0) return null

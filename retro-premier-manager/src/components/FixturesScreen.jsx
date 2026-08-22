@@ -4,6 +4,7 @@ import { standingsToTable, playerLeagueClubIds } from '../state/gameReducer.js'
 import { clubCupStatus, CUP_ROUND_WEEKS, SCOTTISH_CUP_ROUND_WEEKS } from '../state/cup.js'
 import { RESPONSE_TYPES } from '../state/pressConference.js'
 import { EURO_ROUND_WEEKS, EURO_ROUND_NAMES } from '../state/europe.js'
+import { derbyLabel } from '../data/rivalries.js'
 
 const VIEW_DIVISIONS = ['PL', 'CH', 'SPL', 'SCH', 'LALIGA']
 
@@ -216,11 +217,15 @@ export default function FixturesScreen({ state, dispatch }) {
             <div className="panel-title">FIXTURES — WEEK {state.week}</div>
             {upcoming ? (
               <ul>
-                {ownFixtures.map((m) => (
-                  <li key={m.id} style={m.home === state.playerClubId || m.away === state.playerClubId ? { fontWeight: 'bold' } : undefined}>
-                    {CLUB_BY_ID[m.home].name} vs {CLUB_BY_ID[m.away].name}
-                  </li>
-                ))}
+                {ownFixtures.map((m) => {
+                  const label = derbyLabel(m.home, m.away)
+                  return (
+                    <li key={m.id} style={m.home === state.playerClubId || m.away === state.playerClubId ? { fontWeight: 'bold' } : undefined}>
+                      {CLUB_BY_ID[m.home].name} vs {CLUB_BY_ID[m.away].name}
+                      {label && <span className="deadline-day-badge" style={{ marginLeft: 8 }}>{label.toUpperCase()}</span>}
+                    </li>
+                  )
+                })}
               </ul>
             ) : (
               <p>Season complete. Continue to start a new campaign.</p>

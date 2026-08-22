@@ -62,6 +62,15 @@ body {
   z-index: 1;
 }
 
+/* The menu bar's dropdown panels are position:absolute inside it, escaping
+   downward over whatever sits below - now that every pm97-app child above
+   is its own stacking context (for the watermark's sake), the menu bar
+   needs a higher z-index than its siblings or a same-level later sibling
+   (the status bar) would paint over its open dropdown instead of under it. */
+.pm97-app > .menubar {
+  z-index: 2;
+}
+
 /* ---------- Menu bar ---------- */
 .menubar {
   display: flex;
