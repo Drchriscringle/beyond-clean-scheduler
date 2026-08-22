@@ -1,18 +1,18 @@
-name: Premier Manager '97 CI
+name: Retro Premier Manager CI
 
 on:
   pull_request:
-    paths: [premier-manager-97/**, .github/workflows/ci-premier-manager-97.yml]
+    paths: [retro-premier-manager/**, .github/workflows/ci-retro-premier-manager.yml]
   push:
     branches: [main]
-    paths: [premier-manager-97/**, .github/workflows/ci-premier-manager-97.yml]
+    paths: [retro-premier-manager/**, .github/workflows/ci-retro-premier-manager.yml]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: premier-manager-97
+        working-directory: retro-premier-manager
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
