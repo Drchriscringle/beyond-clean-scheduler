@@ -79,7 +79,7 @@ export default function MenuBar({ state, dispatch }) {
 
   return (
     <div className="menubar" ref={wrapperRef}>
-      <div className="brand">PM'97</div>
+      <div className="brand">RPM 25/26</div>
       <div className="menu-item-wrapper">
         <button className={`menu-item${openMenu === 'file' ? ' active' : ''}`} onClick={() => toggleMenu('file')}>
           File
