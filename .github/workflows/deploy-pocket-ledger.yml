@@ -1,7 +1,7 @@
 name: Deploy Pocket Ledger
 
 on:
-  # Auto-deploy disabled: premier-manager-97 is now the main GitHub Pages
+  # Auto-deploy disabled: retro-premier-manager is now the main GitHub Pages
   # site for this repo. Trigger manually (workflow_dispatch) if pocket-ledger
   # ever needs to be redeployed on its own.
   workflow_dispatch:

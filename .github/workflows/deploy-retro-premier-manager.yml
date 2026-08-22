@@ -1,9 +1,9 @@
-name: Deploy Premier Manager '97
+name: Deploy Retro Premier Manager
 
 on:
   push:
     branches: [main]
-    paths: [premier-manager-97/**, .github/workflows/deploy-premier-manager-97.yml]
+    paths: [retro-premier-manager/**, .github/workflows/deploy-retro-premier-manager.yml]
   workflow_dispatch:
 
 permissions:
@@ -26,12 +26,12 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-        working-directory: premier-manager-97
+        working-directory: retro-premier-manager
       - run: npm run build -- --base=${{ steps.pages.outputs.base_path }}
-        working-directory: premier-manager-97
+        working-directory: retro-premier-manager
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: premier-manager-97/dist
+          path: retro-premier-manager/dist
 
   deploy:
     needs: build
