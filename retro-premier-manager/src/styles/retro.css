@@ -35,10 +35,31 @@ body {
 }
 
 .pm97-app {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
   background: var(--navy);
+}
+
+/* A faint national flag watermark, picked from the player's club's division
+   (see utils/flags.js) - sits behind everything else in the shell so it
+   never competes with panel text, which stays fully opaque on top of it. */
+.pm97-app::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--flag-bg, none);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.pm97-app > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- Menu bar ---------- */

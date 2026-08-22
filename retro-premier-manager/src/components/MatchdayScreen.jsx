@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CLUB_BY_ID } from '../data/clubs.js'
 import { PLAYING_STYLES, PLAYING_STYLE_NAMES } from '../state/tactics.js'
 import GoalReplay from './GoalReplay.jsx'
+import { flagBackgroundStyle } from '../utils/flags.js'
 
 const SPEEDS = [
   { key: '5min', label: '5 min' },
@@ -44,7 +45,7 @@ export default function MatchdayScreen({ state, dispatch }) {
 
   if (!lm) {
     return (
-      <div className="pm97-app">
+      <div className="pm97-app" style={flagBackgroundStyle(state.clubs[state.playerClubId]?.division)}>
         <div className="screen">
           <div className="panel">Loading matchday...</div>
         </div>
@@ -92,7 +93,7 @@ export default function MatchdayScreen({ state, dispatch }) {
   }
 
   return (
-    <div className="pm97-app">
+    <div className="pm97-app" style={flagBackgroundStyle(state.clubs[state.playerClubId]?.division)}>
       <div className="screen matchday-screen">
         <div className="panel">
           <div className="panel-title">MATCHDAY</div>

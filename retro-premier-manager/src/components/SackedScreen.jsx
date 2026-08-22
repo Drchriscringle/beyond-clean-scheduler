@@ -1,3 +1,5 @@
+import { flagBackgroundStyle } from '../utils/flags.js'
+
 export default function SackedScreen({ state, dispatch }) {
   const info = state.sackedInfo
 
@@ -6,7 +8,7 @@ export default function SackedScreen({ state, dispatch }) {
   }
 
   return (
-    <div className="pm97-app">
+    <div className="pm97-app" style={flagBackgroundStyle(state.clubs[state.playerClubId]?.division)}>
       <div className="screen">
         <div className="panel">
           <div className="panel-title">YOU HAVE BEEN SACKED</div>
