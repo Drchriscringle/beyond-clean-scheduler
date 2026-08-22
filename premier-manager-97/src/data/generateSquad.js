@@ -98,6 +98,11 @@ export function buildPlayer({ id, name, position, age, ability, potential, reput
     yellowCards: 0,
     attributes: abilityToAttributes(position, ability, rng),
     scouted: false,
+    goalBonus: 0,
+    assistBonus: 0,
+    sellOnClauses: [],
+    loanFromClubId: null,
+    loanWeeksRemaining: 0,
   }
 }
 

@@ -14,7 +14,7 @@ import {
   estimatePlayerValue,
 } from './finance.js'
 import { requestBudget as evaluateBudgetRequest, driftConfidence } from './boardroom.js'
-import { evaluateOffer, buildCost, buildWeeks } from './transfers.js'
+import { evaluateOffer, evaluateClubInterest, settleSellOnClauses, buildCost, buildWeeks } from './transfers.js'
 import { PITCH_LEVELS, TRAINING_LEVELS, YOUTH_LEVELS, nextLevel } from '../data/facilities.js'
 import { pushFormRating } from './form.js'
 import { generateSponsorshipOffers, generateMerchandiseOffers } from '../data/commercial.js'
@@ -22,7 +22,7 @@ import { generateObjective, evaluateObjective } from './objectives.js'
 import { initCupState, isCupWeek, roundIndexForWeek, playCupRound, prizeMoneyForRound, WINNER_BONUS } from './cup.js'
 import { aiTransferTick } from './aiTransfers.js'
 import { generateYouthIntake, assignFreeSquadNumbers } from './youthIntake.js'
-import { evaluateContractOffer } from './contracts.js'
+import { evaluateContractOffer, computeBonusPayout } from './contracts.js'
 import { applyMatchStats, rollSeasonStatsIntoCareer } from './playerStats.js'
 import { maybeGenerateOffer } from './incomingOffers.js'
 import { maybeInjureStarters, tickInjuries } from './injuries.js'
@@ -34,6 +34,7 @@ import { generateJobOffers } from './jobOffers.js'
 import { recordSeason } from './careerHistory.js'
 import { SCOUT_COST } from './scouting.js'
 import { evaluateResponse } from './pressConference.js'
+import { evaluateLoanOffer, evaluateLoanRequest, tickLoans } from './loans.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -472,6 +473,7 @@ function advanceWeek(state, precomputed = null) {
   let playerResultPoints = null
   let playerPlayedThisWeek = false
   let playerWasHome = false
+  let bonusPayout = 0
   const freshInjuryIds = {}
   const freshSuspensionIds = {}
 
@@ -607,6 +609,7 @@ function advanceWeek(state, precomputed = null) {
 
       const starterIds = playerWasHome ? homeLineup : awayLineup
       squads[state.playerClubId] = driftMoraleAndFitness(squads[state.playerClubId], playerResultPoints, starterIds)
+      bonusPayout = computeBonusPayout(squads[state.playerClubId], result.goals)
     }
   }
 
@@ -618,6 +621,7 @@ function advanceWeek(state, precomputed = null) {
     squads[id] = tickInjuries(squads[id], freshInjuryIds[id] ?? new Set())
     squads[id] = tickSuspensions(squads[id], freshSuspensionIds[id] ?? new Set())
   }
+  squads = tickLoans(squads)
 
   // --- Player club finances for the week ---
   const playerClubId = state.playerClubId
@@ -665,7 +669,7 @@ function advanceWeek(state, precomputed = null) {
   }
 
   const income = sponsorship + merchandise + tv + matchday.gateRevenue
-  const expenditure = wages + staff + maintenance + constructionSpend + interest
+  const expenditure = wages + staff + maintenance + constructionSpend + interest + bonusPayout
   const net = income - expenditure
   const bankBalance = club.bankBalance + net
 
@@ -683,7 +687,7 @@ function advanceWeek(state, precomputed = null) {
     week: state.week,
     season: state.season,
     income: { matchday: matchday.gateRevenue, tv, sponsorship, merchandise },
-    expenditure: { wages, staff, maintenance, construction: constructionSpend, interest },
+    expenditure: { wages, staff, maintenance, construction: constructionSpend, interest, bonuses: bonusPayout },
     net,
     balance: bankBalance,
   }
@@ -1010,7 +1014,7 @@ function handleRespondToJobOffer(state, { clubId }) {
   }
 }
 
-function handleOfferContract(state, { playerId, wage, years }) {
+function handleOfferContract(state, { playerId, wage, years, goalBonus, assistBonus }) {
   const squad = state.squads[state.playerClubId]
   const player = squad.find((p) => p.id === playerId)
   if (!player) return state
@@ -1024,7 +1028,11 @@ function handleOfferContract(state, { playerId, wage, years }) {
     ...state,
     squads: {
       ...state.squads,
-      [state.playerClubId]: squad.map((p) => (p.id === playerId ? { ...p, wage, contractYears: years } : p)),
+      [state.playerClubId]: squad.map((p) =>
+        p.id === playerId
+          ? { ...p, wage, contractYears: years, goalBonus: Math.max(0, goalBonus ?? 0), assistBonus: Math.max(0, assistBonus ?? 0) }
+          : p,
+      ),
     },
     notice: result.message,
   }
@@ -1124,6 +1132,16 @@ function handleRespondToOffer(state, { offerId, accept }) {
 
   const club = state.clubs[state.playerClubId]
   const buyerClub = state.clubs[offer.fromClubId]
+  const { netFee, payouts } = settleSellOnClauses(player, offer.fee)
+
+  const clubs = {
+    ...state.clubs,
+    [state.playerClubId]: { ...club, bankBalance: club.bankBalance + netFee },
+    [offer.fromClubId]: { ...buyerClub, bankBalance: buyerClub.bankBalance - offer.fee },
+  }
+  for (const payout of payouts) {
+    clubs[payout.clubId] = { ...clubs[payout.clubId], bankBalance: clubs[payout.clubId].bankBalance + payout.amount }
+  }
 
   return {
     ...state,
@@ -1131,17 +1149,13 @@ function handleRespondToOffer(state, { offerId, accept }) {
       ...state.squads,
       [state.playerClubId]: squad.filter((p) => p.id !== offer.playerId),
     },
-    clubs: {
-      ...state.clubs,
-      [state.playerClubId]: { ...club, bankBalance: club.bankBalance + offer.fee },
-      [offer.fromClubId]: { ...buyerClub, bankBalance: buyerClub.bankBalance - offer.fee },
-    },
+    clubs,
     incomingOffers: remaining,
     notice: `Sold ${player.name} to ${CLUB_BY_ID[offer.fromClubId].name} for ${offer.fee.toLocaleString('en-GB')}.`,
   }
 }
 
-function handleMakeOffer(state, { playerId, fromClubId, fee }) {
+function handleMakeOffer(state, { playerId, fromClubId, fee, swapPlayerIds = [], sellOnPercent = 0 }) {
   if (!isTransferWindowOpen(state.week)) {
     return { ...state, notice: 'The transfer window is closed — you cannot buy players until it reopens.' }
   }
@@ -1152,7 +1166,12 @@ function handleMakeOffer(state, { playerId, fromClubId, fee }) {
     return { ...state, notice: 'The board will not sanction spending beyond the funds available.' }
   }
 
-  const result = evaluateOffer(player, fee)
+  const ownSquad = state.squads[state.playerClubId]
+  const swapPlayers = swapPlayerIds.map((id) => ownSquad.find((p) => p.id === id)).filter(Boolean)
+  const swapValue = swapPlayers.reduce((sum, p) => sum + estimatePlayerValue(p), 0)
+  const clampedSellOn = Math.max(0, Math.min(30, sellOnPercent))
+
+  const result = evaluateOffer(player, fee, { swapValue, sellOnPercent: clampedSellOn })
   const logEntry = { week: state.week, playerName: player.name, fee, outcome: result.accepted ? 'accepted' : 'rejected', message: result.message }
 
   if (!result.accepted) {
@@ -1163,24 +1182,150 @@ function handleMakeOffer(state, { playerId, fromClubId, fee }) {
     }
   }
 
-  const sellerSquad = state.squads[fromClubId].filter((p) => p.id !== playerId)
-  const buyerSquad = [...state.squads[state.playerClubId], { ...player, listed: false, scouted: true }]
+  const { netFee, payouts } = settleSellOnClauses(player, fee)
+  const swapIds = new Set(swapPlayers.map((p) => p.id))
   const sellerClub = state.clubs[fromClubId]
+
+  const clubs = {
+    ...state.clubs,
+    [fromClubId]: { ...sellerClub, bankBalance: sellerClub.bankBalance + netFee },
+    [state.playerClubId]: { ...club, budget: club.budget - fee, bankBalance: club.bankBalance - fee },
+  }
+  for (const payout of payouts) {
+    clubs[payout.clubId] = { ...clubs[payout.clubId], bankBalance: clubs[payout.clubId].bankBalance + payout.amount }
+  }
+
+  const acquiredPlayer = {
+    ...player,
+    listed: false,
+    scouted: true,
+    sellOnClauses: clampedSellOn > 0 ? [...(player.sellOnClauses ?? []), { clubId: fromClubId, percent: clampedSellOn }] : (player.sellOnClauses ?? []),
+  }
 
   return {
     ...state,
     squads: {
       ...state.squads,
-      [fromClubId]: sellerSquad,
-      [state.playerClubId]: buyerSquad,
+      [fromClubId]: [...state.squads[fromClubId].filter((p) => p.id !== playerId), ...swapPlayers],
+      [state.playerClubId]: [...ownSquad.filter((p) => !swapIds.has(p.id)), acquiredPlayer],
     },
-    clubs: {
-      ...state.clubs,
-      [fromClubId]: { ...sellerClub, bankBalance: sellerClub.bankBalance + fee },
-      [state.playerClubId]: { ...club, budget: club.budget - fee, bankBalance: club.bankBalance - fee },
-    },
+    clubs,
     transferLog: [logEntry, ...state.transferLog].slice(0, 20),
     notice: result.message,
+  }
+}
+
+function handleOfferPlayerToClub(state, { playerId, clubId, askingFee }) {
+  if (!isTransferWindowOpen(state.week)) {
+    return { ...state, notice: 'The transfer window is closed — you cannot sell players until it reopens.' }
+  }
+  const squad = state.squads[state.playerClubId]
+  const player = squad.find((p) => p.id === playerId)
+  const targetSquad = state.squads[clubId]
+  if (!player || !targetSquad) return state
+
+  const result = evaluateClubInterest(targetSquad, player, askingFee)
+  const logEntry = { week: state.week, playerName: player.name, fee: askingFee, outcome: result.accepted ? 'accepted' : 'rejected', message: result.message }
+
+  if (!result.accepted) {
+    return { ...state, transferLog: [logEntry, ...state.transferLog].slice(0, 20), notice: result.message }
+  }
+
+  const club = state.clubs[state.playerClubId]
+  const targetClub = state.clubs[clubId]
+  const { netFee, payouts } = settleSellOnClauses(player, askingFee)
+
+  const clubs = {
+    ...state.clubs,
+    [state.playerClubId]: { ...club, bankBalance: club.bankBalance + netFee },
+    [clubId]: { ...targetClub, bankBalance: targetClub.bankBalance - askingFee },
+  }
+  for (const payout of payouts) {
+    clubs[payout.clubId] = { ...clubs[payout.clubId], bankBalance: clubs[payout.clubId].bankBalance + payout.amount }
+  }
+
+  return {
+    ...state,
+    squads: {
+      ...state.squads,
+      [state.playerClubId]: squad.filter((p) => p.id !== playerId),
+      [clubId]: [...targetSquad, { ...player, listed: false }],
+    },
+    clubs,
+    transferLog: [logEntry, ...state.transferLog].slice(0, 20),
+    notice: result.message,
+  }
+}
+
+function handleLoanOutPlayer(state, { playerId, clubId, weeks }) {
+  if (!isTransferWindowOpen(state.week)) {
+    return { ...state, notice: 'The transfer window is closed — no loan deals can be done until it reopens.' }
+  }
+  const squad = state.squads[state.playerClubId]
+  const player = squad.find((p) => p.id === playerId)
+  const targetSquad = state.squads[clubId]
+  if (!player || !targetSquad) return state
+  if (player.injured || player.suspended) {
+    return { ...state, notice: `${player.name} cannot go out on loan while unavailable.` }
+  }
+
+  const result = evaluateLoanOffer(targetSquad, player, weeks)
+  if (!result.accepted) {
+    return { ...state, notice: result.message }
+  }
+
+  return {
+    ...state,
+    squads: {
+      ...state.squads,
+      [state.playerClubId]: squad.filter((p) => p.id !== playerId),
+      [clubId]: [...targetSquad, { ...player, loanFromClubId: state.playerClubId, loanWeeksRemaining: weeks }],
+    },
+    notice: result.message,
+  }
+}
+
+function handleRequestLoanPlayer(state, { playerId, clubId, weeks }) {
+  if (!isTransferWindowOpen(state.week)) {
+    return { ...state, notice: 'The transfer window is closed — no loan deals can be done until it reopens.' }
+  }
+  const targetSquad = state.squads[clubId]
+  const player = targetSquad?.find((p) => p.id === playerId)
+  if (!player) return state
+  if (player.injured || player.suspended) {
+    return { ...state, notice: `${player.name} cannot go out on loan while unavailable.` }
+  }
+
+  const result = evaluateLoanRequest(targetSquad, player, weeks)
+  if (!result.accepted) {
+    return { ...state, notice: result.message }
+  }
+
+  return {
+    ...state,
+    squads: {
+      ...state.squads,
+      [clubId]: targetSquad.filter((p) => p.id !== playerId),
+      [state.playerClubId]: [...state.squads[state.playerClubId], { ...player, loanFromClubId: clubId, loanWeeksRemaining: weeks }],
+    },
+    notice: result.message,
+  }
+}
+
+function handleRecallLoan(state, { playerId }) {
+  const clubIds = Object.keys(state.squads)
+  const homeClubId = clubIds.find((id) => state.squads[id].some((p) => p.id === playerId && p.loanFromClubId === state.playerClubId))
+  if (!homeClubId) return state
+  const player = state.squads[homeClubId].find((p) => p.id === playerId)
+
+  return {
+    ...state,
+    squads: {
+      ...state.squads,
+      [homeClubId]: state.squads[homeClubId].filter((p) => p.id !== playerId),
+      [state.playerClubId]: [...state.squads[state.playerClubId], { ...player, loanFromClubId: null, loanWeeksRemaining: 0 }],
+    },
+    notice: `${player.name} has been recalled from loan.`,
   }
 }
 
@@ -1318,6 +1463,14 @@ export function gameReducer(state, action) {
       return handleOfferContract(state, action.payload)
     case 'MAKE_OFFER':
       return handleMakeOffer(state, action.payload)
+    case 'OFFER_PLAYER_TO_CLUB':
+      return handleOfferPlayerToClub(state, action.payload)
+    case 'LOAN_OUT_PLAYER':
+      return handleLoanOutPlayer(state, action.payload)
+    case 'REQUEST_LOAN_PLAYER':
+      return handleRequestLoanPlayer(state, action.payload)
+    case 'RECALL_LOAN':
+      return handleRecallLoan(state, action.payload)
     case 'RELEASE_PLAYER':
       return handleReleasePlayer(state, action.payload)
     case 'SCOUT_PLAYER':

@@ -6,6 +6,8 @@ import { formLabel, currentForm } from '../state/form.js'
 import { expectedWage } from '../state/contracts.js'
 import { windowStatus } from '../state/transferWindows.js'
 import { isRevealed, SCOUT_COST } from '../state/scouting.js'
+import { ALL_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
+import { DEFAULT_LOAN_WEEKS } from '../state/loans.js'
 
 function attrLabels(position) {
   if (position === 'GK') {
@@ -18,6 +20,14 @@ export default function PlayerDetail({ state, dispatch }) {
   const [offerFee, setOfferFee] = useState('')
   const [contractWage, setContractWage] = useState(null)
   const [contractYears, setContractYears] = useState(3)
+  const [goalBonus, setGoalBonus] = useState(null)
+  const [assistBonus, setAssistBonus] = useState(null)
+  const [shopClubId, setShopClubId] = useState(null)
+  const [shopFee, setShopFee] = useState('')
+  const [swapPlayerIds, setSwapPlayerIds] = useState([])
+  const [sellOnPercent, setSellOnPercent] = useState(0)
+  const [loanClubId, setLoanClubId] = useState(null)
+  const [loanWeeks, setLoanWeeks] = useState(DEFAULT_LOAN_WEEKS)
   const [confirmingRelease, setConfirmingRelease] = useState(false)
   const ownSquad = state.squads[state.playerClubId]
   const viewingClubId = state.viewingClubId
@@ -37,6 +47,8 @@ export default function PlayerDetail({ state, dispatch }) {
   }
 
   const isOwn = ownSquad.some((p) => p.id === player.id)
+  const isLoanee = Boolean(player.loanFromClubId)
+  const isPermanentOwn = isOwn && !isLoanee
   const isFreeAgent = state.freeAgents.some((p) => p.id === player.id)
   const labels = attrLabels(player.position)
   const value = estimatePlayerValue(player)
@@ -44,9 +56,24 @@ export default function PlayerDetail({ state, dispatch }) {
   const window_ = windowStatus(state.week)
   const revealed = isRevealed(player)
   const scoutClubId = isOwn ? state.playerClubId : foreignSquad ? viewingClubId : null
+  const otherClubs = ALL_CLUBS.filter((c) => c.id !== state.playerClubId)
 
   function scoutPlayer() {
     dispatch({ type: 'SCOUT_PLAYER', payload: { playerId: player.id, clubId: scoutClubId } })
+  }
+
+  function shopPlayer() {
+    const askingFee = Number(shopFee)
+    if (!askingFee || askingFee <= 0) return
+    dispatch({ type: 'OFFER_PLAYER_TO_CLUB', payload: { playerId: player.id, clubId: shopClubId ?? otherClubs[0]?.id, askingFee } })
+  }
+
+  function loanOutPlayer() {
+    dispatch({ type: 'LOAN_OUT_PLAYER', payload: { playerId: player.id, clubId: loanClubId ?? otherClubs[0]?.id, weeks: Number(loanWeeks) } })
+  }
+
+  function requestLoan() {
+    dispatch({ type: 'REQUEST_LOAN_PLAYER', payload: { playerId: player.id, clubId: viewingClubId, weeks: Number(loanWeeks) } })
   }
 
   function back() {
@@ -58,7 +85,15 @@ export default function PlayerDetail({ state, dispatch }) {
   function makeOffer() {
     const fee = Number(offerFee)
     if (!fee || fee <= 0) return
-    dispatch({ type: 'MAKE_OFFER', payload: { playerId: player.id, fromClubId: viewingClubId, fee } })
+    dispatch({
+      type: 'MAKE_OFFER',
+      payload: { playerId: player.id, fromClubId: viewingClubId, fee, swapPlayerIds, sellOnPercent: Number(sellOnPercent) },
+    })
+    setSwapPlayerIds([])
+  }
+
+  function toggleSwapPlayer(id) {
+    setSwapPlayerIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]))
   }
 
   function signFreeAgent() {
@@ -68,7 +103,16 @@ export default function PlayerDetail({ state, dispatch }) {
 
   function offerContract() {
     const wage = Number(contractWage ?? expectedWage(player))
-    dispatch({ type: 'OFFER_CONTRACT', payload: { playerId: player.id, wage, years: Number(contractYears) } })
+    dispatch({
+      type: 'OFFER_CONTRACT',
+      payload: {
+        playerId: player.id,
+        wage,
+        years: Number(contractYears),
+        goalBonus: Number(goalBonus ?? player.goalBonus ?? 0),
+        assistBonus: Number(assistBonus ?? player.assistBonus ?? 0),
+      },
+    })
   }
 
   function releasePlayer() {
@@ -96,6 +140,18 @@ export default function PlayerDetail({ state, dispatch }) {
             <p>Current ability: {revealed ? `${player.ability}/99` : 'Unknown — scout to reveal'}</p>
             <p>Potential ability: {revealed ? `${player.potential}/99` : 'Unknown — scout to reveal'}</p>
             <p>Wage: {formatWage(player.wage)}</p>
+            {(player.goalBonus > 0 || player.assistBonus > 0) && (
+              <p style={{ fontSize: 14 }}>
+                Bonuses: {player.goalBonus > 0 ? `${formatMoney(player.goalBonus)}/goal` : ''}
+                {player.goalBonus > 0 && player.assistBonus > 0 ? ', ' : ''}
+                {player.assistBonus > 0 ? `${formatMoney(player.assistBonus)}/assist` : ''}
+              </p>
+            )}
+            {player.sellOnClauses?.length > 0 && isOwn && (
+              <p style={{ fontSize: 14 }}>
+                Sell-on clauses owed: {player.sellOnClauses.map((c) => `${CLUB_BY_ID[c.clubId]?.name ?? 'Unknown club'} ${c.percent}%`).join(', ')}
+              </p>
+            )}
             <p>Contract: {player.contractYears === 0 ? 'Expired' : `${player.contractYears} year(s)`}</p>
             <p>Morale: {player.morale}/100</p>
             <p>Fitness: {player.fitness}/100</p>
@@ -166,7 +222,7 @@ export default function PlayerDetail({ state, dispatch }) {
           </div>
         </div>
 
-        {isOwn && (
+        {isPermanentOwn && (
           <div className="panel-inset" style={{ marginTop: 10 }}>
             <strong>Contract Renewal</strong>
             <p style={{ fontSize: 14 }}>Current wage: {formatWage(player.wage)}. Guide expectation: {formatWage(expectedWage(player))}.</p>
@@ -186,6 +242,24 @@ export default function PlayerDetail({ state, dispatch }) {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="field-row">
+              <label htmlFor="goal-bonus">Goal bonus (£/goal)</label>
+              <input
+                id="goal-bonus"
+                type="number"
+                min="0"
+                value={goalBonus ?? player.goalBonus ?? 0}
+                onChange={(e) => setGoalBonus(e.target.value)}
+              />
+              <label htmlFor="assist-bonus">Assist bonus (£/assist)</label>
+              <input
+                id="assist-bonus"
+                type="number"
+                min="0"
+                value={assistBonus ?? player.assistBonus ?? 0}
+                onChange={(e) => setAssistBonus(e.target.value)}
+              />
               <button className="btn btn-primary" onClick={offerContract}>
                 Offer New Deal
               </button>
@@ -193,7 +267,7 @@ export default function PlayerDetail({ state, dispatch }) {
           </div>
         )}
 
-        {isOwn && (
+        {isPermanentOwn && (
           <div className="panel-inset" style={{ marginTop: 10 }}>
             <strong>Release Player</strong>
             <p style={{ fontSize: 14 }}>Terminates their contract immediately - they join the free agent pool and you receive no fee.</p>
@@ -208,6 +282,66 @@ export default function PlayerDetail({ state, dispatch }) {
           </div>
         )}
 
+        {isPermanentOwn && (
+          <div className="panel-inset" style={{ marginTop: 10 }}>
+            <strong>Offer to a Club</strong>
+            <p style={{ fontSize: 14 }}>Shop {player.name} directly to a club at an asking price - they'll weigh it up and accept or reject on the spot.</p>
+            {window_.open ? (
+              <div className="field-row">
+                <label htmlFor="shop-club">Club</label>
+                <select id="shop-club" value={shopClubId ?? otherClubs[0]?.id} onChange={(e) => setShopClubId(e.target.value)}>
+                  {otherClubs.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.division === 'CH' ? '(Championship)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <label htmlFor="shop-fee">Asking fee (£)</label>
+                <input id="shop-fee" type="number" value={shopFee} onChange={(e) => setShopFee(e.target.value)} />
+                <button className="btn btn-primary" onClick={shopPlayer}>
+                  Make Approach
+                </button>
+              </div>
+            ) : (
+              <p className="window-closed">
+                {window_.label}{window_.opensWeek ? ` — reopens Week ${window_.opensWeek}` : ' for the rest of the season'}. No deals can be done until then.
+              </p>
+            )}
+          </div>
+        )}
+
+        {isPermanentOwn && (
+          <div className="panel-inset" style={{ marginTop: 10 }}>
+            <strong>Loan Out</strong>
+            <p style={{ fontSize: 14 }}>Send {player.name} out on loan for a fixed spell - they return automatically once it expires.</p>
+            {window_.open ? (
+              player.injured || player.suspended ? (
+                <p>{player.name} cannot go out on loan while unavailable.</p>
+              ) : (
+                <div className="field-row">
+                  <label htmlFor="loan-club">Club</label>
+                  <select id="loan-club" value={loanClubId ?? otherClubs[0]?.id} onChange={(e) => setLoanClubId(e.target.value)}>
+                    {otherClubs.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.division === 'CH' ? '(Championship)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <label htmlFor="loan-weeks">Weeks</label>
+                  <input id="loan-weeks" type="number" min="1" max="20" value={loanWeeks} onChange={(e) => setLoanWeeks(e.target.value)} />
+                  <button className="btn btn-primary" onClick={loanOutPlayer}>
+                    Arrange Loan
+                  </button>
+                </div>
+              )
+            ) : (
+              <p className="window-closed">
+                {window_.label}{window_.opensWeek ? ` — reopens Week ${window_.opensWeek}` : ' for the rest of the season'}. No loan deals can be done until then.
+              </p>
+            )}
+          </div>
+        )}
+
         {!isOwn && !isFreeAgent && (
           <div className="panel-inset" style={{ marginTop: 10 }}>
             {window_.open ? (
@@ -215,15 +349,56 @@ export default function PlayerDetail({ state, dispatch }) {
                 <div className="field-row">
                   <label htmlFor="offer-fee">Offer fee (£)</label>
                   <input id="offer-fee" type="number" value={offerFee} onChange={(e) => setOfferFee(e.target.value)} />
+                  <label htmlFor="sell-on-percent">Sell-on clause</label>
+                  <select id="sell-on-percent" value={sellOnPercent} onChange={(e) => setSellOnPercent(e.target.value)}>
+                    {[0, 10, 20, 30].map((pct) => (
+                      <option key={pct} value={pct}>
+                        {pct === 0 ? 'None' : `${pct}%`}
+                      </option>
+                    ))}
+                  </select>
                   <button className="btn btn-primary" onClick={makeOffer}>
                     Submit Offer
                   </button>
+                </div>
+                <div className="panel-inset" style={{ marginTop: 8 }}>
+                  <strong>Include players as part-exchange</strong>
+                  <p style={{ fontSize: 13 }}>Sweetens the deal, valued at a discount to cash - tick any you're willing to include.</p>
+                  <div className="scrollbox" style={{ maxHeight: 140 }}>
+                    {ownSquad.map((p) => (
+                      <label key={p.id} style={{ display: 'block', fontSize: 14 }}>
+                        <input type="checkbox" checked={swapPlayerIds.includes(p.id)} onChange={() => toggleSwapPlayer(p.id)} />
+                        {' '}
+                        {p.name} ({p.position}, {formatWage(p.wage)})
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <p>Transfer budget remaining: <Money value={club.budget} /></p>
               </>
             ) : (
               <p className="window-closed">
                 {window_.label}{window_.opensWeek ? ` — reopens Week ${window_.opensWeek}` : ' for the rest of the season'}. No offers can be made until then.
+              </p>
+            )}
+          </div>
+        )}
+
+        {!isOwn && !isFreeAgent && !isLoanee && (
+          <div className="panel-inset" style={{ marginTop: 10 }}>
+            <strong>Request on Loan</strong>
+            <p style={{ fontSize: 14 }}>Ask to take {player.name} on loan instead of buying outright.</p>
+            {window_.open ? (
+              <div className="field-row">
+                <label htmlFor="request-loan-weeks">Weeks</label>
+                <input id="request-loan-weeks" type="number" min="1" max="20" value={loanWeeks} onChange={(e) => setLoanWeeks(e.target.value)} />
+                <button className="btn btn-primary" onClick={requestLoan}>
+                  Request Loan
+                </button>
+              </div>
+            ) : (
+              <p className="window-closed">
+                {window_.label}{window_.opensWeek ? ` — reopens Week ${window_.opensWeek}` : ' for the rest of the season'}. No loan deals can be done until then.
               </p>
             )}
           </div>

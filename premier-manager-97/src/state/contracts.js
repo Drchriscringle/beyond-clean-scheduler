@@ -10,6 +10,19 @@ export function expectedWage(player) {
   return Math.round(player.wage * formFactor * ageFactor)
 }
 
+// Bonuses are pure extras on top of the negotiated wage - a player never
+// turns down free money, so they don't factor into accept/reject below.
+export function computeBonusPayout(squad, goals) {
+  let total = 0
+  for (const player of squad) {
+    if (!player.goalBonus && !player.assistBonus) continue
+    const goalsScored = goals.filter((g) => g.scorerId === player.id).length
+    const assistsMade = goals.filter((g) => g.assistId === player.id).length
+    total += goalsScored * player.goalBonus + assistsMade * player.assistBonus
+  }
+  return total
+}
+
 export function evaluateContractOffer(player, wage, years) {
   if (years < 1 || years > 5) {
     return { accepted: false, message: `${player.name}'s agent won't discuss a deal of that length.` }

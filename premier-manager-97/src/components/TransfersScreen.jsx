@@ -14,6 +14,11 @@ export default function TransfersScreen({ state, dispatch }) {
   const browseSquad = state.squads[browseClubId] ?? []
   const window_ = windowStatus(state.week)
 
+  const loanedOut = Object.keys(state.squads)
+    .filter((id) => id !== state.playerClubId)
+    .flatMap((id) => state.squads[id].filter((p) => p.loanFromClubId === state.playerClubId).map((p) => ({ ...p, currentClubId: id })))
+  const loanedIn = ownSquad.filter((p) => p.loanFromClubId && p.loanFromClubId !== state.playerClubId)
+
   function viewPlayer(playerId, clubId) {
     dispatch({ type: 'NAVIGATE', payload: { screen: 'player-detail', playerId, clubId } })
   }
@@ -29,7 +34,7 @@ export default function TransfersScreen({ state, dispatch }) {
             : `${window_.label}${window_.opensWeek ? ` — reopens Week ${window_.opensWeek}` : ' for the rest of the season'}`}
         </p>
         <div className="tabs">
-          {['browse', 'free-agents', 'listed', 'offers', 'activity'].map((t) => (
+          {['browse', 'free-agents', 'listed', 'loans', 'offers', 'activity'].map((t) => (
             <button key={t} className={`tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
               {t === 'browse'
                 ? 'Browse Clubs'
@@ -37,9 +42,11 @@ export default function TransfersScreen({ state, dispatch }) {
                   ? 'Free Agents'
                   : t === 'listed'
                     ? 'Transfer List'
-                    : t === 'offers'
-                      ? `Offers${state.incomingOffers.length > 0 ? ` (${state.incomingOffers.length})` : ''}`
-                      : 'Activity'}
+                    : t === 'loans'
+                      ? `Loans${loanedOut.length + loanedIn.length > 0 ? ` (${loanedOut.length + loanedIn.length})` : ''}`
+                      : t === 'offers'
+                        ? `Offers${state.incomingOffers.length > 0 ? ` (${state.incomingOffers.length})` : ''}`
+                        : 'Activity'}
             </button>
           ))}
         </div>
@@ -140,6 +147,33 @@ export default function TransfersScreen({ state, dispatch }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {tab === 'loans' && (
+            <div className="scrollbox">
+              <h3>Out on Loan</h3>
+              {loanedOut.length === 0 && <p>No players currently out on loan. Loan a fringe player out from their Player Detail page.</p>}
+              {loanedOut.map((p) => (
+                <div key={p.id} className="panel-inset" style={{ marginBottom: 8 }}>
+                  <p>
+                    <strong>{p.name}</strong> ({p.position}) at {CLUB_BY_ID[p.currentClubId]?.name} — {p.loanWeeksRemaining} week(s) remaining
+                  </p>
+                  <button className="btn btn-small" onClick={() => dispatch({ type: 'RECALL_LOAN', payload: { playerId: p.id } })}>
+                    Recall Now
+                  </button>
+                </div>
+              ))}
+
+              <h3 style={{ marginTop: 16 }}>On Loan to You</h3>
+              {loanedIn.length === 0 && <p>No incoming loan players. Request one from another club's Player Detail page.</p>}
+              {loanedIn.map((p) => (
+                <div key={p.id} className="panel-inset" style={{ marginBottom: 8 }}>
+                  <p>
+                    <strong>{p.name}</strong> ({p.position}) on loan from {CLUB_BY_ID[p.loanFromClubId]?.name} — returns in {p.loanWeeksRemaining} week(s)
+                  </p>
+                </div>
+              ))}
             </div>
           )}
 
