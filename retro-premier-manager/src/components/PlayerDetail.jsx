@@ -7,7 +7,7 @@ import { expectedWage } from '../state/contracts.js'
 import { windowStatus } from '../state/transferWindows.js'
 import { isRevealed, SCOUT_COST } from '../state/scouting.js'
 import { PERSONALITIES } from '../state/personality.js'
-import { ALL_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
+import { ALL_CLUBS, CLUB_BY_ID, clubTag } from '../data/clubs.js'
 import { DEFAULT_LOAN_WEEKS } from '../state/loans.js'
 
 function attrLabels(position) {
@@ -299,7 +299,7 @@ export default function PlayerDetail({ state, dispatch }) {
                 <select id="shop-club" value={shopClubId ?? otherClubs[0]?.id} onChange={(e) => setShopClubId(e.target.value)}>
                   {otherClubs.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} {c.division === 'CH' ? '(Championship)' : c.league ? `(${c.league})` : ''}
+                      {c.name} {clubTag(c)}
                     </option>
                   ))}
                 </select>
@@ -330,7 +330,7 @@ export default function PlayerDetail({ state, dispatch }) {
                   <select id="loan-club" value={loanClubId ?? otherClubs[0]?.id} onChange={(e) => setLoanClubId(e.target.value)}>
                     {otherClubs.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} {c.division === 'CH' ? '(Championship)' : ''}
+                        {c.name} {clubTag(c)}
                       </option>
                     ))}
                   </select>

@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from 'react'
 import { gameReducer, makeInitialState, leaguePositionOf, playerLeagueClubIds } from './state/gameReducer.js'
 import { saveGame } from './state/persistence.js'
-import { CLUB_BY_ID } from './data/clubs.js'
+import { CLUB_BY_ID, DIVISION_LABELS } from './data/clubs.js'
 import MenuBar from './components/MenuBar.jsx'
 import { NoticeBanner, Money } from './components/shared.jsx'
 import NewGameScreen from './components/NewGameScreen.jsx'
@@ -83,7 +83,7 @@ export default function App() {
   const club = state.clubs[state.playerClubId]
   const clubIds = playerLeagueClubIds(state)
   const position = leaguePositionOf(state.standings, clubIds, state.playerClubId)
-  const divisionName = club.division === 'CH' ? 'Championship' : 'Premier League'
+  const divisionName = DIVISION_LABELS[club.division]
 
   if (state.screen === 'commercial') {
     return (

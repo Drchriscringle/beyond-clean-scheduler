@@ -37,6 +37,8 @@ export default function NewsScreen({ state, dispatch }) {
   const results = state.weekResults
   const plResults = results.filter((r) => state.clubs[r.home]?.division === 'PL')
   const chResults = results.filter((r) => state.clubs[r.home]?.division === 'CH')
+  const splResults = results.filter((r) => state.clubs[r.home]?.division === 'SPL')
+  const schResults = results.filter((r) => state.clubs[r.home]?.division === 'SCH')
   const lastCupRound = state.cup?.history?.[state.cup.history.length - 1]
   const awards = state.lastSeasonAwards
 
@@ -82,6 +84,34 @@ export default function NewsScreen({ state, dispatch }) {
           <div className="scrollbox">
             <ul>
               {chResults.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">SCOTTISH PREMIERSHIP RESULTS</div>
+          {splResults.length === 0 && <p>No Scottish Premiership fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {splResults.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">SCOTTISH CHAMPIONSHIP RESULTS</div>
+          {schResults.length === 0 && <p>No Scottish Championship fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {schResults.map((r, i) => (
                 <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
                   {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
                 </li>

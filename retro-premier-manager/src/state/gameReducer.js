@@ -1,8 +1,9 @@
-import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, totalCapacity } from '../data/clubs.js'
+import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, DIVISION_LABELS, totalCapacity } from '../data/clubs.js'
 import { FOREIGN_CLUBS } from '../data/foreignClubs.js'
+import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
-import { generateFixtures, combineFixturesByWeek } from './fixtures.js'
+import { generateSeasonFixtures, combineFixturesByWeek } from './fixtures.js'
 import { pickBestXI } from './lineup.js'
 import { simulateMatch, simulateMatchSegment, finalizeRatings } from './matchSim.js'
 import {
@@ -48,6 +49,7 @@ import {
 } from './international.js'
 
 const LEDGER_LIMIT = 30
+const SEASON_WEEKS = 38
 const MATCH_TICK_MINUTES = 3
 const MATCH_HALF_TIME_MINUTE = 45
 const MATCH_FULL_TIME_MINUTE = 90
@@ -148,7 +150,7 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const season = 2025
   const abilityMultiplier = aiAbilityMultiplier(difficulty)
 
-  for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS]) {
+  for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS]) {
     const sponsorshipDeal = generateSponsorshipOffers(staticClub.reputation)[0]
     const merchandiseDeal = generateMerchandiseOffers(staticClub.reputation)[0]
     clubs[staticClub.id] = {
@@ -183,7 +185,14 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
 
   const plIds = CLUBS.map((c) => c.id)
   const chIds = CHAMPIONSHIP_CLUBS.map((c) => c.id)
-  const fixtures = combineFixturesByWeek(generateFixtures(plIds), generateFixtures(chIds))
+  const splIds = SCOTTISH_PREMIERSHIP_CLUBS.map((c) => c.id)
+  const schIds = SCOTTISH_CHAMPIONSHIP_CLUBS.map((c) => c.id)
+  const fixtures = combineFixturesByWeek(
+    generateSeasonFixtures(plIds, SEASON_WEEKS),
+    generateSeasonFixtures(chIds, SEASON_WEEKS),
+    generateSeasonFixtures(splIds, SEASON_WEEKS),
+    generateSeasonFixtures(schIds, SEASON_WEEKS),
+  )
   const playerClub = clubs[clubId]
 
   // The squad you inherit is already known to you - only fresh youth intake,
@@ -749,6 +758,7 @@ function advanceWeek(state, precomputed = null) {
       concessionPrice: club.concessionPrice,
       leaguePosition: position,
       formGoodwill,
+      divisionSize: leagueClubIds.length,
     })
   }
 
@@ -764,6 +774,7 @@ function advanceWeek(state, precomputed = null) {
           leaguePosition: position,
           reputation: club.reputation,
           resultPoints: playerResultPoints,
+          divisionSize: leagueClubIds.length,
         })
       : club.boardConfidence
 
@@ -836,22 +847,26 @@ function advanceWeek(state, precomputed = null) {
   return weekReturn
 }
 
-// Bottom 3 of the Premier League go down; top 2 of the Championship go up
-// automatically, and the 3rd-6th placed Championship clubs contest a
-// single-match play-off (two semis, then a final) for the third promotion
-// spot - the real English pyramid's rule, simplified to instant results.
-function resolvePromotionRelegation(state, clubs) {
-  const oldPlIds = divisionClubIds(state.clubs, 'PL')
-  const oldChIds = divisionClubIds(state.clubs, 'CH')
-  const plTable = standingsToTable(state.standings, oldPlIds)
-  const chTable = standingsToTable(state.standings, oldChIds)
+// Shared shape for a two-division pyramid: `relegationCount` go down from
+// the top division, `autoPromoteCount` go up automatically from the bottom
+// one, and the next `playoffPoolSize` (always 4, for a two-semis-plus-final
+// bracket) contest a single-match play-off for the remaining promotion
+// spot(s) - relegationCount must equal autoPromoteCount + 1 (the playoff
+// winner) for the pyramid to stay the same size season to season.
+function resolveDivisionPromotionRelegation(state, clubs, { topDivision, bottomDivision, relegationCount, autoPromoteCount, playoffPoolSize = 4 }) {
+  const oldTopIds = divisionClubIds(state.clubs, topDivision)
+  const oldBottomIds = divisionClubIds(state.clubs, bottomDivision)
+  const topTable = standingsToTable(state.standings, oldTopIds)
+  const bottomTable = standingsToTable(state.standings, oldBottomIds)
+  const topLabel = DIVISION_LABELS[topDivision]
+  const bottomLabel = DIVISION_LABELS[bottomDivision]
 
-  const relegatedIds = plTable.slice(-3).map((r) => r.clubId)
-  const autoPromotedIds = chTable.slice(0, 2).map((r) => r.clubId)
+  const relegatedIds = topTable.slice(-relegationCount).map((r) => r.clubId)
+  const autoPromotedIds = bottomTable.slice(0, autoPromoteCount).map((r) => r.clubId)
 
   let playoffWinnerId = null
   let playoffNotice = ''
-  const contenders = chTable.slice(2, 6).map((r) => r.clubId)
+  const contenders = bottomTable.slice(autoPromoteCount, autoPromoteCount + playoffPoolSize).map((r) => r.clubId)
   if (contenders.length === 4) {
     const ctx = { clubs, squads: state.squads, lineups: state.lineups, tactics: state.tactics, playerClubId: state.playerClubId }
     const [p3, p4, p5, p6] = contenders
@@ -859,26 +874,55 @@ function resolvePromotionRelegation(state, clubs) {
     const semi2 = simulateCupTie(p4, p5, ctx)
     const final = simulateCupTie(semi1.winner, semi2.winner, ctx)
     playoffWinnerId = final.winner
-    playoffNotice = ` Championship play-off final: ${CLUB_BY_ID[semi1.winner].name} ${final.homeGoals}-${final.awayGoals} ${CLUB_BY_ID[semi2.winner].name} — ${CLUB_BY_ID[playoffWinnerId].name} are promoted.`
+    playoffNotice = ` ${bottomLabel} play-off final: ${CLUB_BY_ID[semi1.winner].name} ${final.homeGoals}-${final.awayGoals} ${CLUB_BY_ID[semi2.winner].name} — ${CLUB_BY_ID[playoffWinnerId].name} are promoted.`
   }
 
   const promotedIds = playoffWinnerId ? [...autoPromotedIds, playoffWinnerId] : autoPromotedIds
 
-  for (const id of relegatedIds) clubs[id] = { ...clubs[id], division: 'CH' }
-  for (const id of promotedIds) clubs[id] = { ...clubs[id], division: 'PL' }
+  for (const id of relegatedIds) clubs[id] = { ...clubs[id], division: bottomDivision }
+  for (const id of promotedIds) clubs[id] = { ...clubs[id], division: topDivision }
 
   const playerClubId = state.playerClubId
   let headline = ''
-  if (relegatedIds.includes(playerClubId)) headline = 'YOU HAVE BEEN RELEGATED TO THE CHAMPIONSHIP. '
-  else if (promotedIds.includes(playerClubId)) headline = 'YOU HAVE WON PROMOTION TO THE PREMIER LEAGUE! '
+  if (relegatedIds.includes(playerClubId)) headline = `YOU HAVE BEEN RELEGATED TO THE ${bottomLabel.toUpperCase()}. `
+  else if (promotedIds.includes(playerClubId)) headline = `YOU HAVE WON PROMOTION TO THE ${topLabel.toUpperCase()}! `
 
   const notice =
-    `${headline}Relegated to the Championship: ${relegatedIds.map((id) => CLUB_BY_ID[id].name).join(', ')}. ` +
-    `Promoted to the Premier League: ${autoPromotedIds.map((id) => CLUB_BY_ID[id].name).join(', ')} (automatic)` +
+    `${headline}Relegated to the ${bottomLabel}: ${relegatedIds.map((id) => CLUB_BY_ID[id].name).join(', ')}. ` +
+    `Promoted to the ${topLabel}: ${autoPromotedIds.map((id) => CLUB_BY_ID[id].name).join(', ')} (automatic)` +
     `${playoffWinnerId ? ` and ${CLUB_BY_ID[playoffWinnerId].name} (play-offs)` : ''}.` +
     playoffNotice
 
   return { notice }
+}
+
+// Bottom 3 of the Premier League go down; top 2 of the Championship go up
+// automatically, and the 3rd-6th placed Championship clubs contest a
+// single-match play-off (two semis, then a final) for the third promotion
+// spot - the real English pyramid's rule, simplified to instant results.
+function resolvePromotionRelegation(state, clubs) {
+  return resolveDivisionPromotionRelegation(state, clubs, {
+    topDivision: 'PL',
+    bottomDivision: 'CH',
+    relegationCount: 3,
+    autoPromoteCount: 2,
+  })
+}
+
+// Same shape, recalibrated to the Scottish pyramid's smaller divisions:
+// bottom 2 of the Premiership go down (instead of the top flight's 11th
+// place surviving via a cross-division play-off, which would need a new
+// kind of tie this abstraction doesn't otherwise support), the Championship
+// champion goes up automatically, and 2nd-5th contest a play-off for the
+// second promotion spot - so relegationCount (2) still equals autoPromoteCount
+// + the playoff winner (1 + 1), keeping both divisions the same size.
+function resolveScottishPromotionRelegation(state, clubs) {
+  return resolveDivisionPromotionRelegation(state, clubs, {
+    topDivision: 'SPL',
+    bottomDivision: 'SCH',
+    relegationCount: 2,
+    autoPromoteCount: 1,
+  })
 }
 
 function seasonRollover(state) {
@@ -938,12 +982,20 @@ function seasonRollover(state) {
     }),
   })
   const { notice: promotionRelegationNotice } = resolvePromotionRelegation(state, clubs)
+  const { notice: scottishPromotionRelegationNotice } = resolveScottishPromotionRelegation(state, clubs)
   const squads = {}
   const season = state.season + 1
   let releasedFromPlayerClub = []
 
   for (const id of Object.keys(state.squads)) {
     const club = clubs[id]
+    // Foreign clubs have no facilities/objective/season lifecycle of their
+    // own (see foreignClubs.js) - their squads stay exactly as generated,
+    // never aging or taking a youth intake.
+    if (club.division === 'FOREIGN') {
+      squads[id] = state.squads[id]
+      continue
+    }
     const training = TRAINING_LEVELS.find((l) => l.level === club.facilities.training) ?? TRAINING_LEVELS[0]
 
     let aged = state.squads[id].map((p) => {
@@ -983,7 +1035,14 @@ function seasonRollover(state) {
 
   const newPlIds = divisionClubIds(clubs, 'PL')
   const newChIds = divisionClubIds(clubs, 'CH')
-  const fixtures = combineFixturesByWeek(generateFixtures(newPlIds), generateFixtures(newChIds))
+  const newSplIds = divisionClubIds(clubs, 'SPL')
+  const newSchIds = divisionClubIds(clubs, 'SCH')
+  const fixtures = combineFixturesByWeek(
+    generateSeasonFixtures(newPlIds, SEASON_WEEKS),
+    generateSeasonFixtures(newChIds, SEASON_WEEKS),
+    generateSeasonFixtures(newSplIds, SEASON_WEEKS),
+    generateSeasonFixtures(newSchIds, SEASON_WEEKS),
+  )
   const playerClub = {
     ...clubs[playerClubId],
     boardConfidence: confidenceAfterObjective,
@@ -1024,7 +1083,7 @@ function seasonRollover(state) {
     screen: jobOfferClubIds.length > 0 ? 'job-offers' : 'commercial',
     internationalOffer,
     notice:
-      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice}` +
+      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice} ${scottishPromotionRelegationNotice}` +
       (europeanQualification
         ? ` You've qualified for the ${europeanQualification === 'UCL' ? 'Champions League' : 'Europa League'} next season!`
         : '') +
@@ -1041,6 +1100,7 @@ function handleRequestBudget(state, { amount, reason }) {
     lastRequestWeek: club.lastRequestWeek,
     currentWeek: state.week,
     leaguePosition: position,
+    divisionSize: playerLeagueClubIds(state).length,
     amount,
   })
 
@@ -1644,4 +1704,4 @@ export function gameReducer(state, action) {
   }
 }
 
-export { estimatePlayerValue, leaguePositionOf, resolvePromotionRelegation }
+export { estimatePlayerValue, leaguePositionOf, resolvePromotionRelegation, resolveScottishPromotionRelegation }

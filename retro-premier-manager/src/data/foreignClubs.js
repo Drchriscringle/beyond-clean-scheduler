@@ -23,14 +23,6 @@ const EURO_LEAGUE_BY_ID = {
   'euro-shakhtar': 'Ukrainian Premier League',
 }
 
-const SCOTTISH_CLUBS_RAW = [
-  { id: 'scot-celtic', name: 'Celtic', reputation: 3 },
-  { id: 'scot-rangers', name: 'Rangers', reputation: 3 },
-  { id: 'scot-aberdeen', name: 'Aberdeen', reputation: 2 },
-  { id: 'scot-hearts', name: 'Heart of Midlothian', reputation: 2 },
-  { id: 'scot-hibernian', name: 'Hibernian', reputation: 1 },
-]
-
 const BANK_BALANCE_PER_REPUTATION = 25_000_000
 
 // Foreign clubs are a persistent but deliberately shallow tier: they have
@@ -41,17 +33,14 @@ const BANK_BALANCE_PER_REPUTATION = 25_000_000
 // own (division: 'FOREIGN' keeps them out of every division-filtered league
 // system), and their squads don't age or take a youth intake at season
 // rollover - they stay exactly as generated.
-export const FOREIGN_CLUBS = [
-  ...EUROPEAN_CLUBS.map((c) => ({
-    ...c,
-    division: 'FOREIGN',
-    league: EURO_LEAGUE_BY_ID[c.id] ?? 'European',
-    bankBalance: c.reputation * BANK_BALANCE_PER_REPUTATION,
-  })),
-  ...SCOTTISH_CLUBS_RAW.map((c) => ({
-    ...c,
-    division: 'FOREIGN',
-    league: 'Scottish Premiership',
-    bankBalance: c.reputation * BANK_BALANCE_PER_REPUTATION,
-  })),
-]
+//
+// Scottish clubs used to live here too, but now have their own fully
+// simulated Scottish Premiership/Championship (see scottishClubs.js) - a
+// real division with fixtures and promotion/relegation, not just a
+// transfer-market shopping pool.
+export const FOREIGN_CLUBS = EUROPEAN_CLUBS.map((c) => ({
+  ...c,
+  division: 'FOREIGN',
+  league: EURO_LEAGUE_BY_ID[c.id] ?? 'European',
+  bankBalance: c.reputation * BANK_BALANCE_PER_REPUTATION,
+}))
