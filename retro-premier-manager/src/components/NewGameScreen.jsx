@@ -3,6 +3,7 @@ import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, DIVISION_LABELS } from '../data/
 import { totalCapacity } from '../data/clubs.js'
 import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
 import { LA_LIGA_CLUBS } from '../data/laLigaClubs.js'
+import { SEGUNDA_CLUBS } from '../data/segundaClubs.js'
 
 const DIVISION_CLUB_LISTS = {
   PL: CLUBS,
@@ -10,6 +11,7 @@ const DIVISION_CLUB_LISTS = {
   SPL: SCOTTISH_PREMIERSHIP_CLUBS,
   SCH: SCOTTISH_CHAMPIONSHIP_CLUBS,
   LALIGA: LA_LIGA_CLUBS,
+  SEGUNDA: SEGUNDA_CLUBS,
 }
 import { formatMoney } from '../utils/format.js'
 import { RepStars } from './shared.jsx'

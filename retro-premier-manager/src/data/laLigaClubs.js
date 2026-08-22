@@ -2,9 +2,10 @@
 // all financial figures, squads and results in this game are simulated and
 // should not be read as real-world data - player names are generated, not
 // real footballers (see generateSquad.js), consistent with every other club
-// in the game. A single, standalone top flight: there's no Segunda División
-// modelled, so (like the bottom of any other unpaired division in this
-// game) nobody is ever relegated out of it.
+// in the game. Paired with the Segunda División (see segundaClubs.js) for
+// promotion/relegation, mirroring the English Premier League/Championship
+// pyramid shape exactly (see resolveLaLigaPromotionRelegation in
+// gameReducer.js).
 
 const LA_LIGA_RAW = [
   {

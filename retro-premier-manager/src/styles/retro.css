@@ -401,6 +401,16 @@ table.pm-table tbody tr.zone-relegation {
   background: #f8d6d6;
 }
 
+.form-guide {
+  display: flex;
+  gap: 2px;
+}
+.form-guide .result-badge {
+  min-width: 14px;
+  font-size: 12px;
+  padding: 1px 3px;
+}
+
 /* ---------- Matchday screen ---------- */
 .matchday-screen {
   max-width: 900px;

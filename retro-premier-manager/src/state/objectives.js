@@ -90,6 +90,22 @@ const LALIGA_OBJECTIVE_POOL = {
   ],
 }
 
+// Segunda División clubs are judged on promotion, not on European
+// qualification - same shape as the English Championship pool.
+const SEGUNDA_OBJECTIVE_POOL = {
+  3: [
+    { type: 'win-segunda', label: 'Win the Segunda Division (Automatic Promotion)', targetPosition: 1 },
+    { type: 'auto-promotion-segunda', label: 'Achieve Automatic Promotion (Top 2)', targetPosition: 2 },
+  ],
+  2: [
+    { type: 'playoffs-segunda', label: 'Reach the Promotion Play-offs (Top 6)', targetPosition: 6 },
+    { type: 'top-half-segunda', label: 'Finish in the Top Half', targetPosition: 10 },
+  ],
+  1: [
+    { type: 'avoid-relegation-segunda', label: 'Avoid Relegation (17th or Better)', targetPosition: 17 },
+  ],
+}
+
 export function generateObjective(reputation, rng = Math.random, division = 'PL') {
   const pool =
     division === 'CH'
@@ -100,7 +116,9 @@ export function generateObjective(reputation, rng = Math.random, division = 'PL'
           ? SCOTTISH_CHAMPIONSHIP_OBJECTIVE_POOL
           : division === 'LALIGA'
             ? LALIGA_OBJECTIVE_POOL
-            : OBJECTIVE_POOL
+            : division === 'SEGUNDA'
+              ? SEGUNDA_OBJECTIVE_POOL
+              : OBJECTIVE_POOL
   const list = pool[reputation] ?? pool[3] ?? pool[1]
   return list[Math.floor(rng() * list.length)]
 }

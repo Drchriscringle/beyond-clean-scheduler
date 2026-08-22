@@ -8,7 +8,8 @@ import { generateSeasonFixtures } from '../src/state/fixtures.js'
 import { generateObjective } from '../src/state/objectives.js'
 import { tvIncomeForWeek } from '../src/state/finance.js'
 import { qualificationForPosition } from '../src/state/europe.js'
-import { gameReducer, makeInitialState, playerLeagueClubIds } from '../src/state/gameReducer.js'
+import { SEGUNDA_CLUBS } from '../src/data/segundaClubs.js'
+import { gameReducer, makeInitialState, playerLeagueClubIds, standingsToTable, resolveLaLigaPromotionRelegation } from '../src/state/gameReducer.js'
 
 test('La Liga has 20 clubs, unique ids, and no collisions with English/Scottish/foreign clubs', () => {
   assert.equal(LA_LIGA_CLUBS.length, 20)
@@ -72,7 +73,7 @@ test('starting a new game as a La Liga club sets up all five divisions correctly
   assert.equal(state.clubs['real-madrid'].division, 'LALIGA')
   assert.equal(playerLeagueClubIds(state).length, 20)
 
-  for (const division of ['PL', 'CH', 'SPL', 'SCH', 'LALIGA']) {
+  for (const division of ['PL', 'CH', 'SPL', 'SCH', 'LALIGA', 'SEGUNDA']) {
     const ids = Object.keys(state.clubs).filter((id) => state.clubs[id].division === division)
     assert.ok(ids.length > 0, `no clubs found for division ${division}`)
     for (const id of ids) {
@@ -84,7 +85,7 @@ test('starting a new game as a La Liga club sets up all five divisions correctly
 
   const week1 = state.fixtures.find((f) => f.week === 1)
   const divisionsPlaying = new Set(week1.matches.map((m) => state.clubs[m.home].division))
-  assert.equal(divisionsPlaying.size, 5)
+  assert.equal(divisionsPlaying.size, 6)
 
   assert.equal(state.fixtures.length, 38)
 })
@@ -96,17 +97,78 @@ test('finishing in the top 4 of La Liga qualifies for the Champions League, same
   assert.equal(qualificationForPosition(7), null)
 })
 
-test('La Liga clubs are never touched by promotion/relegation - there is no Segunda División modelled', () => {
+test('Segunda Division has 20 clubs, unique ids, and no collisions with any other division', () => {
+  assert.equal(SEGUNDA_CLUBS.length, 20)
+
+  const allIds = new Set()
+  for (const club of SEGUNDA_CLUBS) {
+    assert.ok(!allIds.has(club.id), `duplicate id: ${club.id}`)
+    allIds.add(club.id)
+    assert.equal(club.division, 'SEGUNDA')
+    assert.ok(Array.isArray(club.stands) && club.stands.length > 0)
+    assert.ok(club.startingBudget > 0 && club.bankBalance > 0 && club.ticketPrice > 0)
+  }
+
+  const otherIds = new Set(
+    [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS, ...LA_LIGA_CLUBS, ...FOREIGN_CLUBS].map(
+      (c) => c.id,
+    ),
+  )
+  for (const id of allIds) assert.ok(!otherIds.has(id), `Segunda Division id collides with another club: ${id}`)
+
+  for (const club of SEGUNDA_CLUBS) {
+    assert.equal(CLUB_BY_ID[club.id]?.name, club.name)
+    assert.ok(ALL_CLUBS.some((c) => c.id === club.id))
+  }
+
+  assert.equal(DIVISION_LABELS.SEGUNDA, 'Segunda Division')
+})
+
+test('generateObjective returns a sensible target position for Segunda Division clubs', () => {
+  for (const club of SEGUNDA_CLUBS) {
+    const objective = generateObjective(club.reputation, () => 0, 'SEGUNDA')
+    assert.ok(objective.targetPosition >= 1 && objective.targetPosition <= 17, `SEGUNDA target ${objective.targetPosition} out of range for ${club.id}`)
+  }
+})
+
+test('tvIncomeForWeek gives the Segunda Division a smaller pot than La Liga', () => {
+  assert.ok(tvIncomeForWeek(1, 'SEGUNDA') < tvIncomeForWeek(1, 'LALIGA'))
+})
+
+test('resolveLaLigaPromotionRelegation relegates the bottom 3 of La Liga, promotes the top 2 of the Segunda Division and one play-off contender, and keeps both divisions the same size', () => {
   let state = gameReducer(makeInitialState(), { type: 'START_NEW_GAME', payload: { clubId: 'real-madrid', managerName: 'Test' } })
-  state = gameReducer(state, {
-    type: 'CONFIRM_COMMERCIAL_DEALS',
-    payload: { sponsorshipId: state.commercial.sponsorshipOptions[0].id, merchandiseId: state.commercial.merchandiseOptions[0].id },
+
+  const laLigaIds = Object.keys(state.clubs).filter((id) => state.clubs[id].division === 'LALIGA')
+  const segundaIds = Object.keys(state.clubs).filter((id) => state.clubs[id].division === 'SEGUNDA')
+  assert.equal(laLigaIds.length, 20)
+  assert.equal(segundaIds.length, 20)
+
+  const standings = {}
+  laLigaIds.forEach((id, i) => {
+    standings[id] = { played: 38, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, points: (laLigaIds.length - i) * 3 }
   })
-  const laLigaIdsBefore = Object.keys(state.clubs).filter((id) => state.clubs[id].division === 'LALIGA').sort()
+  segundaIds.forEach((id, i) => {
+    standings[id] = { played: 38, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, points: (segundaIds.length - i) * 3 }
+  })
+  state = { ...state, standings }
 
-  state = { ...state, week: 39 } // past every division's last fixture week
-  const after = gameReducer(state, { type: 'ADVANCE_WEEK' })
+  const laLigaTable = standingsToTable(state.standings, laLigaIds)
+  const segundaTable = standingsToTable(state.standings, segundaIds)
+  const expectedRelegated = laLigaTable.slice(-3).map((r) => r.clubId)
+  const expectedAutoPromoted = segundaTable.slice(0, 2).map((r) => r.clubId)
+  const playoffContenders = segundaTable.slice(2, 6).map((r) => r.clubId)
 
-  const laLigaIdsAfter = Object.keys(after.clubs).filter((id) => after.clubs[id].division === 'LALIGA').sort()
-  assert.deepEqual(laLigaIdsAfter, laLigaIdsBefore, 'the set of La Liga clubs should be unchanged across a season rollover')
+  const clubs = { ...state.clubs }
+  resolveLaLigaPromotionRelegation(state, clubs)
+
+  for (const id of expectedRelegated) assert.equal(clubs[id].division, 'SEGUNDA', `${id} should be relegated`)
+  for (const id of expectedAutoPromoted) assert.equal(clubs[id].division, 'LALIGA', `${id} should be automatically promoted`)
+
+  const promotedFromPlayoff = playoffContenders.filter((id) => clubs[id].division === 'LALIGA')
+  assert.equal(promotedFromPlayoff.length, 1, 'exactly one of the 4 play-off contenders should go up')
+
+  const laLigaCountAfter = Object.values(clubs).filter((c) => c.division === 'LALIGA').length
+  const segundaCountAfter = Object.values(clubs).filter((c) => c.division === 'SEGUNDA').length
+  assert.equal(laLigaCountAfter, 20)
+  assert.equal(segundaCountAfter, 20)
 })

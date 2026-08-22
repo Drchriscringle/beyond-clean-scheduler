@@ -40,6 +40,7 @@ export default function NewsScreen({ state, dispatch }) {
   const splResults = results.filter((r) => state.clubs[r.home]?.division === 'SPL')
   const schResults = results.filter((r) => state.clubs[r.home]?.division === 'SCH')
   const laLigaResults = results.filter((r) => state.clubs[r.home]?.division === 'LALIGA')
+  const segundaResults = results.filter((r) => state.clubs[r.home]?.division === 'SEGUNDA')
   const lastCupRound = state.cup?.history?.[state.cup.history.length - 1]
   const lastScottishCupRound = state.scottishCup?.history?.[state.scottishCup.history.length - 1]
   const awards = state.lastSeasonAwards
@@ -128,6 +129,20 @@ export default function NewsScreen({ state, dispatch }) {
           <div className="scrollbox">
             <ul>
               {laLigaResults.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">SEGUNDA DIVISION RESULTS</div>
+          {segundaResults.length === 0 && <p>No Segunda Division fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {segundaResults.map((r, i) => (
                 <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
                   {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
                 </li>

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { CLUB_BY_ID, DIVISION_LABELS } from '../data/clubs.js'
-import { standingsToTable, playerLeagueClubIds } from '../state/gameReducer.js'
+import { standingsToTable, playerLeagueClubIds, recentFormForClub } from '../state/gameReducer.js'
 import { clubCupStatus, CUP_ROUND_WEEKS, SCOTTISH_CUP_ROUND_WEEKS } from '../state/cup.js'
 import { RESPONSE_TYPES } from '../state/pressConference.js'
 import { EURO_ROUND_WEEKS, EURO_ROUND_NAMES } from '../state/europe.js'
 import { derbyLabel } from '../data/rivalries.js'
 
-const VIEW_DIVISIONS = ['PL', 'CH', 'SPL', 'SCH', 'LALIGA']
+const VIEW_DIVISIONS = ['PL', 'CH', 'SPL', 'SCH', 'LALIGA', 'SEGUNDA']
 
 function zoneClass(position, division) {
   if (division === 'PL') {
@@ -15,12 +15,11 @@ function zoneClass(position, division) {
     return ''
   }
   if (division === 'LALIGA') {
-    // Standalone top flight (no Segunda División modelled) - European
-    // qualification zone only, no relegation zone to show.
     if (position <= 4) return 'zone-europe'
+    if (position >= 18) return 'zone-relegation'
     return ''
   }
-  if (division === 'CH') {
+  if (division === 'CH' || division === 'SEGUNDA') {
     if (position <= 2) return 'zone-promotion'
     if (position <= 6) return 'zone-playoff'
     if (position >= 18) return 'zone-relegation'
@@ -157,6 +156,7 @@ export default function FixturesScreen({ state, dispatch }) {
                   <th>GA</th>
                   <th>GD</th>
                   <th>Pts</th>
+                  <th>Form</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,6 +164,7 @@ export default function FixturesScreen({ state, dispatch }) {
                   const position = i + 1
                   const classes = [zoneClass(position, viewDivision)]
                   if (row.clubId === state.playerClubId) classes.push('highlight-row')
+                  const form = recentFormForClub(state.fixtures, row.clubId)
                   return (
                     <tr key={row.clubId} className={classes.filter(Boolean).join(' ')}>
                       <td>{position}</td>
@@ -178,6 +179,13 @@ export default function FixturesScreen({ state, dispatch }) {
                       <td>
                         <strong>{row.points}</strong>
                       </td>
+                      <td className="form-guide">
+                        {form.map((outcome, fi) => (
+                          <span key={fi} className={`result-badge result-${outcome.toLowerCase()}`}>
+                            {outcome}
+                          </span>
+                        ))}
+                      </td>
                     </tr>
                   )
                 })}
@@ -191,7 +199,7 @@ export default function FixturesScreen({ state, dispatch }) {
                 <span className="zone-swatch zone-relegation" /> Relegation
               </>
             )}
-            {viewDivision === 'CH' && (
+            {(viewDivision === 'CH' || viewDivision === 'SEGUNDA') && (
               <>
                 <span className="zone-swatch zone-promotion" /> Automatic promotion &nbsp;
                 <span className="zone-swatch zone-playoff" /> Play-offs &nbsp;
@@ -205,7 +213,12 @@ export default function FixturesScreen({ state, dispatch }) {
                 <span className="zone-swatch zone-playoff" /> Play-offs
               </>
             )}
-            {viewDivision === 'LALIGA' && <><span className="zone-swatch zone-europe" /> Champions League/Europe</>}
+            {viewDivision === 'LALIGA' && (
+              <>
+                <span className="zone-swatch zone-europe" /> Champions League/Europe &nbsp;
+                <span className="zone-swatch zone-relegation" /> Relegation
+              </>
+            )}
           </p>
           <CupPanel state={state} cup={state.cup} title="FA CUP" roundWeeks={CUP_ROUND_WEEKS} />
           <CupPanel state={state} cup={state.scottishCup} title="SCOTTISH CUP" roundWeeks={SCOTTISH_CUP_ROUND_WEEKS} />
