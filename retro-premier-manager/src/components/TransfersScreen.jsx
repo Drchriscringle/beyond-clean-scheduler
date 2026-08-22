@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ALL_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
 import { formatWage, formatMoneyFull } from '../utils/format.js'
 import { Money, FormBadge, AbilityCell } from './shared.jsx'
-import { windowStatus } from '../state/transferWindows.js'
+import { windowStatus, isDeadlineDay } from '../state/transferWindows.js'
 
 export default function TransfersScreen({ state, dispatch }) {
   const [tab, setTab] = useState('browse')
@@ -32,6 +32,7 @@ export default function TransfersScreen({ state, dispatch }) {
           {window_.open
             ? `${window_.label} — closes after Week ${window_.closesAfterWeek}`
             : `${window_.label}${window_.opensWeek ? ` — reopens Week ${window_.opensWeek}` : ' for the rest of the season'}`}
+          {window_.open && isDeadlineDay(state.week) && <span className="deadline-day-badge">DEADLINE DAY</span>}
         </p>
         <div className="tabs">
           {['browse', 'free-agents', 'listed', 'loans', 'offers', 'activity'].map((t) => (

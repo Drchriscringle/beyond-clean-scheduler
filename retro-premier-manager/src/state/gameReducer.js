@@ -24,10 +24,10 @@ import { aiTransferTick } from './aiTransfers.js'
 import { generateYouthIntake, assignFreeSquadNumbers } from './youthIntake.js'
 import { evaluateContractOffer, computeBonusPayout } from './contracts.js'
 import { applyMatchStats, rollSeasonStatsIntoCareer } from './playerStats.js'
-import { maybeGenerateOffer } from './incomingOffers.js'
+import { maybeGenerateOffer, generateDeadlineDayOffers } from './incomingOffers.js'
 import { maybeInjureStarters, tickInjuries } from './injuries.js'
 import { applyBookings, tickSuspensions } from './discipline.js'
-import { isTransferWindowOpen } from './transferWindows.js'
+import { isTransferWindowOpen, isDeadlineDay } from './transferWindows.js'
 import { defaultTactics } from './tactics.js'
 import { computeSeasonAwards } from './awards.js'
 import { generateJobOffers } from './jobOffers.js'
@@ -486,7 +486,16 @@ function advanceWeek(state, precomputed = null) {
   const freshSuspensionIds = {}
 
   const windowOpen = isTransferWindowOpen(state.week)
-  const aiResult = aiTransferTick({ clubs, squads, freeAgents: state.freeAgents, playerClubId: state.playerClubId, week: state.week, windowOpen })
+  const deadlineDay = windowOpen && isDeadlineDay(state.week)
+  const aiResult = aiTransferTick({
+    clubs,
+    squads,
+    freeAgents: state.freeAgents,
+    playerClubId: state.playerClubId,
+    week: state.week,
+    windowOpen,
+    isDeadlineDay: deadlineDay,
+  })
   squads = aiResult.squads
   const freeAgents = aiResult.freeAgents
   const transferLog =
@@ -494,15 +503,18 @@ function advanceWeek(state, precomputed = null) {
       ? [...aiResult.events.map((e) => ({ week: e.week, playerName: e.playerName, fee: e.fee, outcome: e.outcome, message: e.message })), ...state.transferLog].slice(0, 20)
       : state.transferLog
 
-  const newOffer = windowOpen
-    ? maybeGenerateOffer({
-        squad: squads[state.playerClubId],
-        clubIds: allClubIds,
-        playerClubId: state.playerClubId,
-        week: state.week,
-      })
-    : null
-  const incomingOffers = newOffer ? [...state.incomingOffers, newOffer].slice(-5) : state.incomingOffers
+  let newOffers = []
+  if (windowOpen && deadlineDay) {
+    newOffers = generateDeadlineDayOffers({ squad: squads[state.playerClubId], clubIds: allClubIds, playerClubId: state.playerClubId, week: state.week })
+  } else if (windowOpen) {
+    const single = maybeGenerateOffer({ squad: squads[state.playerClubId], clubIds: allClubIds, playerClubId: state.playerClubId, week: state.week })
+    if (single) newOffers = [single]
+  }
+  const incomingOffers = newOffers.length > 0 ? [...state.incomingOffers, ...newOffers].slice(-5) : state.incomingOffers
+  const deadlineDayNotice =
+    deadlineDay && (aiResult.events.length > 0 || newOffers.length > 0)
+      ? `DEADLINE DAY: ${aiResult.events.length} move(s) across the league${newOffers.length > 0 ? `, plus ${newOffers.length} offer(s) in for your listed player(s)` : ''}!`
+      : null
 
   let cup = state.cup
   let cupNotice = null
@@ -749,11 +761,11 @@ function advanceWeek(state, precomputed = null) {
     weekResults,
     pressConferenceHandled: playerPlayedThisWeek ? false : state.pressConferenceHandled,
     notice:
-      cupNotice ??
-      europeNotice ??
-      (playerPlayedThisWeek
-        ? `Full-time: ${CLUB_BY_ID[lastMatch.homeClubId].name} ${lastMatch.homeGoals}-${lastMatch.awayGoals} ${CLUB_BY_ID[lastMatch.awayClubId].name}`
-        : 'A quiet week — no fixture for your side.'),
+      (cupNotice ??
+        europeNotice ??
+        (playerPlayedThisWeek
+          ? `Full-time: ${CLUB_BY_ID[lastMatch.homeClubId].name} ${lastMatch.homeGoals}-${lastMatch.awayGoals} ${CLUB_BY_ID[lastMatch.awayClubId].name}`
+          : 'A quiet week — no fixture for your side.')) + (deadlineDayNotice ? ` ${deadlineDayNotice}` : ''),
   }
 
   if (boardConfidence <= SACK_CONFIDENCE_THRESHOLD) {
