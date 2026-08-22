@@ -476,6 +476,125 @@ table.pm-table tbody tr.zone-relegation {
   );
 }
 
+/* ---------- Goal replay (Sensible-Soccer-style top-down flourish) ---------- */
+.goal-replay-panel {
+  margin-bottom: 8px;
+}
+.goal-replay-pitch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 220 / 140;
+  border: 2px inset var(--grey);
+  overflow: hidden;
+}
+.goal-replay-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.goal-replay-dot,
+.goal-replay-ball {
+  position: absolute;
+  width: 4.5%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.goal-replay-dot.attacker {
+  background: var(--red);
+  border: 1px solid var(--white);
+}
+.goal-replay-dot.defender {
+  background: var(--navy);
+  border: 1px solid var(--white);
+}
+.goal-replay-dot.scorer {
+  background: var(--amber);
+  border: 1px solid var(--black);
+  width: 5.5%;
+  z-index: 2;
+}
+.goal-replay-ball {
+  width: 2.5%;
+  background: var(--white);
+  border: 1px solid var(--black);
+  z-index: 3;
+}
+
+.goal-replay-dot.attacker-1 { animation: replay-attacker-1 2.2s ease-out forwards; }
+.goal-replay-dot.attacker-2 { animation: replay-attacker-2 2.2s ease-out 0.1s forwards; }
+.goal-replay-dot.attacker-3 { animation: replay-attacker-3 2.2s ease-out 0.2s forwards; }
+.goal-replay-dot.defender-1 { animation: replay-defender-1 2.2s ease-out forwards; }
+.goal-replay-dot.defender-2 { animation: replay-defender-2 2.2s ease-out forwards; }
+.goal-replay-dot.defender-3 { animation: replay-defender-3 2.2s ease-out forwards; }
+.goal-replay-dot.scorer { animation: replay-scorer 2.2s ease-out forwards; }
+.goal-replay-ball { animation: replay-ball 2.2s ease-in forwards; }
+
+@keyframes replay-attacker-1 {
+  0% { left: 15%; top: 25%; }
+  70% { left: 75%; top: 35%; }
+  100% { left: 82%; top: 32%; }
+}
+@keyframes replay-attacker-2 {
+  0% { left: 12%; top: 65%; }
+  70% { left: 72%; top: 78%; }
+  100% { left: 80%; top: 76%; }
+}
+@keyframes replay-attacker-3 {
+  0% { left: 18%; top: 90%; }
+  70% { left: 70%; top: 60%; }
+  100% { left: 78%; top: 55%; }
+}
+@keyframes replay-defender-1 {
+  0% { left: 78%; top: 25%; }
+  100% { left: 85%; top: 30%; }
+}
+@keyframes replay-defender-2 {
+  0% { left: 82%; top: 50%; }
+  100% { left: 88%; top: 48%; }
+}
+@keyframes replay-defender-3 {
+  0% { left: 78%; top: 78%; }
+  100% { left: 85%; top: 70%; }
+}
+@keyframes replay-scorer {
+  0% { left: 14%; top: 50%; }
+  75% { left: 88%; top: 49%; }
+  100% { left: 90%; top: 49%; }
+}
+@keyframes replay-ball {
+  0% { left: 14%; top: 50%; opacity: 0; }
+  60% { left: 14%; top: 50%; opacity: 0; }
+  78% { left: 88%; top: 49%; opacity: 1; }
+  100% { left: 99%; top: 50%; opacity: 1; }
+}
+
+.goal-replay-caption {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-head);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--amber);
+  text-shadow: 2px 2px 0 var(--black);
+  background: rgba(0, 0, 0, 0);
+  opacity: 0;
+  animation: replay-caption 2.2s ease-out forwards;
+  z-index: 4;
+}
+@keyframes replay-caption {
+  0% { opacity: 0; background: rgba(0, 0, 0, 0); }
+  75% { opacity: 0; background: rgba(0, 0, 0, 0); }
+  85% { opacity: 1; background: rgba(0, 0, 0, 0.45); }
+  100% { opacity: 1; background: rgba(0, 0, 0, 0.45); }
+}
+
 /* ---------- Commentary log ---------- */
 .commentary-log {
   background: var(--black);

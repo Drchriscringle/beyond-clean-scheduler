@@ -5,10 +5,6 @@ import { EUROPEAN_CLUBS } from './europeanClubs.js'
 // need this), it's only used here for display and to group the transfer
 // market's foreign pool by league.
 const EURO_LEAGUE_BY_ID = {
-  'euro-real-madrid': 'La Liga',
-  'euro-barcelona': 'La Liga',
-  'euro-atletico-madrid': 'La Liga',
-  'euro-sevilla': 'La Liga',
   'euro-bayern-munich': 'Bundesliga',
   'euro-dortmund': 'Bundesliga',
   'euro-rb-leipzig': 'Bundesliga',
@@ -34,10 +30,11 @@ const BANK_BALANCE_PER_REPUTATION = 25_000_000
 // system), and their squads don't age or take a youth intake at season
 // rollover - they stay exactly as generated.
 //
-// Scottish clubs used to live here too, but now have their own fully
-// simulated Scottish Premiership/Championship (see scottishClubs.js) - a
-// real division with fixtures and promotion/relegation, not just a
-// transfer-market shopping pool.
+// Scottish clubs (and, since then, four La Liga clubs) used to live here
+// too, but now have their own fully simulated domestic leagues (see
+// scottishClubs.js / laLigaClubs.js) - real divisions with fixtures and
+// their own European qualification, not just a transfer-market shopping
+// pool.
 export const FOREIGN_CLUBS = EUROPEAN_CLUBS.map((c) => ({
   ...c,
   division: 'FOREIGN',

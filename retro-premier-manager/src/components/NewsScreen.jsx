@@ -39,7 +39,9 @@ export default function NewsScreen({ state, dispatch }) {
   const chResults = results.filter((r) => state.clubs[r.home]?.division === 'CH')
   const splResults = results.filter((r) => state.clubs[r.home]?.division === 'SPL')
   const schResults = results.filter((r) => state.clubs[r.home]?.division === 'SCH')
+  const laLigaResults = results.filter((r) => state.clubs[r.home]?.division === 'LALIGA')
   const lastCupRound = state.cup?.history?.[state.cup.history.length - 1]
+  const lastScottishCupRound = state.scottishCup?.history?.[state.scottishCup.history.length - 1]
   const awards = state.lastSeasonAwards
 
   function viewPlayer(playerId, clubId) {
@@ -119,6 +121,20 @@ export default function NewsScreen({ state, dispatch }) {
             </ul>
           </div>
         </div>
+
+        <div className="panel">
+          <div className="panel-title">LA LIGA RESULTS</div>
+          {laLigaResults.length === 0 && <p>No La Liga fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {laLigaResults.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
 
       {lastCupRound && (
@@ -127,6 +143,21 @@ export default function NewsScreen({ state, dispatch }) {
           <div className="scrollbox">
             <ul>
               {lastCupRound.matches.map((m, i) => (
+                <li key={i} className={m.home === state.playerClubId || m.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[m.home].name} {m.homeGoals}-{m.awayGoals} {CLUB_BY_ID[m.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {lastScottishCupRound && (
+        <div className="panel">
+          <div className="panel-title">SCOTTISH CUP — {lastScottishCupRound.round.toUpperCase()}</div>
+          <div className="scrollbox">
+            <ul>
+              {lastScottishCupRound.matches.map((m, i) => (
                 <li key={i} className={m.home === state.playerClubId || m.away === state.playerClubId ? 'highlight-row' : ''}>
                   {CLUB_BY_ID[m.home].name} {m.homeGoals}-{m.awayGoals} {CLUB_BY_ID[m.away].name}
                 </li>

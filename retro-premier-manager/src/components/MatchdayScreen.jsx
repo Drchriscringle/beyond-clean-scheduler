@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CLUB_BY_ID } from '../data/clubs.js'
 import { PLAYING_STYLES, PLAYING_STYLE_NAMES } from '../state/tactics.js'
+import GoalReplay from './GoalReplay.jsx'
 
 const SPEEDS = [
   { key: '5min', label: '5 min' },
@@ -15,6 +16,19 @@ export default function MatchdayScreen({ state, dispatch }) {
   const lm = state.liveMatch
   const isHome = lm?.homeId === state.playerClubId
   const finished = lm && lm.currentMinute >= 90
+
+  const [replayQueue, setReplayQueue] = useState([])
+  const seenGoalsRef = useRef(0)
+
+  useEffect(() => {
+    if (!lm) return
+    if (lm.goals.length > seenGoalsRef.current) {
+      const newGoals = lm.goals.slice(seenGoalsRef.current)
+      seenGoalsRef.current = lm.goals.length
+      setReplayQueue((q) => [...q, ...newGoals])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lm?.goals.length])
 
   useEffect(() => {
     if (!lm || lm.paused || finished) return
@@ -40,6 +54,19 @@ export default function MatchdayScreen({ state, dispatch }) {
 
   const homeClub = CLUB_BY_ID[lm.homeId]
   const awayClub = CLUB_BY_ID[lm.awayId]
+
+  const currentGoalReplay = replayQueue[0]
+  let goalReplayDetails = null
+  if (currentGoalReplay) {
+    const scoringClubId = currentGoalReplay.side === 'home' ? lm.homeId : lm.awayId
+    const scoringSquad = state.squads[scoringClubId]
+    const scorer = scoringSquad?.find((p) => p.id === currentGoalReplay.scorerId)
+    goalReplayDetails = {
+      scorerName: scorer?.name ?? 'Unknown',
+      clubName: CLUB_BY_ID[scoringClubId].name,
+      minute: currentGoalReplay.minute,
+    }
+  }
 
   const playerSquad = state.squads[state.playerClubId]
   const playerLineupIds = isHome ? lm.homeLineup : lm.awayLineup
@@ -96,10 +123,20 @@ export default function MatchdayScreen({ state, dispatch }) {
             )}
           </div>
 
-          <div className="stand-backdrop">
-            <div className="roof" />
-            <div className="crowd" />
-          </div>
+          {goalReplayDetails ? (
+            <GoalReplay
+              key={`${currentGoalReplay.minute}-${currentGoalReplay.scorerId}-${replayQueue.length}`}
+              scorerName={goalReplayDetails.scorerName}
+              clubName={goalReplayDetails.clubName}
+              minute={goalReplayDetails.minute}
+              onDone={() => setReplayQueue((q) => q.slice(1))}
+            />
+          ) : (
+            <div className="stand-backdrop">
+              <div className="roof" />
+              <div className="crowd" />
+            </div>
+          )}
           <div className="commentary-log">
             {lm.commentary.map((line, i) => (
               <p

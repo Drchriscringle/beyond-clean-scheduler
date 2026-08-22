@@ -2,8 +2,15 @@ import { useState } from 'react'
 import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, DIVISION_LABELS } from '../data/clubs.js'
 import { totalCapacity } from '../data/clubs.js'
 import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
+import { LA_LIGA_CLUBS } from '../data/laLigaClubs.js'
 
-const DIVISION_CLUB_LISTS = { PL: CLUBS, CH: CHAMPIONSHIP_CLUBS, SPL: SCOTTISH_PREMIERSHIP_CLUBS, SCH: SCOTTISH_CHAMPIONSHIP_CLUBS }
+const DIVISION_CLUB_LISTS = {
+  PL: CLUBS,
+  CH: CHAMPIONSHIP_CLUBS,
+  SPL: SCOTTISH_PREMIERSHIP_CLUBS,
+  SCH: SCOTTISH_CHAMPIONSHIP_CLUBS,
+  LALIGA: LA_LIGA_CLUBS,
+}
 import { formatMoney } from '../utils/format.js'
 import { RepStars } from './shared.jsx'
 import { listSaves, clearSave } from '../state/persistence.js'

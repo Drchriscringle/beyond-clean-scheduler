@@ -11,6 +11,16 @@ export const CUP_SIZE = 32
 const PRIZE_MONEY = [150_000, 350_000, 700_000, 1_600_000, 3_200_000]
 export const WINNER_BONUS = 5_500_000
 
+// Scottish Cup: same engine, a smaller bracket to match a 22-club pyramid
+// (12 Premiership + 10 Championship) and smaller, Scotland-scaled prize
+// money - on its own set of weeks so it never clashes with the FA Cup,
+// Europe or international fixtures.
+export const SCOTTISH_CUP_ROUND_NAMES = ['Round of 16', 'Quarter-Final', 'Semi-Final', 'Final']
+export const SCOTTISH_CUP_ROUND_WEEKS = [8, 15, 25, 33]
+export const SCOTTISH_CUP_SIZE = 16
+const SCOTTISH_PRIZE_MONEY = [15_000, 35_000, 90_000, 220_000]
+export const SCOTTISH_WINNER_BONUS = 600_000
+
 function shuffle(arr, rng) {
   const copy = [...arr]
   for (let i = copy.length - 1; i > 0; i--) {
@@ -28,8 +38,8 @@ function pairUp(clubIds) {
   return matches
 }
 
-export function initCupState(allClubIds, season, rng = Math.random) {
-  const entrants = shuffle(allClubIds, rng).slice(0, CUP_SIZE)
+export function initCupState(allClubIds, season, cupSize = CUP_SIZE, rng = Math.random) {
+  const entrants = shuffle(allClubIds, rng).slice(0, cupSize)
   return {
     season,
     roundIndex: 0,
@@ -51,16 +61,30 @@ export function prizeMoneyForRound(roundIndex) {
   return PRIZE_MONEY[roundIndex] ?? 0
 }
 
+export function isScottishCupWeek(week) {
+  return SCOTTISH_CUP_ROUND_WEEKS.includes(week)
+}
+
+export function scottishRoundIndexForWeek(week) {
+  return SCOTTISH_CUP_ROUND_WEEKS.indexOf(week)
+}
+
+export function scottishPrizeMoneyForRound(roundIndex) {
+  return SCOTTISH_PRIZE_MONEY[roundIndex] ?? 0
+}
+
 // Advances the cup by one round using the supplied match-simulator.
-// simulateFn(clubId, clubId) => { winner: clubId }
-export function playCupRound(cup, simulateFn) {
+// simulateFn(clubId, clubId) => { winner: clubId }. `roundNames` defaults to
+// the FA Cup's own names/length - pass SCOTTISH_CUP_ROUND_NAMES for the
+// smaller Scottish bracket.
+export function playCupRound(cup, simulateFn, roundNames = ROUND_NAMES) {
   const results = cup.matches.map((m) => {
     const { winner, homeGoals, awayGoals } = simulateFn(m.home, m.away)
     return { ...m, played: true, homeGoals, awayGoals, winner }
   })
 
   const winners = results.map((r) => r.winner)
-  const history = [...cup.history, { round: ROUND_NAMES[cup.roundIndex], matches: results }]
+  const history = [...cup.history, { round: roundNames[cup.roundIndex], matches: results }]
 
   if (winners.length === 1) {
     return { ...cup, matches: results, history, champion: winners[0] }
