@@ -4,7 +4,7 @@ import { FOREIGN_CLUBS } from '../src/data/foreignClubs.js'
 import { CLUB_BY_ID, ALL_CLUBS, CLUBS, CHAMPIONSHIP_CLUBS } from '../src/data/clubs.js'
 import { generateJobOffers } from '../src/state/jobOffers.js'
 import { gameReducer, makeInitialState, playerLeagueClubIds } from '../src/state/gameReducer.js'
-import { playEuropeanRound, initEuropeanCampaign } from '../src/state/europe.js'
+import { playEuropeanRound, initEuropeanCampaign, europeanOpponentPool } from '../src/state/europe.js'
 import { estimatePlayerValue } from '../src/state/finance.js'
 
 test('every foreign club has a unique id, a league label, and a valid 1-5 reputation', () => {
@@ -102,21 +102,40 @@ test('generateJobOffers never offers a foreign club regardless of reputation gap
   for (const id of offers) assert.ok(!FOREIGN_CLUBS.some((c) => c.id === id), `foreign club ${id} should never be offered as a job`)
 })
 
-test('the European opponent draw is confined to the foreign pool (no Scottish clubs, which now have their own domestic league)', () => {
+test('the European opponent draw excludes domestic (English/Scottish) clubs, which play in their own competitions', () => {
   const state = newGame()
   const europe = initEuropeanCampaign('UCL')
   const playerLineup = state.lineups.arsenal.startingXI
 
   // pickOpponent does Math.floor(rng() * candidates.length), so a rng that
   // always returns just under 1 deterministically selects the last entry of
-  // whichever reputation-filtered pool applies to this round. For round 0
-  // (minRep 2) that's all 16 EUROPEAN_CLUBS - Shakhtar Donetsk is last.
+  // whichever reputation-filtered pool applies to this round.
   const rng = () => 0.999
   const result = playEuropeanRound(
     europe,
     { playerClub: state.clubs.arsenal, playerSquad: state.squads.arsenal, playerLineup, playerTactics: state.tactics.arsenal, allSquads: state.squads },
     rng,
   )
-  assert.equal(result.europe.history[0].opponent, 'Shakhtar Donetsk')
-  assert.ok(FOREIGN_CLUBS.some((c) => c.name === result.europe.history[0].opponent))
+  const pool = europeanOpponentPool('PL').filter((c) => c.reputation >= 2)
+  assert.equal(result.europe.history[0].opponent, pool[pool.length - 1].name)
+  assert.ok(!['PL', 'CH', 'SPL', 'SCH'].includes(pool[pool.length - 1].division))
+})
+
+test('the European opponent pool now includes La Liga, Serie A and the Bundesliga (not just the shallow foreign pool), but excludes the player\'s own top flight and every second division', () => {
+  // A Premier League manager's pool should include clubs graduated into
+  // La Liga/Serie A/Bundesliga, since none of those is the player's own
+  // division.
+  const plPool = europeanOpponentPool('PL')
+  assert.ok(plPool.some((c) => c.id === 'real-madrid'))
+  assert.ok(plPool.some((c) => c.id === 'juventus'))
+  assert.ok(plPool.some((c) => c.id === 'bayern-munich'))
+  assert.ok(!plPool.some((c) => c.division === 'SEGUNDA' || c.division === 'SERIEB' || c.division === 'BUNDESLIGA2'))
+
+  // A La Liga manager's own division is excluded, but Serie A/Bundesliga/
+  // the shallow foreign pool remain eligible.
+  const laLigaPool = europeanOpponentPool('LALIGA')
+  assert.ok(!laLigaPool.some((c) => c.division === 'LALIGA'))
+  assert.ok(laLigaPool.some((c) => c.id === 'juventus'))
+  assert.ok(laLigaPool.some((c) => c.id === 'bayern-munich'))
+  assert.ok(laLigaPool.some((c) => c.id === 'euro-psg'))
 })

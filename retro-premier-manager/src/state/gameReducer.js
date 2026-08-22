@@ -3,6 +3,10 @@ import { FOREIGN_CLUBS } from '../data/foreignClubs.js'
 import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
 import { LA_LIGA_CLUBS } from '../data/laLigaClubs.js'
 import { SEGUNDA_CLUBS } from '../data/segundaClubs.js'
+import { SERIE_A_CLUBS } from '../data/serieAClubs.js'
+import { SERIE_B_CLUBS } from '../data/serieBClubs.js'
+import { BUNDESLIGA_CLUBS } from '../data/bundesligaClubs.js'
+import { BUNDESLIGA_2_CLUBS } from '../data/bundesliga2Clubs.js'
 import { rollWeather } from '../data/weather.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
@@ -184,7 +188,18 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const season = 2025
   const abilityMultiplier = aiAbilityMultiplier(difficulty)
 
-  for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS, ...LA_LIGA_CLUBS, ...SEGUNDA_CLUBS]) {
+  for (const staticClub of [
+    ...CLUBS,
+    ...CHAMPIONSHIP_CLUBS,
+    ...SCOTTISH_PREMIERSHIP_CLUBS,
+    ...SCOTTISH_CHAMPIONSHIP_CLUBS,
+    ...LA_LIGA_CLUBS,
+    ...SEGUNDA_CLUBS,
+    ...SERIE_A_CLUBS,
+    ...SERIE_B_CLUBS,
+    ...BUNDESLIGA_CLUBS,
+    ...BUNDESLIGA_2_CLUBS,
+  ]) {
     const sponsorshipDeal = generateSponsorshipOffers(staticClub.reputation)[0]
     const merchandiseDeal = generateMerchandiseOffers(staticClub.reputation)[0]
     clubs[staticClub.id] = {
@@ -223,6 +238,10 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const schIds = SCOTTISH_CHAMPIONSHIP_CLUBS.map((c) => c.id)
   const laLigaIds = LA_LIGA_CLUBS.map((c) => c.id)
   const segundaIds = SEGUNDA_CLUBS.map((c) => c.id)
+  const serieAIds = SERIE_A_CLUBS.map((c) => c.id)
+  const serieBIds = SERIE_B_CLUBS.map((c) => c.id)
+  const bundesligaIds = BUNDESLIGA_CLUBS.map((c) => c.id)
+  const bundesliga2Ids = BUNDESLIGA_2_CLUBS.map((c) => c.id)
   const fixtures = combineFixturesByWeek(
     generateSeasonFixtures(plIds, SEASON_WEEKS),
     generateSeasonFixtures(chIds, SEASON_WEEKS),
@@ -230,6 +249,10 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
     generateSeasonFixtures(schIds, SEASON_WEEKS),
     generateSeasonFixtures(laLigaIds, SEASON_WEEKS),
     generateSeasonFixtures(segundaIds, SEASON_WEEKS),
+    generateSeasonFixtures(serieAIds, SEASON_WEEKS),
+    generateSeasonFixtures(serieBIds, SEASON_WEEKS),
+    generateSeasonFixtures(bundesligaIds, SEASON_WEEKS),
+    generateSeasonFixtures(bundesliga2Ids, SEASON_WEEKS),
   )
   const playerClub = clubs[clubId]
 
@@ -1040,13 +1063,42 @@ function resolveLaLigaPromotionRelegation(state, clubs) {
   })
 }
 
+// Same shape again for Italy: bottom 3 of Serie A go down, top 2 of Serie B
+// go up automatically, 3rd-6th contest a play-off for the third promotion
+// spot.
+function resolveSerieAPromotionRelegation(state, clubs) {
+  return resolveDivisionPromotionRelegation(state, clubs, {
+    topDivision: 'SERIEA',
+    bottomDivision: 'SERIEB',
+    relegationCount: 3,
+    autoPromoteCount: 2,
+  })
+}
+
+// Same shape again for Germany, recalibrated to the Bundesliga's smaller
+// (18-club) divisions - simplified to the same shared shape used for every
+// other pyramid in this game rather than Germany's real one-off relegation
+// play-off (which this abstraction doesn't otherwise support, same
+// reasoning as the Scottish pyramid above).
+function resolveBundesligaPromotionRelegation(state, clubs) {
+  return resolveDivisionPromotionRelegation(state, clubs, {
+    topDivision: 'BUNDESLIGA',
+    bottomDivision: 'BUNDESLIGA2',
+    relegationCount: 3,
+    autoPromoteCount: 2,
+  })
+}
+
 function seasonRollover(state) {
   const leagueClubIds = playerLeagueClubIds(state)
   const playerClubId = state.playerClubId
   const finalPosition = leaguePositionOf(state.standings, leagueClubIds, playerClubId)
   const playerClubBefore = state.clubs[playerClubId]
   const europeanQualification =
-    playerClubBefore.division === 'PL' || playerClubBefore.division === 'LALIGA'
+    playerClubBefore.division === 'PL' ||
+    playerClubBefore.division === 'LALIGA' ||
+    playerClubBefore.division === 'SERIEA' ||
+    playerClubBefore.division === 'BUNDESLIGA'
       ? qualificationForPosition(finalPosition)
       : playerClubBefore.division === 'SPL'
         ? scottishQualificationForPosition(finalPosition)
@@ -1105,6 +1157,8 @@ function seasonRollover(state) {
   const { notice: promotionRelegationNotice } = resolvePromotionRelegation(state, clubs)
   const { notice: scottishPromotionRelegationNotice } = resolveScottishPromotionRelegation(state, clubs)
   const { notice: laLigaPromotionRelegationNotice } = resolveLaLigaPromotionRelegation(state, clubs)
+  const { notice: serieAPromotionRelegationNotice } = resolveSerieAPromotionRelegation(state, clubs)
+  const { notice: bundesligaPromotionRelegationNotice } = resolveBundesligaPromotionRelegation(state, clubs)
   const squads = {}
   const season = state.season + 1
   let releasedFromPlayerClub = []
@@ -1161,6 +1215,10 @@ function seasonRollover(state) {
   const newSchIds = divisionClubIds(clubs, 'SCH')
   const newLaLigaIds = divisionClubIds(clubs, 'LALIGA')
   const newSegundaIds = divisionClubIds(clubs, 'SEGUNDA')
+  const newSerieAIds = divisionClubIds(clubs, 'SERIEA')
+  const newSerieBIds = divisionClubIds(clubs, 'SERIEB')
+  const newBundesligaIds = divisionClubIds(clubs, 'BUNDESLIGA')
+  const newBundesliga2Ids = divisionClubIds(clubs, 'BUNDESLIGA2')
   const fixtures = combineFixturesByWeek(
     generateSeasonFixtures(newPlIds, SEASON_WEEKS),
     generateSeasonFixtures(newChIds, SEASON_WEEKS),
@@ -1168,6 +1226,10 @@ function seasonRollover(state) {
     generateSeasonFixtures(newSchIds, SEASON_WEEKS),
     generateSeasonFixtures(newLaLigaIds, SEASON_WEEKS),
     generateSeasonFixtures(newSegundaIds, SEASON_WEEKS),
+    generateSeasonFixtures(newSerieAIds, SEASON_WEEKS),
+    generateSeasonFixtures(newSerieBIds, SEASON_WEEKS),
+    generateSeasonFixtures(newBundesligaIds, SEASON_WEEKS),
+    generateSeasonFixtures(newBundesliga2Ids, SEASON_WEEKS),
   )
   const playerClub = {
     ...clubs[playerClubId],
@@ -1211,7 +1273,7 @@ function seasonRollover(state) {
     screen: jobOfferClubIds.length > 0 ? 'job-offers' : 'commercial',
     internationalOffer,
     notice:
-      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice} ${scottishPromotionRelegationNotice} ${laLigaPromotionRelegationNotice}` +
+      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice} ${scottishPromotionRelegationNotice} ${laLigaPromotionRelegationNotice} ${serieAPromotionRelegationNotice} ${bundesligaPromotionRelegationNotice}` +
       (europeanQualification
         ? ` You've qualified for the ${europeanQualification === 'UCL' ? 'Champions League' : 'Europa League'} next season!`
         : '') +
@@ -1832,4 +1894,12 @@ export function gameReducer(state, action) {
   }
 }
 
-export { estimatePlayerValue, leaguePositionOf, resolvePromotionRelegation, resolveScottishPromotionRelegation, resolveLaLigaPromotionRelegation }
+export {
+  estimatePlayerValue,
+  leaguePositionOf,
+  resolvePromotionRelegation,
+  resolveScottishPromotionRelegation,
+  resolveLaLigaPromotionRelegation,
+  resolveSerieAPromotionRelegation,
+  resolveBundesligaPromotionRelegation,
+}

@@ -4,6 +4,10 @@ import { totalCapacity } from '../data/clubs.js'
 import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
 import { LA_LIGA_CLUBS } from '../data/laLigaClubs.js'
 import { SEGUNDA_CLUBS } from '../data/segundaClubs.js'
+import { SERIE_A_CLUBS } from '../data/serieAClubs.js'
+import { SERIE_B_CLUBS } from '../data/serieBClubs.js'
+import { BUNDESLIGA_CLUBS } from '../data/bundesligaClubs.js'
+import { BUNDESLIGA_2_CLUBS } from '../data/bundesliga2Clubs.js'
 
 const DIVISION_CLUB_LISTS = {
   PL: CLUBS,
@@ -12,6 +16,10 @@ const DIVISION_CLUB_LISTS = {
   SCH: SCOTTISH_CHAMPIONSHIP_CLUBS,
   LALIGA: LA_LIGA_CLUBS,
   SEGUNDA: SEGUNDA_CLUBS,
+  SERIEA: SERIE_A_CLUBS,
+  SERIEB: SERIE_B_CLUBS,
+  BUNDESLIGA: BUNDESLIGA_CLUBS,
+  BUNDESLIGA2: BUNDESLIGA_2_CLUBS,
 }
 import { formatMoney } from '../utils/format.js'
 import { RepStars } from './shared.jsx'

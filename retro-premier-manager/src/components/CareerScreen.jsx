@@ -25,7 +25,9 @@ export default function CareerScreen({ state }) {
       next.clubId === h.clubId &&
       ((h.division === 'CH' && next.division === 'PL') ||
         (h.division === 'SCH' && next.division === 'SPL') ||
-        (h.division === 'SEGUNDA' && next.division === 'LALIGA'))
+        (h.division === 'SEGUNDA' && next.division === 'LALIGA') ||
+        (h.division === 'SERIEB' && next.division === 'SERIEA') ||
+        (h.division === 'BUNDESLIGA2' && next.division === 'BUNDESLIGA'))
     )
   }).length
   const seasonsManaged = history.length

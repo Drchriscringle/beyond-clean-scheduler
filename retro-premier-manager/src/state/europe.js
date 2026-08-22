@@ -1,7 +1,26 @@
 import { FOREIGN_CLUBS } from '../data/foreignClubs.js'
+import { LA_LIGA_CLUBS } from '../data/laLigaClubs.js'
+import { SERIE_A_CLUBS } from '../data/serieAClubs.js'
+import { BUNDESLIGA_CLUBS } from '../data/bundesligaClubs.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { pickBestXI } from './lineup.js'
 import { simulateMatch } from './matchSim.js'
+
+// European opponents are drawn from the shallow foreign pool (see
+// foreignClubs.js) plus every other fully-simulated top-flight league in
+// the game - La Liga, Serie A and the Bundesliga all have real squads of
+// their own now, so a Champions League/Europa League run can pit the
+// player against the likes of Real Madrid, Juventus or Bayern Munich, not
+// just the shallow pool's PSG or Ajax. Second-tier divisions (Segunda/
+// Serie B/2. Bundesliga) aren't eligible - continental competition is a
+// top-flight-only affair - and a manager's own top flight is excluded too,
+// so a La Liga club never draws another La Liga club in this abstraction.
+const CONTINENTAL_TOP_FLIGHTS = [LA_LIGA_CLUBS, SERIE_A_CLUBS, BUNDESLIGA_CLUBS]
+
+export function europeanOpponentPool(playerDivision) {
+  const topFlightClubs = CONTINENTAL_TOP_FLIGHTS.flat().filter((c) => c.division !== playerDivision)
+  return [...FOREIGN_CLUBS, ...topFlightClubs]
+}
 
 // Only the Premier League's top 6 qualify, and only the player's own run
 // through the bracket is tracked - the game doesn't simulate a full European
@@ -36,11 +55,12 @@ export function initEuropeanCampaign(competition) {
   return { competition, roundIndex: 0, eliminated: false, champion: false, history: [] }
 }
 
-function pickOpponent(roundIndex, rng) {
+function pickOpponent(roundIndex, rng, playerDivision) {
   // Later rounds draw from tougher (higher-reputation) opposition.
   const minRep = Math.min(5, 2 + roundIndex)
-  const pool = FOREIGN_CLUBS.filter((c) => c.reputation >= minRep)
-  const candidates = pool.length > 0 ? pool : FOREIGN_CLUBS
+  const opponentPool = europeanOpponentPool(playerDivision)
+  const pool = opponentPool.filter((c) => c.reputation >= minRep)
+  const candidates = pool.length > 0 ? pool : opponentPool
   return candidates[Math.floor(rng() * candidates.length)]
 }
 
@@ -51,7 +71,7 @@ function pickOpponent(roundIndex, rng) {
 // squad (so a player weakened by a transfer-window sale shows up weakened
 // here too) - it falls back to a freshly generated one otherwise.
 export function playEuropeanRound(europe, { playerClub, playerSquad, playerLineup, playerTactics, allSquads }, rng = Math.random) {
-  const opponentClub = pickOpponent(europe.roundIndex, rng)
+  const opponentClub = pickOpponent(europe.roundIndex, rng, playerClub.division)
   const opponentSquad = allSquads?.[opponentClub.id] ?? generateSquadForClub(opponentClub)
   const opponentLineup = pickBestXI(opponentSquad, '4-4-2')
   const playerIsHome = rng() < 0.5
