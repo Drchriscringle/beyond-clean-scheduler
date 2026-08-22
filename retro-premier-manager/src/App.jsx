@@ -21,6 +21,7 @@ import MatchdayScreen from './components/MatchdayScreen.jsx'
 import JobOfferScreen from './components/JobOfferScreen.jsx'
 import CareerScreen from './components/CareerScreen.jsx'
 import InternationalScreen from './components/InternationalScreen.jsx'
+import { flagBackgroundStyle } from './utils/flags.js'
 
 const SCREENS = {
   squad: SquadScreen,
@@ -87,7 +88,7 @@ export default function App() {
 
   if (state.screen === 'commercial') {
     return (
-      <div className="pm97-app">
+      <div className="pm97-app" style={flagBackgroundStyle(club.division)}>
         <div className="statusbar">
           <span>{state.managerName} — {CLUB_BY_ID[state.playerClubId].name}</span>
           <span>Season {state.season}/{String(state.season + 1).slice(2)}</span>
@@ -101,7 +102,7 @@ export default function App() {
   const ScreenComponent = SCREENS[state.screen] ?? SquadScreen
 
   return (
-    <div className="pm97-app">
+    <div className="pm97-app" style={flagBackgroundStyle(club.division)}>
       <MenuBar state={state} dispatch={dispatch} />
       <div className="statusbar">
         <span>{state.managerName} — {CLUB_BY_ID[state.playerClubId].name}</span>

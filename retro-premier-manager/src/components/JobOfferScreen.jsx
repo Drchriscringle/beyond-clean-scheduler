@@ -1,6 +1,7 @@
 import { CLUB_BY_ID, DIVISION_LABELS, totalCapacity } from '../data/clubs.js'
 import { RepStars } from './shared.jsx'
 import { formatMoney } from '../utils/format.js'
+import { flagBackgroundStyle } from '../utils/flags.js'
 
 export default function JobOfferScreen({ state, dispatch }) {
   const offers = state.jobOffers ?? []
@@ -11,7 +12,7 @@ export default function JobOfferScreen({ state, dispatch }) {
   }
 
   return (
-    <div className="pm97-app">
+    <div className="pm97-app" style={flagBackgroundStyle(state.clubs[state.playerClubId]?.division)}>
       <div className="screen">
         <div className="panel">
           <div className="panel-title">JOB OFFERS</div>
