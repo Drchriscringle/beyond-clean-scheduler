@@ -1,6 +1,7 @@
 import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, DIVISION_LABELS, totalCapacity } from '../data/clubs.js'
 import { FOREIGN_CLUBS } from '../data/foreignClubs.js'
 import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
+import { LA_LIGA_CLUBS } from '../data/laLigaClubs.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
 import { generateSeasonFixtures, combineFixturesByWeek } from './fixtures.js'
@@ -21,7 +22,20 @@ import { PITCH_LEVELS, TRAINING_LEVELS, YOUTH_LEVELS, nextLevel } from '../data/
 import { pushFormRating } from './form.js'
 import { generateSponsorshipOffers, generateMerchandiseOffers } from '../data/commercial.js'
 import { generateObjective, evaluateObjective } from './objectives.js'
-import { initCupState, isCupWeek, roundIndexForWeek, playCupRound, prizeMoneyForRound, WINNER_BONUS } from './cup.js'
+import {
+  initCupState,
+  isCupWeek,
+  roundIndexForWeek,
+  playCupRound,
+  prizeMoneyForRound,
+  WINNER_BONUS,
+  isScottishCupWeek,
+  scottishRoundIndexForWeek,
+  scottishPrizeMoneyForRound,
+  SCOTTISH_CUP_SIZE,
+  SCOTTISH_CUP_ROUND_NAMES,
+  SCOTTISH_WINNER_BONUS,
+} from './cup.js'
 import { aiTransferTick } from './aiTransfers.js'
 import { generateYouthIntake, assignFreeSquadNumbers } from './youthIntake.js'
 import { evaluateContractOffer, computeBonusPayout } from './contracts.js'
@@ -38,7 +52,7 @@ import { SCOUT_COST } from './scouting.js'
 import { evaluateResponse } from './pressConference.js'
 import { evaluateLoanOffer, evaluateLoanRequest, tickLoans } from './loans.js'
 import { moraleSwingMultiplier, isLeader } from './personality.js'
-import { qualificationForPosition, initEuropeanCampaign, playEuropeanRound, EURO_ROUND_WEEKS } from './europe.js'
+import { qualificationForPosition, scottishQualificationForPosition, initEuropeanCampaign, playEuropeanRound, EURO_ROUND_WEEKS } from './europe.js'
 import { aiAbilityMultiplier, sackConfidenceThreshold, objectiveFailStreakLimit } from './difficulty.js'
 import {
   INTERNATIONAL_WEEKS,
@@ -78,6 +92,7 @@ export function makeInitialState() {
     viewingClubId: null,
     notice: null,
     cup: null,
+    scottishCup: null,
     commercial: null,
     sackedInfo: null,
     incomingOffers: [],
@@ -150,7 +165,7 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const season = 2025
   const abilityMultiplier = aiAbilityMultiplier(difficulty)
 
-  for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS]) {
+  for (const staticClub of [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS, ...LA_LIGA_CLUBS]) {
     const sponsorshipDeal = generateSponsorshipOffers(staticClub.reputation)[0]
     const merchandiseDeal = generateMerchandiseOffers(staticClub.reputation)[0]
     clubs[staticClub.id] = {
@@ -187,11 +202,13 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const chIds = CHAMPIONSHIP_CLUBS.map((c) => c.id)
   const splIds = SCOTTISH_PREMIERSHIP_CLUBS.map((c) => c.id)
   const schIds = SCOTTISH_CHAMPIONSHIP_CLUBS.map((c) => c.id)
+  const laLigaIds = LA_LIGA_CLUBS.map((c) => c.id)
   const fixtures = combineFixturesByWeek(
     generateSeasonFixtures(plIds, SEASON_WEEKS),
     generateSeasonFixtures(chIds, SEASON_WEEKS),
     generateSeasonFixtures(splIds, SEASON_WEEKS),
     generateSeasonFixtures(schIds, SEASON_WEEKS),
+    generateSeasonFixtures(laLigaIds, SEASON_WEEKS),
   )
   const playerClub = clubs[clubId]
 
@@ -219,6 +236,7 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
     lastMatch: null,
     weekResults: [],
     cup: initCupState([...plIds, ...chIds], season),
+    scottishCup: initCupState([...splIds, ...schIds], season, SCOTTISH_CUP_SIZE),
     commercial: {
       sponsorshipOptions: generateSponsorshipOffers(playerClub.reputation),
       merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
@@ -576,6 +594,39 @@ function advanceWeek(state, precomputed = null) {
     cup = nextCup
   }
 
+  let scottishCup = state.scottishCup
+  let scottishCupNotice = null
+  if (scottishCup && !scottishCup.champion && isScottishCupWeek(state.week) && scottishRoundIndexForWeek(state.week) === scottishCup.roundIndex) {
+    const involvedBefore = scottishCup.matches.some((m) => m.home === state.playerClubId || m.away === state.playerClubId)
+    const roundIndexPlayed = scottishCup.roundIndex
+    const nextScottishCup = playCupRound(
+      scottishCup,
+      (h, a) => simulateCupTie(h, a, { clubs, squads, lineups: state.lineups, tactics: state.tactics, playerClubId: state.playerClubId }),
+      SCOTTISH_CUP_ROUND_NAMES,
+    )
+    if (involvedBefore) {
+      const playedRound = nextScottishCup.history[nextScottishCup.history.length - 1]
+      const tie = playedRound.matches.find((m) => m.home === state.playerClubId || m.away === state.playerClubId)
+      const wasHome = tie.home === state.playerClubId
+      const oppId = wasHome ? tie.away : tie.home
+      const won = tie.winner === state.playerClubId
+      const prize = scottishPrizeMoneyForRound(roundIndexPlayed)
+      const bonus = won && nextScottishCup.champion === state.playerClubId ? SCOTTISH_WINNER_BONUS : 0
+      clubs[state.playerClubId] = {
+        ...clubs[state.playerClubId],
+        bankBalance: clubs[state.playerClubId].bankBalance + prize + bonus,
+      }
+      if (nextScottishCup.champion === state.playerClubId) {
+        scottishCupNotice = `Scottish Cup Final: WON ${tie.homeGoals}-${tie.awayGoals} vs ${CLUB_BY_ID[oppId].name} — you are Scottish Cup Champions!`
+      } else if (won) {
+        scottishCupNotice = `Scottish Cup ${playedRound.round}: Won ${tie.homeGoals}-${tie.awayGoals} vs ${CLUB_BY_ID[oppId].name} — through to the next round!`
+      } else {
+        scottishCupNotice = `Scottish Cup ${playedRound.round}: Lost ${tie.homeGoals}-${tie.awayGoals} to ${CLUB_BY_ID[oppId].name} — you're out of the cup.`
+      }
+    }
+    scottishCup = nextScottishCup
+  }
+
   let europe = state.europe
   let europeNotice = null
   if (europe && !europe.eliminated && !europe.champion && EURO_ROUND_WEEKS.includes(state.week)) {
@@ -806,6 +857,7 @@ function advanceWeek(state, precomputed = null) {
     transferLog,
     incomingOffers,
     cup,
+    scottishCup,
     europe,
     international,
     week: nextWeek,
@@ -814,6 +866,7 @@ function advanceWeek(state, precomputed = null) {
     pressConferenceHandled: playerPlayedThisWeek ? false : state.pressConferenceHandled,
     notice:
       (cupNotice ??
+        scottishCupNotice ??
         europeNotice ??
         (playerPlayedThisWeek
           ? `Full-time: ${CLUB_BY_ID[lastMatch.homeClubId].name} ${lastMatch.homeGoals}-${lastMatch.awayGoals} ${CLUB_BY_ID[lastMatch.awayClubId].name}`
@@ -833,6 +886,7 @@ function advanceWeek(state, precomputed = null) {
         objectiveLabel: club.objective.label,
         objectiveMet: null,
         cup: cup,
+        scottishCup: scottishCup,
         outcome: 'sacked-mid-season',
       }),
       screen: 'sacked',
@@ -930,7 +984,12 @@ function seasonRollover(state) {
   const playerClubId = state.playerClubId
   const finalPosition = leaguePositionOf(state.standings, leagueClubIds, playerClubId)
   const playerClubBefore = state.clubs[playerClubId]
-  const europeanQualification = playerClubBefore.division === 'PL' ? qualificationForPosition(finalPosition) : null
+  const europeanQualification =
+    playerClubBefore.division === 'PL' || playerClubBefore.division === 'LALIGA'
+      ? qualificationForPosition(finalPosition)
+      : playerClubBefore.division === 'SPL'
+        ? scottishQualificationForPosition(finalPosition)
+        : null
   const objectiveResult = evaluateObjective(playerClubBefore.objective, finalPosition)
   const confidenceAfterObjective = Math.max(0, Math.min(100, playerClubBefore.boardConfidence + objectiveResult.confidenceDelta))
   const objectiveMissedStreak = objectiveResult.met ? 0 : playerClubBefore.objectiveMissedStreak + 1
@@ -950,6 +1009,7 @@ function seasonRollover(state) {
         objectiveLabel: playerClubBefore.objective.label,
         objectiveMet: objectiveResult.met,
         cup: state.cup,
+        scottishCup: state.scottishCup,
         outcome: 'sacked',
       }),
       screen: 'sacked',
@@ -1037,11 +1097,13 @@ function seasonRollover(state) {
   const newChIds = divisionClubIds(clubs, 'CH')
   const newSplIds = divisionClubIds(clubs, 'SPL')
   const newSchIds = divisionClubIds(clubs, 'SCH')
+  const newLaLigaIds = divisionClubIds(clubs, 'LALIGA')
   const fixtures = combineFixturesByWeek(
     generateSeasonFixtures(newPlIds, SEASON_WEEKS),
     generateSeasonFixtures(newChIds, SEASON_WEEKS),
     generateSeasonFixtures(newSplIds, SEASON_WEEKS),
     generateSeasonFixtures(newSchIds, SEASON_WEEKS),
+    generateSeasonFixtures(newLaLigaIds, SEASON_WEEKS),
   )
   const playerClub = {
     ...clubs[playerClubId],
@@ -1063,6 +1125,7 @@ function seasonRollover(state) {
     lastMatch: null,
     weekResults: [],
     cup: initCupState([...newPlIds, ...newChIds], season),
+    scottishCup: initCupState([...newSplIds, ...newSchIds], season, SCOTTISH_CUP_SIZE),
     europe: europeanQualification ? initEuropeanCampaign(europeanQualification) : null,
     commercial: {
       sponsorshipOptions: generateSponsorshipOffers(playerClub.reputation),
@@ -1077,6 +1140,7 @@ function seasonRollover(state) {
       objectiveLabel: playerClubBefore.objective.label,
       objectiveMet: objectiveResult.met,
       cup: state.cup,
+      scottishCup: state.scottishCup,
       outcome: 'completed',
     }),
     jobOffers: jobOfferClubIds.length > 0 ? jobOfferClubIds : null,

@@ -3,6 +3,7 @@
 // simulated and should not be read as real-world data.
 import { FOREIGN_CLUBS } from './foreignClubs.js'
 import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from './scottishClubs.js'
+import { LA_LIGA_CLUBS } from './laLigaClubs.js'
 
 // reputation tier: 5 = "Big Six", 4 = strong mid-table / European chasers,
 // 3 = comfortable mid-table, 2 = lower mid-table, 1 = newly promoted / bottom
@@ -622,17 +623,26 @@ export const CHAMPIONSHIP_CLUBS = CHAMPIONSHIP_CLUBS_RAW.map((c) => ({ ...c, div
 // is built (Transfers screen, Player Detail) - everything that needs only
 // English clubs (English fixtures/standings, the new-game English club
 // picker) reads CLUBS/CHAMPIONSHIP_CLUBS directly instead.
-export const ALL_CLUBS = [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS, ...FOREIGN_CLUBS]
+export const ALL_CLUBS = [
+  ...CLUBS,
+  ...CHAMPIONSHIP_CLUBS,
+  ...SCOTTISH_PREMIERSHIP_CLUBS,
+  ...SCOTTISH_CHAMPIONSHIP_CLUBS,
+  ...LA_LIGA_CLUBS,
+  ...FOREIGN_CLUBS,
+]
 
 export const CLUB_BY_ID = Object.fromEntries(ALL_CLUBS.map((c) => [c.id, c]))
 
 // Human-readable label for every division tag used across the game -
-// English (PL/CH), Scottish (SPL/SCH), and the foreign transfer-market pool.
+// English (PL/CH), Scottish (SPL/SCH), Spanish (LALIGA), and the foreign
+// transfer-market pool.
 export const DIVISION_LABELS = {
   PL: 'Premier League',
   CH: 'Championship',
   SPL: 'Scottish Premiership',
   SCH: 'Scottish Championship',
+  LALIGA: 'La Liga',
   FOREIGN: 'Foreign',
 }
 

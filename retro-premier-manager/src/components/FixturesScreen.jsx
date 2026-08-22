@@ -1,16 +1,22 @@
 import { useState } from 'react'
 import { CLUB_BY_ID, DIVISION_LABELS } from '../data/clubs.js'
 import { standingsToTable, playerLeagueClubIds } from '../state/gameReducer.js'
-import { clubCupStatus, CUP_ROUND_WEEKS } from '../state/cup.js'
+import { clubCupStatus, CUP_ROUND_WEEKS, SCOTTISH_CUP_ROUND_WEEKS } from '../state/cup.js'
 import { RESPONSE_TYPES } from '../state/pressConference.js'
 import { EURO_ROUND_WEEKS, EURO_ROUND_NAMES } from '../state/europe.js'
 
-const VIEW_DIVISIONS = ['PL', 'CH', 'SPL', 'SCH']
+const VIEW_DIVISIONS = ['PL', 'CH', 'SPL', 'SCH', 'LALIGA']
 
 function zoneClass(position, division) {
   if (division === 'PL') {
     if (position <= 4) return 'zone-europe'
     if (position >= 18) return 'zone-relegation'
+    return ''
+  }
+  if (division === 'LALIGA') {
+    // Standalone top flight (no Segunda División modelled) - European
+    // qualification zone only, no relegation zone to show.
+    if (position <= 4) return 'zone-europe'
     return ''
   }
   if (division === 'CH') {
@@ -34,16 +40,15 @@ function zoneClass(position, division) {
   return ''
 }
 
-function CupPanel({ state }) {
-  const cup = state.cup
+function CupPanel({ state, cup, title, roundWeeks }) {
   if (!cup) return null
   const status = clubCupStatus(cup, state.playerClubId)
   const stillIn = cup.matches.some((m) => m.home === state.playerClubId || m.away === state.playerClubId)
-  const nextWeek = CUP_ROUND_WEEKS[cup.roundIndex]
+  const nextWeek = roundWeeks[cup.roundIndex]
 
   return (
     <div className="panel">
-      <div className="panel-title">FA CUP</div>
+      <div className="panel-title">{title}</div>
       {cup.champion && <p>Champions: <strong>{CLUB_BY_ID[cup.champion].name}</strong></p>}
       {!cup.champion && stillIn && (
         <p>
@@ -199,8 +204,10 @@ export default function FixturesScreen({ state, dispatch }) {
                 <span className="zone-swatch zone-playoff" /> Play-offs
               </>
             )}
+            {viewDivision === 'LALIGA' && <><span className="zone-swatch zone-europe" /> Champions League/Europe</>}
           </p>
-          <CupPanel state={state} />
+          <CupPanel state={state} cup={state.cup} title="FA CUP" roundWeeks={CUP_ROUND_WEEKS} />
+          <CupPanel state={state} cup={state.scottishCup} title="SCOTTISH CUP" roundWeeks={SCOTTISH_CUP_ROUND_WEEKS} />
           <EuropePanel state={state} />
         </div>
 

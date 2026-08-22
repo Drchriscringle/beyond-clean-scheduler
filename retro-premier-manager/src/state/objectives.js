@@ -66,6 +66,30 @@ const SCOTTISH_CHAMPIONSHIP_OBJECTIVE_POOL = {
   ],
 }
 
+// La Liga is another 20-club top flight, so it reuses the English pool's
+// target positions (1/4/6/8/10/12/14/17) exactly - only the label text
+// changes to match the competition.
+const LALIGA_OBJECTIVE_POOL = {
+  5: [
+    { type: 'win-league', label: 'Win La Liga', targetPosition: 1 },
+    { type: 'top4', label: 'Finish in the Top 4', targetPosition: 4 },
+  ],
+  4: [
+    { type: 'top6', label: 'Qualify for Europe (Top 6)', targetPosition: 6 },
+    { type: 'top8', label: 'Finish in the Top 8', targetPosition: 8 },
+  ],
+  3: [
+    { type: 'top-half', label: 'Finish in the Top Half', targetPosition: 10 },
+    { type: 'top12', label: 'Finish 12th or Better', targetPosition: 12 },
+  ],
+  2: [
+    { type: 'mid-table', label: 'A Secure Mid-Table Finish (14th or Better)', targetPosition: 14 },
+  ],
+  1: [
+    { type: 'avoid-relegation', label: 'Avoid Relegation (17th or Better)', targetPosition: 17 },
+  ],
+}
+
 export function generateObjective(reputation, rng = Math.random, division = 'PL') {
   const pool =
     division === 'CH'
@@ -74,7 +98,9 @@ export function generateObjective(reputation, rng = Math.random, division = 'PL'
         ? SCOTTISH_PREMIERSHIP_OBJECTIVE_POOL
         : division === 'SCH'
           ? SCOTTISH_CHAMPIONSHIP_OBJECTIVE_POOL
-          : OBJECTIVE_POOL
+          : division === 'LALIGA'
+            ? LALIGA_OBJECTIVE_POOL
+            : OBJECTIVE_POOL
   const list = pool[reputation] ?? pool[3] ?? pool[1]
   return list[Math.floor(rng() * list.length)]
 }

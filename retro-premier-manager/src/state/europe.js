@@ -23,6 +23,15 @@ export function qualificationForPosition(position) {
   return null
 }
 
+// The Scottish Premiership gets a much smaller European allocation than the
+// Premier League in real life - only the champion and runner-up, not a
+// top-6 spread.
+export function scottishQualificationForPosition(position) {
+  if (position === 1) return 'UCL'
+  if (position === 2) return 'UEL'
+  return null
+}
+
 export function initEuropeanCampaign(competition) {
   return { competition, roundIndex: 0, eliminated: false, champion: false, history: [] }
 }
