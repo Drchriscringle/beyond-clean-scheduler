@@ -31,6 +31,7 @@ import { isTransferWindowOpen } from './transferWindows.js'
 import { defaultTactics } from './tactics.js'
 import { computeSeasonAwards } from './awards.js'
 import { generateJobOffers } from './jobOffers.js'
+import { recordSeason } from './careerHistory.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -70,6 +71,7 @@ export function makeInitialState() {
     matchSpeed: 'instant',
     lastSeasonAwards: null,
     jobOffers: null,
+    careerHistory: [],
   }
 }
 
@@ -711,6 +713,16 @@ function advanceWeek(state, precomputed = null) {
   if (boardConfidence <= SACK_CONFIDENCE_THRESHOLD) {
     return {
       ...weekReturn,
+      careerHistory: recordSeason(state.careerHistory, {
+        season: state.season,
+        clubId: playerClubId,
+        division: club.division,
+        finalPosition: position,
+        objectiveLabel: club.objective.label,
+        objectiveMet: null,
+        cup: cup,
+        outcome: 'sacked-mid-season',
+      }),
       screen: 'sacked',
       sackedInfo: {
         clubName: CLUB_BY_ID[playerClubId].name,
@@ -784,6 +796,16 @@ function seasonRollover(state) {
         ...state.clubs,
         [playerClubId]: { ...playerClubBefore, boardConfidence: confidenceAfterObjective, objectiveMissedStreak },
       },
+      careerHistory: recordSeason(state.careerHistory, {
+        season: state.season,
+        clubId: playerClubId,
+        division: playerClubBefore.division,
+        finalPosition,
+        objectiveLabel: playerClubBefore.objective.label,
+        objectiveMet: objectiveResult.met,
+        cup: state.cup,
+        outcome: 'sacked',
+      }),
       screen: 'sacked',
       sackedInfo: {
         clubName: CLUB_BY_ID[playerClubId].name,
@@ -878,6 +900,16 @@ function seasonRollover(state) {
       merchandiseOptions: generateMerchandiseOffers(playerClub.reputation),
     },
     lastSeasonAwards: { season: state.season, ...seasonAwards },
+    careerHistory: recordSeason(state.careerHistory, {
+      season: state.season,
+      clubId: playerClubId,
+      division: playerClubBefore.division,
+      finalPosition,
+      objectiveLabel: playerClubBefore.objective.label,
+      objectiveMet: objectiveResult.met,
+      cup: state.cup,
+      outcome: 'completed',
+    }),
     jobOffers: jobOfferClubIds.length > 0 ? jobOfferClubIds : null,
     screen: jobOfferClubIds.length > 0 ? 'job-offers' : 'commercial',
     notice: `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice}`,
@@ -1259,7 +1291,7 @@ export function gameReducer(state, action) {
       }
     }
     case 'QUIT_TO_MENU':
-      return makeInitialState()
+      return { ...makeInitialState(), careerHistory: state.careerHistory }
     default:
       return state
   }

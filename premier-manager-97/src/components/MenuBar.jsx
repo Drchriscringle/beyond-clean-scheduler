@@ -11,6 +11,7 @@ const MENU = [
   { key: 'stadium', label: 'Stadium' },
   { key: 'fixtures', label: 'Fixtures' },
   { key: 'news', label: 'News' },
+  { key: 'career', label: 'Career' },
 ]
 
 export default function MenuBar({ state, dispatch }) {
