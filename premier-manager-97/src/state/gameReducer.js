@@ -32,6 +32,7 @@ import { defaultTactics } from './tactics.js'
 import { computeSeasonAwards } from './awards.js'
 import { generateJobOffers } from './jobOffers.js'
 import { recordSeason } from './careerHistory.js'
+import { SCOUT_COST } from './scouting.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -157,6 +158,10 @@ function startNewGame(state, { clubId, managerName }) {
   const chIds = CHAMPIONSHIP_CLUBS.map((c) => c.id)
   const fixtures = combineFixturesByWeek(generateFixtures(plIds), generateFixtures(chIds))
   const playerClub = clubs[clubId]
+
+  // The squad you inherit is already known to you - only fresh youth intake,
+  // free agents and every other club's players need scouting.
+  squads[clubId] = squads[clubId].map((p) => ({ ...p, scouted: true }))
 
   return {
     ...state,
@@ -1022,6 +1027,36 @@ function handleOfferContract(state, { playerId, wage, years }) {
   }
 }
 
+function handleScoutPlayer(state, { playerId, clubId }) {
+  const club = state.clubs[state.playerClubId]
+  if (club.bankBalance < SCOUT_COST) {
+    return { ...state, notice: 'Not enough in the bank to commission a scouting report.' }
+  }
+
+  const clubs = { ...state.clubs, [state.playerClubId]: { ...club, bankBalance: club.bankBalance - SCOUT_COST } }
+
+  if (!clubId) {
+    const player = state.freeAgents.find((p) => p.id === playerId)
+    if (!player) return state
+    return {
+      ...state,
+      clubs,
+      freeAgents: state.freeAgents.map((p) => (p.id === playerId ? { ...p, scouted: true } : p)),
+      notice: `Scouting report on ${player.name} complete.`,
+    }
+  }
+
+  const squad = state.squads[clubId]
+  const player = squad?.find((p) => p.id === playerId)
+  if (!player) return state
+  return {
+    ...state,
+    clubs,
+    squads: { ...state.squads, [clubId]: squad.map((p) => (p.id === playerId ? { ...p, scouted: true } : p)) },
+    notice: `Scouting report on ${player.name} complete.`,
+  }
+}
+
 function handleReleasePlayer(state, { playerId }) {
   const squad = state.squads[state.playerClubId]
   const player = squad.find((p) => p.id === playerId)
@@ -1095,7 +1130,7 @@ function handleMakeOffer(state, { playerId, fromClubId, fee }) {
   }
 
   const sellerSquad = state.squads[fromClubId].filter((p) => p.id !== playerId)
-  const buyerSquad = [...state.squads[state.playerClubId], { ...player, listed: false }]
+  const buyerSquad = [...state.squads[state.playerClubId], { ...player, listed: false, scouted: true }]
   const sellerClub = state.clubs[fromClubId]
 
   return {
@@ -1118,7 +1153,7 @@ function handleMakeOffer(state, { playerId, fromClubId, fee }) {
 function handleSignFreeAgent(state, { playerId, contractYears }) {
   const player = state.freeAgents.find((p) => p.id === playerId)
   if (!player) return state
-  const signed = { ...player, contractYears: contractYears ?? 2, listed: false }
+  const signed = { ...player, contractYears: contractYears ?? 2, listed: false, scouted: true }
   return {
     ...state,
     freeAgents: state.freeAgents.filter((p) => p.id !== playerId),
@@ -1251,6 +1286,8 @@ export function gameReducer(state, action) {
       return handleMakeOffer(state, action.payload)
     case 'RELEASE_PLAYER':
       return handleReleasePlayer(state, action.payload)
+    case 'SCOUT_PLAYER':
+      return handleScoutPlayer(state, action.payload)
     case 'RESPOND_TO_OFFER':
       return handleRespondToOffer(state, action.payload)
     case 'SIGN_FREE_AGENT':

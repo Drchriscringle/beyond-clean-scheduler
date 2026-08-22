@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ALL_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
 import { formatWage, formatMoneyFull } from '../utils/format.js'
-import { Money, FormBadge } from './shared.jsx'
+import { Money, FormBadge, AbilityCell } from './shared.jsx'
 import { windowStatus } from '../state/transferWindows.js'
 
 export default function TransfersScreen({ state, dispatch }) {
@@ -75,7 +75,7 @@ export default function TransfersScreen({ state, dispatch }) {
                         <td>{p.name}</td>
                         <td>{p.position}</td>
                         <td>{p.age}</td>
-                        <td>{p.ability}</td>
+                        <td><AbilityCell player={p} value={p.ability} /></td>
                         <td><FormBadge player={p} /></td>
                         <td>{formatWage(p.wage)}</td>
                       </tr>
@@ -104,7 +104,7 @@ export default function TransfersScreen({ state, dispatch }) {
                       <td>{p.name}</td>
                       <td>{p.position}</td>
                       <td>{p.age}</td>
-                      <td>{p.ability}</td>
+                      <td><AbilityCell player={p} value={p.ability} /></td>
                       <td>{formatWage(p.wage)}</td>
                     </tr>
                   ))}
@@ -133,7 +133,7 @@ export default function TransfersScreen({ state, dispatch }) {
                       <td>{p.name}</td>
                       <td>{p.position}</td>
                       <td>{p.age}</td>
-                      <td>{p.ability}</td>
+                      <td><AbilityCell player={p} value={p.ability} /></td>
                       <td><FormBadge player={p} /></td>
                       <td>{formatWage(p.wage)}</td>
                     </tr>

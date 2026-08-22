@@ -1,5 +1,6 @@
 import { formatMoney } from '../utils/format.js'
 import { currentForm, formTrend } from '../state/form.js'
+import { isRevealed, abilityStars } from '../state/scouting.js'
 
 export function Money({ value, showSign = false }) {
   const cls = value < 0 ? 'money negative' : showSign ? 'money positive' : 'money'
@@ -34,6 +35,14 @@ export function ConfidenceMeter({ value }) {
 
 export function RepStars({ reputation }) {
   return <span className="rep-stars">{'★'.repeat(reputation)}{'☆'.repeat(5 - reputation)}</span>
+}
+
+// Shows the exact ability/potential number once a player's been scouted (or
+// has played and shown what they can do); otherwise a coarse star rating -
+// enough to judge roughly, not enough to know exactly what you're getting.
+export function AbilityCell({ player, value }) {
+  if (isRevealed(player)) return <>{value}</>
+  return <RepStars reputation={abilityStars(value)} />
 }
 
 const TREND_ARROW = { up: ' ▲', down: ' ▼', level: '' }
