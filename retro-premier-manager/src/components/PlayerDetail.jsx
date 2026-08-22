@@ -6,6 +6,7 @@ import { formLabel, currentForm } from '../state/form.js'
 import { expectedWage } from '../state/contracts.js'
 import { windowStatus } from '../state/transferWindows.js'
 import { isRevealed, SCOUT_COST } from '../state/scouting.js'
+import { PERSONALITIES } from '../state/personality.js'
 import { ALL_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
 import { DEFAULT_LOAN_WEEKS } from '../state/loans.js'
 
@@ -139,6 +140,12 @@ export default function PlayerDetail({ state, dispatch }) {
             <p>Age: {player.age}</p>
             <p>Current ability: {revealed ? `${player.ability}/99` : 'Unknown — scout to reveal'}</p>
             <p>Potential ability: {revealed ? `${player.potential}/99` : 'Unknown — scout to reveal'}</p>
+            <p>
+              Personality:{' '}
+              {revealed
+                ? `${PERSONALITIES[player.personality ?? 'balanced'].label} — ${PERSONALITIES[player.personality ?? 'balanced'].description}`
+                : 'Unknown — scout to reveal'}
+            </p>
             <p>Wage: {formatWage(player.wage)}</p>
             {(player.goalBonus > 0 || player.assistBonus > 0) && (
               <p style={{ fontSize: 14 }}>

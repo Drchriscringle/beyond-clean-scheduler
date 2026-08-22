@@ -1,5 +1,6 @@
 import { STAR_PLAYERS } from './starPlayers.js'
 import { generateName } from './namePool.js'
+import { pickPersonality } from '../state/personality.js'
 
 // Simple seeded PRNG (mulberry32) so a new game's squads are reproducible
 // for the length of that session without needing to persist anything.
@@ -100,6 +101,7 @@ export function buildPlayer({ id, name, position, age, ability, potential, reput
     scouted: false,
     goalBonus: 0,
     assistBonus: 0,
+    personality: pickPersonality(rng),
     sellOnClauses: [],
     loanFromClubId: null,
     loanWeeksRemaining: 0,

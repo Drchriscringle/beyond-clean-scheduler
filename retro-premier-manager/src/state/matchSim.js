@@ -1,5 +1,6 @@
 import { ratePerformance } from './form.js'
 import { PLAYING_STYLES } from './tactics.js'
+import { cardChanceMultiplier } from './personality.js'
 
 function poissonRandom(lambda, rng) {
   const L = Math.exp(-lambda)
@@ -91,10 +92,11 @@ function minuteInRange(startMinute, endMinute, rng) {
 function generateBookings(xi, side, rng, chanceMultiplier, startMinute, endMinute) {
   const bookings = []
   for (const p of xi) {
+    const personalityMult = cardChanceMultiplier(p.personality)
     const roll = rng()
-    if (roll < RED_CARD_CHANCE * chanceMultiplier) {
+    if (roll < RED_CARD_CHANCE * chanceMultiplier * personalityMult) {
       bookings.push({ playerId: p.id, side, type: 'red', minute: minuteInRange(startMinute, endMinute, rng), name: p.name })
-    } else if (roll < (RED_CARD_CHANCE + YELLOW_CARD_CHANCE) * chanceMultiplier) {
+    } else if (roll < (RED_CARD_CHANCE + YELLOW_CARD_CHANCE) * chanceMultiplier * personalityMult) {
       bookings.push({ playerId: p.id, side, type: 'yellow', minute: minuteInRange(startMinute, endMinute, rng), name: p.name })
     }
   }
