@@ -33,6 +33,7 @@ import { computeSeasonAwards } from './awards.js'
 import { generateJobOffers } from './jobOffers.js'
 import { recordSeason } from './careerHistory.js'
 import { SCOUT_COST } from './scouting.js'
+import { evaluateResponse } from './pressConference.js'
 
 const LEDGER_LIMIT = 30
 const SACK_CONFIDENCE_THRESHOLD = 5
@@ -73,6 +74,7 @@ export function makeInitialState() {
     lastSeasonAwards: null,
     jobOffers: null,
     careerHistory: [],
+    pressConferenceHandled: true,
   }
 }
 
@@ -708,6 +710,7 @@ function advanceWeek(state, precomputed = null) {
     week: nextWeek,
     lastMatch,
     weekResults,
+    pressConferenceHandled: playerPlayedThisWeek ? false : state.pressConferenceHandled,
     notice:
       cupNotice ??
       (playerPlayedThisWeek
@@ -1057,6 +1060,37 @@ function handleScoutPlayer(state, { playerId, clubId }) {
   }
 }
 
+function handleRespondToPress(state, { responseType }) {
+  const match = state.lastMatch
+  if (!match || state.pressConferenceHandled) return state
+
+  const playerWasHome = match.homeClubId === state.playerClubId
+  const gf = playerWasHome ? match.homeGoals : match.awayGoals
+  const ga = playerWasHome ? match.awayGoals : match.homeGoals
+  const resultPoints = gf > ga ? 3 : gf === ga ? 1 : 0
+
+  const { confidenceDelta, moraleDelta, message } = evaluateResponse(resultPoints, responseType)
+  const club = state.clubs[state.playerClubId]
+  const squad = state.squads[state.playerClubId]
+
+  return {
+    ...state,
+    clubs: {
+      ...state.clubs,
+      [state.playerClubId]: {
+        ...club,
+        boardConfidence: Math.max(0, Math.min(100, club.boardConfidence + confidenceDelta)),
+      },
+    },
+    squads: {
+      ...state.squads,
+      [state.playerClubId]: squad.map((p) => ({ ...p, morale: Math.max(0, Math.min(100, p.morale + moraleDelta)) })),
+    },
+    pressConferenceHandled: true,
+    notice: message,
+  }
+}
+
 function handleReleasePlayer(state, { playerId }) {
   const squad = state.squads[state.playerClubId]
   const player = squad.find((p) => p.id === playerId)
@@ -1288,6 +1322,8 @@ export function gameReducer(state, action) {
       return handleReleasePlayer(state, action.payload)
     case 'SCOUT_PLAYER':
       return handleScoutPlayer(state, action.payload)
+    case 'RESPOND_TO_PRESS':
+      return handleRespondToPress(state, action.payload)
     case 'RESPOND_TO_OFFER':
       return handleRespondToOffer(state, action.payload)
     case 'SIGN_FREE_AGENT':
