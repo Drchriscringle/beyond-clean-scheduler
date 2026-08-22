@@ -19,13 +19,22 @@ export function sponsorshipIncome(club) {
   return Math.round(8000 + club.reputation * 14000)
 }
 
-// Full-season TV/broadcast pot amortised per matchweek (19 home games/season).
-// Championship clubs earn a small fraction of Premier League broadcast money,
-// reflecting the real-world gulf between the two divisions.
+// Full-season TV/broadcast pot amortised per matchweek. Championship clubs
+// earn a small fraction of Premier League broadcast money, reflecting the
+// real-world gulf between the two divisions; Scottish broadcast deals are
+// smaller again than even the English Championship's.
 export function tvIncomeForWeek(leaguePosition, division = 'PL') {
   if (division === 'CH') {
     const seasonPot = 7_000_000 - (leaguePosition - 1) * 120_000
     return Math.round(Math.max(seasonPot, 3_500_000) / 38)
+  }
+  if (division === 'SPL') {
+    const seasonPot = 1_800_000 - (leaguePosition - 1) * 90_000
+    return Math.round(Math.max(seasonPot, 700_000) / 38)
+  }
+  if (division === 'SCH') {
+    const seasonPot = 500_000 - (leaguePosition - 1) * 30_000
+    return Math.round(Math.max(seasonPot, 200_000) / 38)
   }
   const seasonPot = 60_000_000 - (leaguePosition - 1) * 1_900_000
   return Math.round(Math.max(seasonPot, 22_000_000) / 38)
@@ -47,9 +56,12 @@ export function availableCapacity(club, stadiumProjects) {
 // fans weigh the whole matchday cost, not just the ticket.
 const CONCESSION_UPTAKE = 0.65
 
-export function matchdayIncome({ club, capacity, ticketPrice, concessionPrice = 0, leaguePosition, formGoodwill, rng = Math.random }) {
+export function matchdayIncome({ club, capacity, ticketPrice, concessionPrice = 0, leaguePosition, formGoodwill, divisionSize = 20, rng = Math.random }) {
   const reputationBase = 0.55 + club.reputation * 0.06
-  const positionBonus = (21 - leaguePosition) * 0.004
+  // Same overall swing (top club +0.08, bottom club ~0) regardless of the
+  // division's actual size, so a smaller league (e.g. a 12-club Scottish
+  // Premiership) doesn't get an artificially compressed or inflated bonus.
+  const positionBonus = (divisionSize + 1 - leaguePosition) * (0.08 / divisionSize)
   const priceDrag = Math.max(0, (ticketPrice - 40) * 0.0025)
   const concessionDrag = Math.max(0, (concessionPrice - 12) * 0.003)
   const attendancePct = Math.min(

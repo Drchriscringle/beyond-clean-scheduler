@@ -1,4 +1,4 @@
-import { CLUB_BY_ID, totalCapacity } from '../data/clubs.js'
+import { CLUB_BY_ID, DIVISION_LABELS, totalCapacity } from '../data/clubs.js'
 import { RepStars } from './shared.jsx'
 import { formatMoney } from '../utils/format.js'
 
@@ -36,7 +36,7 @@ export default function JobOfferScreen({ state, dispatch }) {
                   </p>
                 </div>
                 <div>
-                  <p>Division: {liveClub.division === 'CH' ? 'Championship' : 'Premier League'}</p>
+                  <p>Division: {DIVISION_LABELS[liveClub.division]}</p>
                   <p>Transfer budget: {formatMoney(liveClub.budget)}</p>
                 </div>
               </div>

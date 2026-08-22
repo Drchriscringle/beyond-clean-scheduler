@@ -38,8 +38,43 @@ const CHAMPIONSHIP_OBJECTIVE_POOL = {
   ],
 }
 
+// Scottish Premiership is a 12-club league; targets are scaled down from the
+// English pools rather than reusing English-sized positions like 14th/17th,
+// which don't exist in a 12-team table.
+const SCOTTISH_PREMIERSHIP_OBJECTIVE_POOL = {
+  3: [
+    { type: 'win-spl', label: 'Win the Scottish Premiership', targetPosition: 1 },
+    { type: 'top3-spl', label: 'Finish in the Top 3', targetPosition: 3 },
+  ],
+  2: [
+    { type: 'top4-spl', label: 'Finish in the Top 4', targetPosition: 4 },
+    { type: 'top6-spl', label: 'Finish in the Top 6', targetPosition: 6 },
+  ],
+  1: [
+    { type: 'avoid-relegation-spl', label: 'Avoid Relegation (10th or Better)', targetPosition: 10 },
+  ],
+}
+
+// Scottish Championship is a 10-club league.
+const SCOTTISH_CHAMPIONSHIP_OBJECTIVE_POOL = {
+  2: [
+    { type: 'win-sch', label: 'Win the Scottish Championship (Automatic Promotion)', targetPosition: 1 },
+    { type: 'promotion-sch', label: 'Achieve Promotion (Top 2)', targetPosition: 2 },
+  ],
+  1: [
+    { type: 'playoffs-sch', label: 'Reach the Promotion Play-offs (Top 5)', targetPosition: 5 },
+  ],
+}
+
 export function generateObjective(reputation, rng = Math.random, division = 'PL') {
-  const pool = division === 'CH' ? CHAMPIONSHIP_OBJECTIVE_POOL : OBJECTIVE_POOL
+  const pool =
+    division === 'CH'
+      ? CHAMPIONSHIP_OBJECTIVE_POOL
+      : division === 'SPL'
+        ? SCOTTISH_PREMIERSHIP_OBJECTIVE_POOL
+        : division === 'SCH'
+          ? SCOTTISH_CHAMPIONSHIP_OBJECTIVE_POOL
+          : OBJECTIVE_POOL
   const list = pool[reputation] ?? pool[3] ?? pool[1]
   return list[Math.floor(rng() * list.length)]
 }

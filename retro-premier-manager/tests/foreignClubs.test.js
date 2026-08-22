@@ -16,7 +16,9 @@ test('every foreign club has a unique id, a league label, and a valid 1-5 reputa
     assert.equal(typeof club.league, 'string')
     assert.ok(club.reputation >= 1 && club.reputation <= 5)
   }
-  assert.ok(FOREIGN_CLUBS.some((c) => c.league === 'Scottish Premiership'), 'Scottish Premiership clubs should be included')
+  // Scotland has its own fully simulated Premiership/Championship now (see
+  // scotland.test.js), not a slot in the shopping-pool-only foreign tier.
+  assert.ok(!FOREIGN_CLUBS.some((c) => c.league === 'Scottish Premiership'))
 })
 
 test('foreign clubs are resolvable by id everywhere English clubs are, with no id collisions', () => {
@@ -100,7 +102,7 @@ test('generateJobOffers never offers a foreign club regardless of reputation gap
   for (const id of offers) assert.ok(!FOREIGN_CLUBS.some((c) => c.id === id), `foreign club ${id} should never be offered as a job`)
 })
 
-test('the European opponent draw can reach Scottish clubs, not just the original European pool', () => {
+test('the European opponent draw is confined to the foreign pool (no Scottish clubs, which now have their own domestic league)', () => {
   const state = newGame()
   const europe = initEuropeanCampaign('UCL')
   const playerLineup = state.lineups.arsenal.startingXI
@@ -108,14 +110,13 @@ test('the European opponent draw can reach Scottish clubs, not just the original
   // pickOpponent does Math.floor(rng() * candidates.length), so a rng that
   // always returns just under 1 deterministically selects the last entry of
   // whichever reputation-filtered pool applies to this round. For round 0
-  // (minRep 2) that pool is all 16 EUROPEAN_CLUBS plus every Scottish club
-  // except Hibernian (reputation 1) - Hearts, the last surviving Scottish
-  // entry in array order, ends up last overall.
+  // (minRep 2) that's all 16 EUROPEAN_CLUBS - Shakhtar Donetsk is last.
   const rng = () => 0.999
   const result = playEuropeanRound(
     europe,
     { playerClub: state.clubs.arsenal, playerSquad: state.squads.arsenal, playerLineup, playerTactics: state.tactics.arsenal, allSquads: state.squads },
     rng,
   )
-  assert.equal(result.europe.history[0].opponent, 'Heart of Midlothian')
+  assert.equal(result.europe.history[0].opponent, 'Shakhtar Donetsk')
+  assert.ok(FOREIGN_CLUBS.some((c) => c.name === result.europe.history[0].opponent))
 })

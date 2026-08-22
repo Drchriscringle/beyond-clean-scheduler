@@ -1,6 +1,9 @@
 import { useState } from 'react'
-import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
+import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID, DIVISION_LABELS } from '../data/clubs.js'
 import { totalCapacity } from '../data/clubs.js'
+import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from '../data/scottishClubs.js'
+
+const DIVISION_CLUB_LISTS = { PL: CLUBS, CH: CHAMPIONSHIP_CLUBS, SPL: SCOTTISH_PREMIERSHIP_CLUBS, SCH: SCOTTISH_CHAMPIONSHIP_CLUBS }
 import { formatMoney } from '../utils/format.js'
 import { RepStars } from './shared.jsx'
 import { listSaves, clearSave } from '../state/persistence.js'
@@ -16,7 +19,7 @@ export default function NewGameScreen({ dispatch }) {
   const firstEmptySlot = saves.find((s) => !s.data)?.slot ?? saves[0].slot
   const [saveSlot, setSaveSlot] = useState(firstEmptySlot)
 
-  const clubList = division === 'CH' ? CHAMPIONSHIP_CLUBS : CLUBS
+  const clubList = DIVISION_CLUB_LISTS[division]
   const selected = CLUB_BY_ID[clubId]
 
   function chooseDivision(next) {
@@ -67,12 +70,11 @@ export default function NewGameScreen({ dispatch }) {
         <div className="panel-title">PREMIER MANAGER '97 — NEW GAME</div>
         <p>Select a club to take charge of for the 2025/26 season.</p>
         <div className="tabs" style={{ marginBottom: 8 }}>
-          <button className={`tab${division === 'PL' ? ' active' : ''}`} onClick={() => chooseDivision('PL')}>
-            Premier League
-          </button>
-          <button className={`tab${division === 'CH' ? ' active' : ''}`} onClick={() => chooseDivision('CH')}>
-            Championship
-          </button>
+          {Object.keys(DIVISION_CLUB_LISTS).map((d) => (
+            <button key={d} className={`tab${division === d ? ' active' : ''}`} onClick={() => chooseDivision(d)}>
+              {DIVISION_LABELS[d]}
+            </button>
+          ))}
         </div>
         <div className="club-list panel-inset">
           {clubList.map((c) => (
@@ -95,7 +97,7 @@ export default function NewGameScreen({ dispatch }) {
           <div className="panel-title">{selected.name.toUpperCase()}</div>
           <div className="grid-2">
             <div>
-              <p>Division: {selected.division === 'CH' ? 'Championship' : 'Premier League'}</p>
+              <p>Division: {DIVISION_LABELS[selected.division]}</p>
               <p>Ground: {selected.ground}</p>
               <p>Capacity: {totalCapacity(selected).toLocaleString('en-GB')}</p>
               <p>Reputation: <RepStars reputation={selected.reputation} /></p>

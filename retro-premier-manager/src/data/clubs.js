@@ -2,6 +2,7 @@
 // flavour; all financial figures, squads and results in this game are
 // simulated and should not be read as real-world data.
 import { FOREIGN_CLUBS } from './foreignClubs.js'
+import { SCOTTISH_PREMIERSHIP_CLUBS, SCOTTISH_CHAMPIONSHIP_CLUBS } from './scottishClubs.js'
 
 // reputation tier: 5 = "Big Six", 4 = strong mid-table / European chasers,
 // 3 = comfortable mid-table, 2 = lower mid-table, 1 = newly promoted / bottom
@@ -616,14 +617,33 @@ const CHAMPIONSHIP_CLUBS_RAW = [
 
 export const CLUBS = PL_CLUBS_RAW.map((c) => ({ ...c, division: 'PL' }))
 export const CHAMPIONSHIP_CLUBS = CHAMPIONSHIP_CLUBS_RAW.map((c) => ({ ...c, division: 'CH' }))
-// ALL_CLUBS also includes foreign clubs (division: 'FOREIGN') so they show
-// up alongside domestic clubs everywhere a browse/offer-to/loan-to target
-// list is built (Transfers screen, Player Detail) - everything that needs
-// only English clubs (fixtures, standings, the new-game club picker) reads
-// CLUBS/CHAMPIONSHIP_CLUBS directly instead.
-export const ALL_CLUBS = [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...FOREIGN_CLUBS]
+// ALL_CLUBS also includes foreign and Scottish clubs so they show up
+// alongside domestic clubs everywhere a browse/offer-to/loan-to target list
+// is built (Transfers screen, Player Detail) - everything that needs only
+// English clubs (English fixtures/standings, the new-game English club
+// picker) reads CLUBS/CHAMPIONSHIP_CLUBS directly instead.
+export const ALL_CLUBS = [...CLUBS, ...CHAMPIONSHIP_CLUBS, ...SCOTTISH_PREMIERSHIP_CLUBS, ...SCOTTISH_CHAMPIONSHIP_CLUBS, ...FOREIGN_CLUBS]
 
 export const CLUB_BY_ID = Object.fromEntries(ALL_CLUBS.map((c) => [c.id, c]))
+
+// Human-readable label for every division tag used across the game -
+// English (PL/CH), Scottish (SPL/SCH), and the foreign transfer-market pool.
+export const DIVISION_LABELS = {
+  PL: 'Premier League',
+  CH: 'Championship',
+  SPL: 'Scottish Premiership',
+  SCH: 'Scottish Championship',
+  FOREIGN: 'Foreign',
+}
+
+// Short suffix for a club-picker option: the foreign pool's own league name
+// if it has one, otherwise the division label - blank for the Premier
+// League, since that's the assumed default and doesn't need calling out.
+export function clubTag(club) {
+  if (club.league) return `(${club.league})`
+  if (club.division === 'PL') return ''
+  return `(${DIVISION_LABELS[club.division]})`
+}
 
 export function totalCapacity(club) {
   return club.stands.reduce((sum, s) => sum + s.capacity, 0)

@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { CLUB_BY_ID } from '../data/clubs.js'
+import { CLUB_BY_ID, DIVISION_LABELS } from '../data/clubs.js'
 import { standingsToTable, playerLeagueClubIds } from '../state/gameReducer.js'
 import { clubCupStatus, CUP_ROUND_WEEKS } from '../state/cup.js'
 import { RESPONSE_TYPES } from '../state/pressConference.js'
 import { EURO_ROUND_WEEKS, EURO_ROUND_NAMES } from '../state/europe.js'
+
+const VIEW_DIVISIONS = ['PL', 'CH', 'SPL', 'SCH']
 
 function zoneClass(position, division) {
   if (division === 'PL') {
@@ -11,9 +13,24 @@ function zoneClass(position, division) {
     if (position >= 18) return 'zone-relegation'
     return ''
   }
-  if (position <= 2) return 'zone-promotion'
-  if (position <= 6) return 'zone-playoff'
-  if (position >= 18) return 'zone-relegation'
+  if (division === 'CH') {
+    if (position <= 2) return 'zone-promotion'
+    if (position <= 6) return 'zone-playoff'
+    if (position >= 18) return 'zone-relegation'
+    return ''
+  }
+  if (division === 'SPL') {
+    // 12-club league: bottom 2 relegated.
+    if (position >= 11) return 'zone-relegation'
+    return ''
+  }
+  if (division === 'SCH') {
+    // 10-club league: champion auto-promoted, 2nd-5th contest the play-off.
+    // No relegation zone - there's no third tier below it in this game.
+    if (position === 1) return 'zone-promotion'
+    if (position <= 5) return 'zone-playoff'
+    return ''
+  }
   return ''
 }
 
@@ -114,12 +131,11 @@ export default function FixturesScreen({ state, dispatch }) {
       <div className="grid-2">
         <div className="panel">
           <div className="tabs" style={{ marginBottom: 8 }}>
-            <button className={`tab${viewDivision === 'PL' ? ' active' : ''}`} onClick={() => setViewDivision('PL')}>
-              Premier League
-            </button>
-            <button className={`tab${viewDivision === 'CH' ? ' active' : ''}`} onClick={() => setViewDivision('CH')}>
-              Championship
-            </button>
+            {VIEW_DIVISIONS.map((d) => (
+              <button key={d} className={`tab${viewDivision === d ? ' active' : ''}`} onClick={() => setViewDivision(d)}>
+                {DIVISION_LABELS[d]}
+              </button>
+            ))}
           </div>
           <div className="scrollbox">
             <table className="pm-table">
@@ -163,16 +179,24 @@ export default function FixturesScreen({ state, dispatch }) {
             </table>
           </div>
           <p style={{ fontSize: 13, marginTop: 6 }}>
-            {viewDivision === 'PL' ? (
+            {viewDivision === 'PL' && (
               <>
                 <span className="zone-swatch zone-europe" /> Champions League/Europe &nbsp;
                 <span className="zone-swatch zone-relegation" /> Relegation
               </>
-            ) : (
+            )}
+            {viewDivision === 'CH' && (
               <>
                 <span className="zone-swatch zone-promotion" /> Automatic promotion &nbsp;
                 <span className="zone-swatch zone-playoff" /> Play-offs &nbsp;
                 <span className="zone-swatch zone-relegation" /> Relegation
+              </>
+            )}
+            {viewDivision === 'SPL' && <><span className="zone-swatch zone-relegation" /> Relegation</>}
+            {viewDivision === 'SCH' && (
+              <>
+                <span className="zone-swatch zone-promotion" /> Automatic promotion &nbsp;
+                <span className="zone-swatch zone-playoff" /> Play-offs
               </>
             )}
           </p>

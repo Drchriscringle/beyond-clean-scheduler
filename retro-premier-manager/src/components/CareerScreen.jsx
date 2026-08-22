@@ -1,4 +1,4 @@
-import { CLUB_BY_ID } from '../data/clubs.js'
+import { CLUB_BY_ID, DIVISION_LABELS } from '../data/clubs.js'
 
 const OUTCOME_LABEL = {
   completed: 'Continued',
@@ -20,7 +20,11 @@ export default function CareerScreen({ state }) {
   const trophies = history.filter((h) => h.cupResult === 'FA Cup Winner').length
   const promotions = history.filter((h, i) => {
     const next = history[i + 1]
-    return next && next.clubId === h.clubId && h.division === 'CH' && next.division === 'PL'
+    return (
+      next &&
+      next.clubId === h.clubId &&
+      ((h.division === 'CH' && next.division === 'PL') || (h.division === 'SCH' && next.division === 'SPL'))
+    )
   }).length
   const seasonsManaged = history.length
   const clubsManaged = new Set(history.map((h) => h.clubId)).size
@@ -62,7 +66,7 @@ export default function CareerScreen({ state }) {
                       {h.season}/{String(h.season + 1).slice(2)}
                     </td>
                     <td>{CLUB_BY_ID[h.clubId]?.name ?? h.clubId}</td>
-                    <td>{h.division === 'CH' ? 'Championship' : 'Premier League'}</td>
+                    <td>{DIVISION_LABELS[h.division] ?? h.division}</td>
                     <td>
                       {h.finalPosition}
                       {ordinalSuffix(h.finalPosition)}

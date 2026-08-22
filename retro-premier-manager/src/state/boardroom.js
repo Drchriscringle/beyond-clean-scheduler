@@ -13,11 +13,19 @@ export function reasonLabel(reason) {
 
 // A rough "expected league position" for a club given its reputation tier -
 // used only to nudge chairman mood, never shown directly to the player.
-function expectedPosition(reputation) {
-  return { 5: 4, 4: 9, 3: 11, 2: 14, 1: 17 }[reputation] ?? 12
+// Expressed as a fraction of the division's size (calibrated against the
+// original English 20-club figures: reputation 5 expects roughly the top
+// 20%, reputation 1 the bottom 15%) so it scales correctly for a smaller
+// league, like the 12-club Scottish Premiership, instead of expecting a
+// position that league doesn't even have.
+const EXPECTED_POSITION_FRACTION = { 5: 0.2, 4: 0.45, 3: 0.55, 2: 0.7, 1: 0.85 }
+
+function expectedPosition(reputation, divisionSize = 20) {
+  const fraction = EXPECTED_POSITION_FRACTION[reputation] ?? 0.55
+  return Math.max(1, Math.round(fraction * divisionSize))
 }
 
-export function requestBudget({ club, boardConfidence, lastRequestWeek, currentWeek, leaguePosition, amount }) {
+export function requestBudget({ club, boardConfidence, lastRequestWeek, currentWeek, leaguePosition, divisionSize = 20, amount }) {
   if (lastRequestWeek != null && currentWeek - lastRequestWeek < 3) {
     return {
       outcome: 'too-soon',
@@ -28,7 +36,7 @@ export function requestBudget({ club, boardConfidence, lastRequestWeek, currentW
     }
   }
 
-  const positionFactor = leaguePosition <= expectedPosition(club.reputation) ? 1.15 : 0.82
+  const positionFactor = leaguePosition <= expectedPosition(club.reputation, divisionSize) ? 1.15 : 0.82
   const confidenceFactor = 0.5 + boardConfidence / 100
   const affordable = club.bankBalance * 0.4 * confidenceFactor * positionFactor
 
@@ -62,8 +70,8 @@ export function requestBudget({ club, boardConfidence, lastRequestWeek, currentW
   }
 }
 
-export function driftConfidence({ boardConfidence, leaguePosition, reputation, resultPoints }) {
-  const expected = expectedPosition(reputation)
+export function driftConfidence({ boardConfidence, leaguePosition, reputation, resultPoints, divisionSize = 20 }) {
+  const expected = expectedPosition(reputation, divisionSize)
   const positionDelta = (expected - leaguePosition) * 0.4
   const formDelta = resultPoints === 3 ? 1 : resultPoints === 1 ? 0 : -1.2
   const next = boardConfidence + positionDelta * 0.15 + formDelta
