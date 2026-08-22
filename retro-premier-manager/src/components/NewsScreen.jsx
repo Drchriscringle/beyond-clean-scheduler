@@ -45,6 +45,10 @@ export default function NewsScreen({ state, dispatch }) {
   const serieBResults = results.filter((r) => state.clubs[r.home]?.division === 'SERIEB')
   const bundesligaResults = results.filter((r) => state.clubs[r.home]?.division === 'BUNDESLIGA')
   const bundesliga2Results = results.filter((r) => state.clubs[r.home]?.division === 'BUNDESLIGA2')
+  const ligue1Results = results.filter((r) => state.clubs[r.home]?.division === 'LIGUE1')
+  const ligue2Results = results.filter((r) => state.clubs[r.home]?.division === 'LIGUE2')
+  const eredivisieResults = results.filter((r) => state.clubs[r.home]?.division === 'EREDIVISIE')
+  const eersteDivisieResults = results.filter((r) => state.clubs[r.home]?.division === 'EERSTEDIVISIE')
   const lastCupRound = state.cup?.history?.[state.cup.history.length - 1]
   const lastScottishCupRound = state.scottishCup?.history?.[state.scottishCup.history.length - 1]
   const awards = state.lastSeasonAwards
@@ -203,6 +207,62 @@ export default function NewsScreen({ state, dispatch }) {
           <div className="scrollbox">
             <ul>
               {bundesliga2Results.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">LIGUE 1 RESULTS</div>
+          {ligue1Results.length === 0 && <p>No Ligue 1 fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {ligue1Results.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">LIGUE 2 RESULTS</div>
+          {ligue2Results.length === 0 && <p>No Ligue 2 fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {ligue2Results.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">EREDIVISIE RESULTS</div>
+          {eredivisieResults.length === 0 && <p>No Eredivisie fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {eredivisieResults.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">EERSTE DIVISIE RESULTS</div>
+          {eersteDivisieResults.length === 0 && <p>No Eerste Divisie fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {eersteDivisieResults.map((r, i) => (
                 <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
                   {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
                 </li>
