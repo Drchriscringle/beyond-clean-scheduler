@@ -154,14 +154,14 @@ test('resolveScottishPromotionRelegation relegates the bottom 2 of the Premiersh
   assert.equal(schCountAfter, 10)
 })
 
-test('starting a new game as a Scottish club sets up all ten divisions correctly', () => {
+test('starting a new game as a Scottish club sets up all fourteen divisions correctly', () => {
   let state = gameReducer(makeInitialState(), { type: 'START_NEW_GAME', payload: { clubId: 'celtic', managerName: 'Test' } })
 
   assert.equal(state.playerClubId, 'celtic')
   assert.equal(state.clubs.celtic.division, 'SPL')
   assert.equal(playerLeagueClubIds(state).length, 12)
 
-  for (const division of ['PL', 'CH', 'SPL', 'SCH', 'LALIGA', 'SEGUNDA', 'SERIEA', 'SERIEB', 'BUNDESLIGA', 'BUNDESLIGA2']) {
+  for (const division of ['PL', 'CH', 'SPL', 'SCH', 'LALIGA', 'SEGUNDA', 'SERIEA', 'SERIEB', 'BUNDESLIGA', 'BUNDESLIGA2', 'LIGUE1', 'LIGUE2', 'EREDIVISIE', 'EERSTEDIVISIE']) {
     const ids = Object.keys(state.clubs).filter((id) => state.clubs[id].division === division)
     assert.ok(ids.length > 0, `no clubs found for division ${division}`)
     for (const id of ids) {
@@ -174,7 +174,7 @@ test('starting a new game as a Scottish club sets up all ten divisions correctly
   // Week 1 fixtures should include matches from every division.
   const week1 = state.fixtures.find((f) => f.week === 1)
   const divisionsPlaying = new Set(week1.matches.map((m) => state.clubs[m.home].division))
-  assert.equal(divisionsPlaying.size, 10)
+  assert.equal(divisionsPlaying.size, 14)
 
   // The whole season still runs to exactly 38 weeks for every division.
   assert.equal(state.fixtures.length, 38)

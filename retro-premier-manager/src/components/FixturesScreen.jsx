@@ -6,7 +6,22 @@ import { RESPONSE_TYPES } from '../state/pressConference.js'
 import { EURO_ROUND_WEEKS, EURO_ROUND_NAMES } from '../state/europe.js'
 import { derbyLabel } from '../data/rivalries.js'
 
-const VIEW_DIVISIONS = ['PL', 'CH', 'SPL', 'SCH', 'LALIGA', 'SEGUNDA', 'SERIEA', 'SERIEB', 'BUNDESLIGA', 'BUNDESLIGA2']
+const VIEW_DIVISIONS = [
+  'PL',
+  'CH',
+  'SPL',
+  'SCH',
+  'LALIGA',
+  'SEGUNDA',
+  'SERIEA',
+  'SERIEB',
+  'BUNDESLIGA',
+  'BUNDESLIGA2',
+  'LIGUE1',
+  'LIGUE2',
+  'EREDIVISIE',
+  'EERSTEDIVISIE',
+]
 
 function zoneClass(position, division) {
   if (division === 'PL') {
@@ -19,19 +34,19 @@ function zoneClass(position, division) {
     if (position >= 18) return 'zone-relegation'
     return ''
   }
-  if (division === 'BUNDESLIGA') {
+  if (division === 'BUNDESLIGA' || division === 'LIGUE1' || division === 'EREDIVISIE') {
     // 18-club league: bottom 3 relegated.
     if (position <= 4) return 'zone-europe'
     if (position >= 16) return 'zone-relegation'
     return ''
   }
-  if (division === 'CH' || division === 'SEGUNDA' || division === 'SERIEB') {
+  if (division === 'CH' || division === 'SEGUNDA' || division === 'SERIEB' || division === 'EERSTEDIVISIE') {
     if (position <= 2) return 'zone-promotion'
     if (position <= 6) return 'zone-playoff'
     if (position >= 18) return 'zone-relegation'
     return ''
   }
-  if (division === 'BUNDESLIGA2') {
+  if (division === 'BUNDESLIGA2' || division === 'LIGUE2') {
     // 18-club league: bottom 3 relegated.
     if (position <= 2) return 'zone-promotion'
     if (position <= 6) return 'zone-playoff'
@@ -212,7 +227,12 @@ export default function FixturesScreen({ state, dispatch }) {
                 <span className="zone-swatch zone-relegation" /> Relegation
               </>
             )}
-            {(viewDivision === 'CH' || viewDivision === 'SEGUNDA' || viewDivision === 'SERIEB' || viewDivision === 'BUNDESLIGA2') && (
+            {(viewDivision === 'CH' ||
+              viewDivision === 'SEGUNDA' ||
+              viewDivision === 'SERIEB' ||
+              viewDivision === 'BUNDESLIGA2' ||
+              viewDivision === 'LIGUE2' ||
+              viewDivision === 'EERSTEDIVISIE') && (
               <>
                 <span className="zone-swatch zone-promotion" /> Automatic promotion &nbsp;
                 <span className="zone-swatch zone-playoff" /> Play-offs &nbsp;
@@ -226,7 +246,11 @@ export default function FixturesScreen({ state, dispatch }) {
                 <span className="zone-swatch zone-playoff" /> Play-offs
               </>
             )}
-            {(viewDivision === 'LALIGA' || viewDivision === 'SERIEA' || viewDivision === 'BUNDESLIGA') && (
+            {(viewDivision === 'LALIGA' ||
+              viewDivision === 'SERIEA' ||
+              viewDivision === 'BUNDESLIGA' ||
+              viewDivision === 'LIGUE1' ||
+              viewDivision === 'EREDIVISIE') && (
               <>
                 <span className="zone-swatch zone-europe" /> Champions League/Europe &nbsp;
                 <span className="zone-swatch zone-relegation" /> Relegation

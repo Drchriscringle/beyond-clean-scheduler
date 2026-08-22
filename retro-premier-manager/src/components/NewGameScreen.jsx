@@ -8,6 +8,10 @@ import { SERIE_A_CLUBS } from '../data/serieAClubs.js'
 import { SERIE_B_CLUBS } from '../data/serieBClubs.js'
 import { BUNDESLIGA_CLUBS } from '../data/bundesligaClubs.js'
 import { BUNDESLIGA_2_CLUBS } from '../data/bundesliga2Clubs.js'
+import { LIGUE_1_CLUBS } from '../data/ligue1Clubs.js'
+import { LIGUE_2_CLUBS } from '../data/ligue2Clubs.js'
+import { EREDIVISIE_CLUBS } from '../data/eredivisieClubs.js'
+import { EERSTE_DIVISIE_CLUBS } from '../data/eersteDivisieClubs.js'
 
 const DIVISION_CLUB_LISTS = {
   PL: CLUBS,
@@ -20,6 +24,10 @@ const DIVISION_CLUB_LISTS = {
   SERIEB: SERIE_B_CLUBS,
   BUNDESLIGA: BUNDESLIGA_CLUBS,
   BUNDESLIGA2: BUNDESLIGA_2_CLUBS,
+  LIGUE1: LIGUE_1_CLUBS,
+  LIGUE2: LIGUE_2_CLUBS,
+  EREDIVISIE: EREDIVISIE_CLUBS,
+  EERSTEDIVISIE: EERSTE_DIVISIE_CLUBS,
 }
 import { formatMoney } from '../utils/format.js'
 import { RepStars } from './shared.jsx'

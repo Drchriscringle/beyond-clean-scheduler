@@ -5,8 +5,6 @@ import { EUROPEAN_CLUBS } from './europeanClubs.js'
 // need this), it's only used here for display and to group the transfer
 // market's foreign pool by league.
 const EURO_LEAGUE_BY_ID = {
-  'euro-psg': 'Ligue 1',
-  'euro-ajax': 'Eredivisie',
   'euro-porto': 'Primeira Liga',
   'euro-benfica': 'Primeira Liga',
   'euro-shakhtar': 'Ukrainian Premier League',

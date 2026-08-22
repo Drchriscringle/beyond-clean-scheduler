@@ -66,14 +66,14 @@ test('tvIncomeForWeek gives La Liga its own independent pot, distinct from the P
   assert.ok(tvIncomeForWeek(1, 'LALIGA') > tvIncomeForWeek(1, 'CH'))
 })
 
-test('starting a new game as a La Liga club sets up all ten divisions correctly', () => {
+test('starting a new game as a La Liga club sets up all fourteen divisions correctly', () => {
   let state = gameReducer(makeInitialState(), { type: 'START_NEW_GAME', payload: { clubId: 'real-madrid', managerName: 'Test' } })
 
   assert.equal(state.playerClubId, 'real-madrid')
   assert.equal(state.clubs['real-madrid'].division, 'LALIGA')
   assert.equal(playerLeagueClubIds(state).length, 20)
 
-  for (const division of ['PL', 'CH', 'SPL', 'SCH', 'LALIGA', 'SEGUNDA', 'SERIEA', 'SERIEB', 'BUNDESLIGA', 'BUNDESLIGA2']) {
+  for (const division of ['PL', 'CH', 'SPL', 'SCH', 'LALIGA', 'SEGUNDA', 'SERIEA', 'SERIEB', 'BUNDESLIGA', 'BUNDESLIGA2', 'LIGUE1', 'LIGUE2', 'EREDIVISIE', 'EERSTEDIVISIE']) {
     const ids = Object.keys(state.clubs).filter((id) => state.clubs[id].division === division)
     assert.ok(ids.length > 0, `no clubs found for division ${division}`)
     for (const id of ids) {
@@ -85,7 +85,7 @@ test('starting a new game as a La Liga club sets up all ten divisions correctly'
 
   const week1 = state.fixtures.find((f) => f.week === 1)
   const divisionsPlaying = new Set(week1.matches.map((m) => state.clubs[m.home].division))
-  assert.equal(divisionsPlaying.size, 10)
+  assert.equal(divisionsPlaying.size, 14)
 
   assert.equal(state.fixtures.length, 38)
 })

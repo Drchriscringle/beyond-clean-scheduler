@@ -10,11 +10,10 @@
 // real division with fixtures and their own European qualification, not
 // just opposition drawn for someone else's cup run. Bayern Munich, Borussia
 // Dortmund and RB Leipzig graduated the same way into the Bundesliga (see
-// bundesligaClubs.js), and Inter Milan, AC Milan, Juventus and Napoli into
-// Serie A (see serieAClubs.js).
+// bundesligaClubs.js), Inter Milan, AC Milan, Juventus and Napoli into
+// Serie A (see serieAClubs.js), PSG into Ligue 1 (see ligue1Clubs.js), and
+// Ajax into the Eredivisie (see eredivisieClubs.js).
 export const EUROPEAN_CLUBS = [
-  { id: 'euro-psg', name: 'Paris Saint-Germain', reputation: 5 },
-  { id: 'euro-ajax', name: 'Ajax', reputation: 3 },
   { id: 'euro-porto', name: 'Porto', reputation: 3 },
   { id: 'euro-benfica', name: 'Benfica', reputation: 3 },
   { id: 'euro-shakhtar', name: 'Shakhtar Donetsk', reputation: 2 },

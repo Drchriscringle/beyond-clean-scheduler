@@ -9,6 +9,10 @@ import { SERIE_A_CLUBS } from './serieAClubs.js'
 import { SERIE_B_CLUBS } from './serieBClubs.js'
 import { BUNDESLIGA_CLUBS } from './bundesligaClubs.js'
 import { BUNDESLIGA_2_CLUBS } from './bundesliga2Clubs.js'
+import { LIGUE_1_CLUBS } from './ligue1Clubs.js'
+import { LIGUE_2_CLUBS } from './ligue2Clubs.js'
+import { EREDIVISIE_CLUBS } from './eredivisieClubs.js'
+import { EERSTE_DIVISIE_CLUBS } from './eersteDivisieClubs.js'
 
 // reputation tier: 5 = "Big Six", 4 = strong mid-table / European chasers,
 // 3 = comfortable mid-table, 2 = lower mid-table, 1 = newly promoted / bottom
@@ -639,6 +643,10 @@ export const ALL_CLUBS = [
   ...SERIE_B_CLUBS,
   ...BUNDESLIGA_CLUBS,
   ...BUNDESLIGA_2_CLUBS,
+  ...LIGUE_1_CLUBS,
+  ...LIGUE_2_CLUBS,
+  ...EREDIVISIE_CLUBS,
+  ...EERSTE_DIVISIE_CLUBS,
   ...FOREIGN_CLUBS,
 ]
 
@@ -646,8 +654,8 @@ export const CLUB_BY_ID = Object.fromEntries(ALL_CLUBS.map((c) => [c.id, c]))
 
 // Human-readable label for every division tag used across the game -
 // English (PL/CH), Scottish (SPL/SCH), Spanish (LALIGA/SEGUNDA), Italian
-// (SERIEA/SERIEB), German (BUNDESLIGA/BUNDESLIGA2), and the foreign
-// transfer-market pool.
+// (SERIEA/SERIEB), German (BUNDESLIGA/BUNDESLIGA2), French (LIGUE1/LIGUE2),
+// Dutch (EREDIVISIE/EERSTEDIVISIE), and the foreign transfer-market pool.
 export const DIVISION_LABELS = {
   PL: 'Premier League',
   CH: 'Championship',
@@ -659,6 +667,10 @@ export const DIVISION_LABELS = {
   SERIEB: 'Serie B',
   BUNDESLIGA: 'Bundesliga',
   BUNDESLIGA2: '2. Bundesliga',
+  LIGUE1: 'Ligue 1',
+  LIGUE2: 'Ligue 2',
+  EREDIVISIE: 'Eredivisie',
+  EERSTEDIVISIE: 'Eerste Divisie',
   FOREIGN: 'Foreign',
 }
 

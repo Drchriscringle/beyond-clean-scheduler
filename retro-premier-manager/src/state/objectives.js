@@ -185,6 +185,83 @@ const BUNDESLIGA2_OBJECTIVE_POOL = {
   ],
 }
 
+// Ligue 1 is an 18-club top flight, same shape as the Bundesliga pool.
+const LIGUE1_OBJECTIVE_POOL = {
+  5: [
+    { type: 'win-league', label: 'Win Ligue 1', targetPosition: 1 },
+    { type: 'top4', label: 'Finish in the Top 4', targetPosition: 4 },
+  ],
+  4: [
+    { type: 'top6', label: 'Qualify for Europe (Top 6)', targetPosition: 6 },
+    { type: 'top8', label: 'Finish in the Top 8', targetPosition: 8 },
+  ],
+  3: [
+    { type: 'top-half', label: 'Finish in the Top Half', targetPosition: 9 },
+    { type: 'top11', label: 'Finish 11th or Better', targetPosition: 11 },
+  ],
+  2: [
+    { type: 'mid-table', label: 'A Secure Mid-Table Finish (12th or Better)', targetPosition: 12 },
+  ],
+  1: [
+    { type: 'avoid-relegation', label: 'Avoid Relegation (15th or Better)', targetPosition: 15 },
+  ],
+}
+
+// Ligue 2 clubs are judged on promotion, not on European qualification -
+// same shape as the 2. Bundesliga pool.
+const LIGUE2_OBJECTIVE_POOL = {
+  3: [
+    { type: 'win-ligue2', label: 'Win Ligue 2 (Automatic Promotion)', targetPosition: 1 },
+    { type: 'auto-promotion-ligue2', label: 'Achieve Automatic Promotion (Top 2)', targetPosition: 2 },
+  ],
+  2: [
+    { type: 'playoffs-ligue2', label: 'Reach the Promotion Play-offs (Top 6)', targetPosition: 6 },
+    { type: 'top-half-ligue2', label: 'Finish in the Top Half', targetPosition: 9 },
+  ],
+  1: [
+    { type: 'avoid-relegation-ligue2', label: 'Avoid Relegation (15th or Better)', targetPosition: 15 },
+  ],
+}
+
+// The Eredivisie is an 18-club top flight, same shape as the Bundesliga pool.
+const EREDIVISIE_OBJECTIVE_POOL = {
+  5: [
+    { type: 'win-league', label: 'Win the Eredivisie', targetPosition: 1 },
+    { type: 'top4', label: 'Finish in the Top 4', targetPosition: 4 },
+  ],
+  4: [
+    { type: 'top6', label: 'Qualify for Europe (Top 6)', targetPosition: 6 },
+    { type: 'top8', label: 'Finish in the Top 8', targetPosition: 8 },
+  ],
+  3: [
+    { type: 'top-half', label: 'Finish in the Top Half', targetPosition: 9 },
+    { type: 'top11', label: 'Finish 11th or Better', targetPosition: 11 },
+  ],
+  2: [
+    { type: 'mid-table', label: 'A Secure Mid-Table Finish (12th or Better)', targetPosition: 12 },
+  ],
+  1: [
+    { type: 'avoid-relegation', label: 'Avoid Relegation (15th or Better)', targetPosition: 15 },
+  ],
+}
+
+// Eerste Divisie clubs are judged on promotion, not on European
+// qualification - a 20-club division, same shape as the Segunda
+// División/Serie B pools.
+const EERSTEDIVISIE_OBJECTIVE_POOL = {
+  3: [
+    { type: 'win-eerstedivisie', label: 'Win the Eerste Divisie (Automatic Promotion)', targetPosition: 1 },
+    { type: 'auto-promotion-eerstedivisie', label: 'Achieve Automatic Promotion (Top 2)', targetPosition: 2 },
+  ],
+  2: [
+    { type: 'playoffs-eerstedivisie', label: 'Reach the Promotion Play-offs (Top 6)', targetPosition: 6 },
+    { type: 'top-half-eerstedivisie', label: 'Finish in the Top Half', targetPosition: 10 },
+  ],
+  1: [
+    { type: 'avoid-relegation-eerstedivisie', label: 'Avoid Relegation (17th or Better)', targetPosition: 17 },
+  ],
+}
+
 export function generateObjective(reputation, rng = Math.random, division = 'PL') {
   const pool =
     division === 'CH'
@@ -205,7 +282,15 @@ export function generateObjective(reputation, rng = Math.random, division = 'PL'
                     ? BUNDESLIGA_OBJECTIVE_POOL
                     : division === 'BUNDESLIGA2'
                       ? BUNDESLIGA2_OBJECTIVE_POOL
-                      : OBJECTIVE_POOL
+                      : division === 'LIGUE1'
+                        ? LIGUE1_OBJECTIVE_POOL
+                        : division === 'LIGUE2'
+                          ? LIGUE2_OBJECTIVE_POOL
+                          : division === 'EREDIVISIE'
+                            ? EREDIVISIE_OBJECTIVE_POOL
+                            : division === 'EERSTEDIVISIE'
+                              ? EERSTEDIVISIE_OBJECTIVE_POOL
+                              : OBJECTIVE_POOL
   const list = pool[reputation] ?? pool[3] ?? pool[1]
   return list[Math.floor(rng() * list.length)]
 }
