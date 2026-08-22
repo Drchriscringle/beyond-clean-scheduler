@@ -130,7 +130,11 @@ function assignSquadNumbers(players, rng) {
   })
 }
 
-export function generateSquadForClub(club) {
+// `abilityMultiplier` scales every generated player's ability (and, for
+// young stars, their potential) - used to make AI clubs modestly weaker or
+// stronger under the difficulty setting. It's never applied to the
+// player's own club, which is always generated at the baseline.
+export function generateSquadForClub(club, { abilityMultiplier = 1 } = {}) {
   const rng = mulberry32(hashString(club.id) ^ 0x9e3779b9)
   const stars = STAR_PLAYERS[club.id] ?? []
   const targetSize = TARGET_SQUAD_SIZE[club.reputation] ?? 24
@@ -139,14 +143,15 @@ export function generateSquadForClub(club) {
 
   for (const star of stars) {
     idCounter += 1
+    const scaledAbility = star.star * abilityMultiplier
     players.push(
       buildPlayer({
         id: `${club.id}-${idCounter}`,
         name: star.name,
         position: star.position,
         age: star.age,
-        ability: star.star,
-        potential: star.age <= 24 ? Math.min(99, star.star + 6) : star.star,
+        ability: scaledAbility,
+        potential: star.age <= 24 ? Math.min(99, scaledAbility + 6) : scaledAbility,
         reputation: club.reputation,
         rng,
       }),
@@ -175,7 +180,7 @@ export function generateSquadForClub(club) {
     idCounter += 1
     const baseAbility = 42 + club.reputation * 6
     const age = 18 + Math.floor(rng() * 15)
-    const ability = clamp(baseAbility + Math.round((rng() - 0.4) * 22), 38, 82)
+    const ability = clamp(Math.round((baseAbility + Math.round((rng() - 0.4) * 22)) * abilityMultiplier), 38, 82)
     const youthBonus = age <= 21 ? Math.round(rng() * 12) : Math.round(rng() * 4)
     let name = generateName(rng)
     let attempts = 0

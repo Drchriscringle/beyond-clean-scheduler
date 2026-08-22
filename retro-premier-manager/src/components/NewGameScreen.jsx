@@ -3,13 +3,18 @@ import { CLUBS, CHAMPIONSHIP_CLUBS, CLUB_BY_ID } from '../data/clubs.js'
 import { totalCapacity } from '../data/clubs.js'
 import { formatMoney } from '../utils/format.js'
 import { RepStars } from './shared.jsx'
-import { loadGame, clearSave } from '../state/persistence.js'
+import { listSaves, clearSave } from '../state/persistence.js'
+import { DIFFICULTIES, difficultyLabel } from '../state/difficulty.js'
 
 export default function NewGameScreen({ dispatch }) {
   const [division, setDivision] = useState('PL')
   const [clubId, setClubId] = useState(null)
   const [managerName, setManagerName] = useState('')
-  const [savedGame, setSavedGame] = useState(() => loadGame())
+  const [difficulty, setDifficulty] = useState('normal')
+  const [saves, setSaves] = useState(() => listSaves())
+
+  const firstEmptySlot = saves.find((s) => !s.data)?.slot ?? saves[0].slot
+  const [saveSlot, setSaveSlot] = useState(firstEmptySlot)
 
   const clubList = division === 'CH' ? CHAMPIONSHIP_CLUBS : CLUBS
   const selected = CLUB_BY_ID[clubId]
@@ -21,35 +26,40 @@ export default function NewGameScreen({ dispatch }) {
 
   function start() {
     if (!clubId || !managerName.trim()) return
-    dispatch({ type: 'START_NEW_GAME', payload: { clubId, managerName: managerName.trim() } })
+    dispatch({ type: 'START_NEW_GAME', payload: { clubId, managerName: managerName.trim(), difficulty, saveSlot } })
   }
 
-  function continueSave() {
-    if (!savedGame) return
-    dispatch({ type: 'LOAD_GAME', payload: { state: savedGame.state, savedAt: savedGame.savedAt } })
+  function continueSave(slot, data) {
+    dispatch({ type: 'LOAD_GAME', payload: { state: data.state, savedAt: data.savedAt } })
   }
 
-  function deleteSave() {
-    clearSave()
-    setSavedGame(null)
+  function deleteSave(slot) {
+    clearSave(slot)
+    setSaves(listSaves())
   }
 
   return (
     <div className="screen">
-      {savedGame && (
+      {saves.some((s) => s.data) && (
         <div className="panel">
           <div className="panel-title">CONTINUE SAVED CAREER</div>
-          <p>
-            {savedGame.state.managerName} — {CLUB_BY_ID[savedGame.state.playerClubId]?.name ?? 'Unknown club'}
-            &nbsp;· Season {savedGame.state.season}, Week {Math.min(savedGame.state.week, 38)}/38
-          </p>
-          <p style={{ fontSize: 14 }}>Last saved: {new Date(savedGame.savedAt).toLocaleString()}</p>
-          <button className="btn btn-primary" onClick={continueSave}>
-            Continue
-          </button>{' '}
-          <button className="btn btn-danger" onClick={deleteSave}>
-            Delete Save
-          </button>
+          {saves
+            .filter((s) => s.data)
+            .map(({ slot, data }) => (
+              <div key={slot} className="panel-inset" style={{ marginBottom: 8 }}>
+                <p>
+                  Slot {slot}: {data.state.managerName} — {CLUB_BY_ID[data.state.playerClubId]?.name ?? 'Unknown club'}
+                  &nbsp;· Season {data.state.season}, Week {Math.min(data.state.week, 38)}/38
+                </p>
+                <p style={{ fontSize: 14 }}>Last saved: {new Date(data.savedAt).toLocaleString()}</p>
+                <button className="btn btn-primary btn-small" onClick={() => continueSave(slot, data)}>
+                  Continue
+                </button>{' '}
+                <button className="btn btn-danger btn-small" onClick={() => deleteSave(slot)}>
+                  Delete Save
+                </button>
+              </div>
+            ))}
         </div>
       )}
 
@@ -110,6 +120,26 @@ export default function NewGameScreen({ dispatch }) {
             onChange={(e) => setManagerName(e.target.value)}
             placeholder="e.g. A. Wenger"
           />
+        </div>
+        <div className="field-row">
+          <label htmlFor="difficulty">Difficulty</label>
+          <select id="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+            {DIFFICULTIES.map((d) => (
+              <option key={d} value={d}>
+                {difficultyLabel(d)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field-row">
+          <label htmlFor="save-slot">Save to slot</label>
+          <select id="save-slot" value={saveSlot} onChange={(e) => setSaveSlot(Number(e.target.value))}>
+            {saves.map(({ slot, data }) => (
+              <option key={slot} value={slot}>
+                Slot {slot}{data ? ' (occupied — will overwrite)' : ' (empty)'}
+              </option>
+            ))}
+          </select>
         </div>
         <button className="btn btn-primary" disabled={!clubId || !managerName.trim()} onClick={start}>
           Begin Season

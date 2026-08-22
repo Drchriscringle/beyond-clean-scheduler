@@ -3,19 +3,23 @@ import { currentForm } from './form.js'
 const POSITIONS = ['GK', 'DF', 'MF', 'FW']
 const TARGET_MIN = { GK: 2, DF: 6, MF: 6, FW: 4 }
 const ACTIVITY_CHANCE = 0.08
+// On the deadline day itself, clubs rush to get business done before the
+// window shuts - a noticeably bigger flurry of activity than a normal week.
+const DEADLINE_DAY_MULTIPLIER = 4
 
 // A light touch of life in the transfer market: each week every AI club has
 // a small chance to sign a free agent (if short in a position) or release an
 // ageing, out-of-form fringe player back into free agency. The player's own
 // club is untouched - that squad is managed by hand.
-export function aiTransferTick({ clubs, squads, freeAgents, playerClubId, week, windowOpen = true, rng = Math.random }) {
+export function aiTransferTick({ clubs, squads, freeAgents, playerClubId, week, windowOpen = true, isDeadlineDay = false, rng = Math.random }) {
   let nextFreeAgents = [...freeAgents]
   const nextSquads = { ...squads }
   const events = []
+  const activityChance = isDeadlineDay ? ACTIVITY_CHANCE * DEADLINE_DAY_MULTIPLIER : ACTIVITY_CHANCE
 
   for (const clubId of Object.keys(clubs)) {
     if (clubId === playerClubId) continue
-    if (rng() > ACTIVITY_CHANCE) continue
+    if (rng() > activityChance) continue
 
     const club = clubs[clubId]
     const squad = nextSquads[clubId]

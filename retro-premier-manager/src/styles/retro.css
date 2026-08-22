@@ -343,6 +343,16 @@ table.pm-table tbody tr.zone-relegation {
   font-weight: bold;
 }
 
+.deadline-day-badge {
+  display: inline-block;
+  background: var(--red);
+  color: var(--white);
+  font-weight: bold;
+  padding: 2px 8px;
+  margin-left: 8px;
+  border: 2px outset #c00000;
+}
+
 /* ---------- Matchday screen ---------- */
 .matchday-screen {
   max-width: 900px;

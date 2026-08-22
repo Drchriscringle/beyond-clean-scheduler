@@ -28,6 +28,7 @@ const MENU_GROUPS = [
       { key: 'fixtures', label: 'Fixtures' },
       { key: 'news', label: 'News' },
       { key: 'career', label: 'Career' },
+      { key: 'international', label: 'International' },
     ],
   },
 ]
@@ -55,25 +56,25 @@ export default function MenuBar({ state, dispatch }) {
   }
 
   function handleSave() {
-    const ok = saveGame(state)
-    dispatch({ type: 'NOTICE', payload: { message: ok ? 'Game saved.' : 'Could not save — browser storage unavailable.' } })
+    const ok = saveGame(state, state.saveSlot)
+    dispatch({ type: 'NOTICE', payload: { message: ok ? `Game saved (slot ${state.saveSlot}).` : 'Could not save — browser storage unavailable.' } })
     setOpenMenu(null)
   }
 
   function handleLoadLast() {
-    const saved = loadGame()
+    const saved = loadGame(state.saveSlot)
     if (saved) dispatch({ type: 'LOAD_GAME', payload: { state: saved.state, savedAt: saved.savedAt } })
     setOpenMenu(null)
   }
 
   function handleQuit() {
-    saveGame(state)
+    saveGame(state, state.saveSlot)
     dispatch({ type: 'QUIT_TO_MENU' })
     setOpenMenu(null)
   }
 
   function handleDeleteSave() {
-    clearSave()
+    clearSave(state.saveSlot)
     setOpenMenu(null)
   }
 
@@ -87,15 +88,15 @@ export default function MenuBar({ state, dispatch }) {
         {openMenu === 'file' && (
           <div className="dropdown-panel">
             <button className="dropdown-item" onClick={handleSave}>
-              Save Game
+              Save Game (Slot {state.saveSlot})
             </button>
-            <button className="dropdown-item" onClick={handleLoadLast} disabled={!hasSave()}>
+            <button className="dropdown-item" onClick={handleLoadLast} disabled={!hasSave(state.saveSlot)}>
               Load Last Save
             </button>
             <button className="dropdown-item" onClick={handleQuit}>
               Quit to Main Menu
             </button>
-            <button className="dropdown-item" onClick={handleDeleteSave} disabled={!hasSave()}>
+            <button className="dropdown-item" onClick={handleDeleteSave} disabled={!hasSave(state.saveSlot)}>
               Delete Save
             </button>
           </div>
@@ -120,6 +121,7 @@ export default function MenuBar({ state, dispatch }) {
                     onClick={() => navigate(item.key)}
                   >
                     {item.label}
+                    {item.key === 'international' && state.internationalOffer ? ' (!)' : ''}
                   </button>
                 ))}
               </div>

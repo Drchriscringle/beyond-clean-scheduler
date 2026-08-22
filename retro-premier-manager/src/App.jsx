@@ -20,6 +20,7 @@ import NewsScreen from './components/NewsScreen.jsx'
 import MatchdayScreen from './components/MatchdayScreen.jsx'
 import JobOfferScreen from './components/JobOfferScreen.jsx'
 import CareerScreen from './components/CareerScreen.jsx'
+import InternationalScreen from './components/InternationalScreen.jsx'
 
 const SCREENS = {
   squad: SquadScreen,
@@ -32,6 +33,7 @@ const SCREENS = {
   fixtures: FixturesScreen,
   news: NewsScreen,
   career: CareerScreen,
+  international: InternationalScreen,
   'player-detail': PlayerDetail,
 }
 
@@ -42,13 +44,13 @@ export default function App() {
 
   useEffect(() => {
     if (!state.started) return
-    const timeout = setTimeout(() => saveGame(state), 600)
+    const timeout = setTimeout(() => saveGame(state, state.saveSlot), 600)
     return () => clearTimeout(timeout)
   }, [state])
 
   useEffect(() => {
     function flush() {
-      if (stateRef.current.started) saveGame(stateRef.current)
+      if (stateRef.current.started) saveGame(stateRef.current, stateRef.current.saveSlot)
     }
     window.addEventListener('beforeunload', flush)
     window.addEventListener('pagehide', flush)

@@ -10,6 +10,12 @@ export function isTransferWindowOpen(week) {
   return SUMMER_WINDOW_WEEKS.includes(week) || WINTER_WINDOW_WEEKS.includes(week)
 }
 
+// The final day of either window - a flurry of last-minute activity across
+// the league as clubs rush to get deals done before the deadline.
+export function isDeadlineDay(week) {
+  return week === SUMMER_WINDOW_WEEKS[SUMMER_WINDOW_WEEKS.length - 1] || week === WINTER_WINDOW_WEEKS[WINTER_WINDOW_WEEKS.length - 1]
+}
+
 // Returns { open, label, closesAfterWeek } when open, or
 // { open, label, opensWeek } when closed (opensWeek is null once both
 // windows for the season have passed - it reopens at week 1 next season).
