@@ -1,308 +1,55 @@
-// A curated handful of recognisable first-team names per club, for flavour,
-// loosely based on 2025/26 squads. Exact rosters, ages and ratings are not
-// guaranteed accurate (players move between clubs every window) - treat
-// every attribute and ability rating in this game as simulated fiction.
-// Positions: GK, DF, MF, FW. Star rating (1-100) feeds ability generation.
+// A handful of "marquee" flavor players per club, generated from the same
+// fictional name pool as the rest of the squad (see namePool.js) rather
+// than any real footballer's name - every attribute, including the star
+// rating that feeds ability generation, is simulated fiction, consistent
+// with every other player in the game. How many a club gets, and how good
+// they are, scales with its reputation tier (5 = biggest budget/deepest
+// squad down to 1 = smallest), so a marquee signing at a top club still
+// reads as more of a household name than one at a newly-promoted side.
+import { generateName } from './namePool.js'
 
-export const STAR_PLAYERS = {
-  arsenal: [
-    { name: 'David Raya', position: 'GK', age: 30, star: 84 },
-    { name: 'William Saliba', position: 'DF', age: 24, star: 87 },
-    { name: 'Gabriel Magalhaes', position: 'DF', age: 28, star: 85 },
-    { name: 'Declan Rice', position: 'MF', age: 26, star: 88 },
-    { name: 'Martin Odegaard', position: 'MF', age: 27, star: 87 },
-    { name: 'Bukayo Saka', position: 'FW', age: 24, star: 89 },
-    { name: 'Viktor Gyokeres', position: 'FW', age: 27, star: 85 },
-  ],
-  'aston-villa': [
-    { name: 'Emiliano Martinez', position: 'GK', age: 33, star: 83 },
-    { name: 'Ezri Konsa', position: 'DF', age: 28, star: 79 },
-    { name: 'Pau Torres', position: 'DF', age: 28, star: 80 },
-    { name: 'Youri Tielemans', position: 'MF', age: 28, star: 80 },
-    { name: 'John McGinn', position: 'MF', age: 31, star: 79 },
-    { name: 'Morgan Rogers', position: 'MF', age: 23, star: 80 },
-    { name: 'Ollie Watkins', position: 'FW', age: 30, star: 83 },
-  ],
-  bournemouth: [
-    { name: 'Djordje Petrovic', position: 'GK', age: 26, star: 76 },
-    { name: 'Marcos Senesi', position: 'DF', age: 28, star: 77 },
-    { name: 'Adrien Truffert', position: 'DF', age: 24, star: 74 },
-    { name: 'Ryan Christie', position: 'MF', age: 30, star: 75 },
-    { name: 'Alex Scott', position: 'MF', age: 22, star: 74 },
-    { name: 'Antoine Semenyo', position: 'FW', age: 25, star: 79 },
-    { name: 'Evanilson', position: 'FW', age: 26, star: 77 },
-  ],
-  brentford: [
-    { name: 'Caoimhin Kelleher', position: 'GK', age: 27, star: 78 },
-    { name: 'Nathan Collins', position: 'DF', age: 24, star: 78 },
-    { name: 'Ethan Pinnock', position: 'DF', age: 32, star: 74 },
-    { name: 'Mikkel Damsgaard', position: 'MF', age: 25, star: 78 },
-    { name: 'Vitaly Janelt', position: 'MF', age: 27, star: 74 },
-    { name: 'Kevin Schade', position: 'FW', age: 23, star: 78 },
-    { name: 'Igor Thiago', position: 'FW', age: 24, star: 75 },
-  ],
-  brighton: [
-    { name: 'Bart Verbruggen', position: 'GK', age: 23, star: 78 },
-    { name: 'Lewis Dunk', position: 'DF', age: 34, star: 77 },
-    { name: 'Jan Paul van Hecke', position: 'DF', age: 25, star: 77 },
-    { name: 'Carlos Baleba', position: 'MF', age: 22, star: 81 },
-    { name: 'Yankuba Minteh', position: 'MF', age: 21, star: 78 },
-    { name: 'Georginio Rutter', position: 'FW', age: 23, star: 79 },
-    { name: 'Danny Welbeck', position: 'FW', age: 35, star: 74 },
-  ],
-  burnley: [
-    { name: 'Max Weiss', position: 'GK', age: 25, star: 68 },
-    { name: 'Maxime Esteve', position: 'DF', age: 23, star: 70 },
-    { name: 'CJ Egan-Riley', position: 'DF', age: 22, star: 68 },
-    { name: 'Josh Cullen', position: 'MF', age: 29, star: 71 },
-    { name: 'Josh Brownhill', position: 'MF', age: 29, star: 72 },
-    { name: 'Zian Flemming', position: 'FW', age: 27, star: 70 },
-  ],
-  chelsea: [
-    { name: 'Robert Sanchez', position: 'GK', age: 28, star: 79 },
-    { name: 'Levi Colwill', position: 'DF', age: 22, star: 80 },
-    { name: 'Wesley Fofana', position: 'DF', age: 25, star: 79 },
-    { name: 'Moises Caicedo', position: 'MF', age: 24, star: 84 },
-    { name: 'Enzo Fernandez', position: 'MF', age: 25, star: 85 },
-    { name: 'Cole Palmer', position: 'FW', age: 23, star: 87 },
-    { name: 'Nicolas Jackson', position: 'FW', age: 24, star: 78 },
-  ],
-  'crystal-palace': [
-    { name: 'Dean Henderson', position: 'GK', age: 28, star: 80 },
-    { name: 'Marc Guehi', position: 'DF', age: 25, star: 81 },
-    { name: 'Maxence Lacroix', position: 'DF', age: 25, star: 78 },
-    { name: 'Adam Wharton', position: 'MF', age: 21, star: 79 },
-    { name: 'Eberechi Eze', position: 'MF', age: 27, star: 83 },
-    { name: 'Jean-Philippe Mateta', position: 'FW', age: 28, star: 78 },
-  ],
-  everton: [
-    { name: 'Jordan Pickford', position: 'GK', age: 32, star: 82 },
-    { name: 'James Tarkowski', position: 'DF', age: 33, star: 78 },
-    { name: 'Jarrad Branthwaite', position: 'DF', age: 23, star: 79 },
-    { name: 'Idrissa Gueye', position: 'MF', age: 36, star: 73 },
-    { name: 'Iliman Ndiaye', position: 'MF', age: 25, star: 77 },
-    { name: 'Beto', position: 'FW', age: 27, star: 73 },
-  ],
-  fulham: [
-    { name: 'Bernd Leno', position: 'GK', age: 34, star: 79 },
-    { name: 'Calvin Bassey', position: 'DF', age: 26, star: 74 },
-    { name: 'Joachim Andersen', position: 'DF', age: 29, star: 78 },
-    { name: 'Sander Berge', position: 'MF', age: 28, star: 76 },
-    { name: 'Emile Smith Rowe', position: 'MF', age: 25, star: 76 },
-    { name: 'Raul Jimenez', position: 'FW', age: 34, star: 74 },
-    { name: 'Rodrigo Muniz', position: 'FW', age: 25, star: 75 },
-  ],
-  leeds: [
-    { name: 'Illan Meslier', position: 'GK', age: 25, star: 74 },
-    { name: 'Pascal Struijk', position: 'DF', age: 26, star: 73 },
-    { name: 'Joe Rodon', position: 'DF', age: 28, star: 71 },
-    { name: 'Ilia Gruev', position: 'MF', age: 24, star: 71 },
-    { name: 'Ao Tanaka', position: 'MF', age: 27, star: 72 },
-    { name: 'Joel Piroe', position: 'FW', age: 26, star: 74 },
-  ],
-  liverpool: [
-    { name: 'Alisson', position: 'GK', age: 33, star: 87 },
-    { name: 'Virgil van Dijk', position: 'DF', age: 35, star: 86 },
-    { name: 'Ibrahima Konate', position: 'DF', age: 27, star: 83 },
-    { name: 'Ryan Gravenberch', position: 'MF', age: 24, star: 82 },
-    { name: 'Alexis Mac Allister', position: 'MF', age: 27, star: 84 },
-    { name: 'Florian Wirtz', position: 'MF', age: 23, star: 87 },
-    { name: 'Mohamed Salah', position: 'FW', age: 34, star: 88 },
-    { name: 'Hugo Ekitike', position: 'FW', age: 23, star: 82 },
-  ],
-  'man-city': [
-    { name: 'Ederson', position: 'GK', age: 32, star: 85 },
-    { name: 'Ruben Dias', position: 'DF', age: 29, star: 87 },
-    { name: 'Josko Gvardiol', position: 'DF', age: 24, star: 85 },
-    { name: 'Rodri', position: 'MF', age: 30, star: 89 },
-    { name: 'Phil Foden', position: 'MF', age: 26, star: 86 },
-    { name: 'Erling Haaland', position: 'FW', age: 25, star: 92 },
-    { name: 'Omar Marmoush', position: 'FW', age: 27, star: 81 },
-  ],
-  'man-utd': [
-    { name: 'Andre Onana', position: 'GK', age: 30, star: 78 },
-    { name: 'Lisandro Martinez', position: 'DF', age: 28, star: 80 },
-    { name: 'Matthijs de Ligt', position: 'DF', age: 26, star: 81 },
-    { name: 'Bruno Fernandes', position: 'MF', age: 31, star: 86 },
-    { name: 'Kobbie Mainoo', position: 'MF', age: 21, star: 79 },
-    { name: 'Bryan Mbeumo', position: 'FW', age: 26, star: 83 },
-    { name: 'Benjamin Sesko', position: 'FW', age: 23, star: 80 },
-  ],
-  newcastle: [
-    { name: 'Nick Pope', position: 'GK', age: 34, star: 82 },
-    { name: 'Sven Botman', position: 'DF', age: 26, star: 80 },
-    { name: 'Fabian Schar', position: 'DF', age: 34, star: 78 },
-    { name: 'Bruno Guimaraes', position: 'MF', age: 28, star: 85 },
-    { name: 'Sandro Tonali', position: 'MF', age: 26, star: 82 },
-    { name: 'Anthony Gordon', position: 'FW', age: 25, star: 82 },
-    { name: 'Harvey Barnes', position: 'FW', age: 28, star: 79 },
-  ],
-  forest: [
-    { name: 'Matz Sels', position: 'GK', age: 34, star: 80 },
-    { name: 'Murillo', position: 'DF', age: 24, star: 79 },
-    { name: 'Nikola Milenkovic', position: 'DF', age: 28, star: 78 },
-    { name: 'Elliot Anderson', position: 'MF', age: 23, star: 78 },
-    { name: 'Morgan Gibbs-White', position: 'MF', age: 26, star: 80 },
-    { name: 'Chris Wood', position: 'FW', age: 34, star: 78 },
-  ],
-  sunderland: [
-    { name: 'Anthony Patterson', position: 'GK', age: 25, star: 71 },
-    { name: 'Dan Ballard', position: 'DF', age: 26, star: 71 },
-    { name: 'Luke O’Nien', position: 'DF', age: 30, star: 70 },
-    { name: 'Dan Neil', position: 'MF', age: 24, star: 71 },
-    { name: 'Patrick Roberts', position: 'MF', age: 29, star: 70 },
-    { name: 'Wilson Isidor', position: 'FW', age: 25, star: 72 },
-  ],
-  tottenham: [
-    { name: 'Guglielmo Vicario', position: 'GK', age: 29, star: 82 },
-    { name: 'Cristian Romero', position: 'DF', age: 27, star: 84 },
-    { name: 'Micky van de Ven', position: 'DF', age: 24, star: 82 },
-    { name: 'Rodrigo Bentancur', position: 'MF', age: 28, star: 80 },
-    { name: 'James Maddison', position: 'MF', age: 29, star: 82 },
-    { name: 'Son Heung-min', position: 'FW', age: 33, star: 84 },
-    { name: 'Dominic Solanke', position: 'FW', age: 28, star: 78 },
-  ],
-  'west-ham': [
-    { name: 'Alphonse Areola', position: 'GK', age: 32, star: 76 },
-    { name: 'Max Kilman', position: 'DF', age: 28, star: 76 },
-    { name: 'Konstantinos Mavropanos', position: 'DF', age: 27, star: 76 },
-    { name: 'James Ward-Prowse', position: 'MF', age: 30, star: 78 },
-    { name: 'Lucas Paqueta', position: 'MF', age: 27, star: 80 },
-    { name: 'Jarrod Bowen', position: 'FW', age: 28, star: 81 },
-  ],
-  wolves: [
-    { name: 'Jose Sa', position: 'GK', age: 32, star: 78 },
-    { name: 'Santiago Bueno', position: 'DF', age: 27, star: 74 },
-    { name: 'Toti Gomes', position: 'DF', age: 26, star: 74 },
-    { name: 'Joao Gomes', position: 'MF', age: 24, star: 78 },
-    { name: 'Andre', position: 'MF', age: 24, star: 76 },
-    { name: 'Jorgen Strand Larsen', position: 'FW', age: 25, star: 77 },
-  ],
+const STAR_COUNT_BY_REPUTATION = { 5: 7, 4: 6, 3: 6, 2: 5, 1: 4 }
 
-  // --- Championship (second tier) ---
-  leicester: [
-    { name: 'Mads Hermansen', position: 'GK', age: 25, star: 76 },
-    { name: 'Wout Faes', position: 'DF', age: 27, star: 75 },
-    { name: 'Ricardo Pereira', position: 'DF', age: 31, star: 74 },
-    { name: 'Wilfred Ndidi', position: 'MF', age: 28, star: 75 },
-    { name: 'Bobby De Cordova-Reid', position: 'FW', age: 32, star: 73 },
-  ],
-  ipswich: [
-    { name: 'Arijanet Muric', position: 'GK', age: 27, star: 73 },
-    { name: 'Jacob Greaves', position: 'DF', age: 25, star: 72 },
-    { name: 'Leif Davis', position: 'DF', age: 25, star: 73 },
-    { name: 'Sammie Szmodics', position: 'MF', age: 29, star: 74 },
-    { name: 'Omari Hutchinson', position: 'FW', age: 21, star: 74 },
-  ],
-  southampton: [
-    { name: 'Aaron Ramsdale', position: 'GK', age: 28, star: 75 },
-    { name: 'Jan Bednarek', position: 'DF', age: 29, star: 73 },
-    { name: 'Ryan Manning', position: 'DF', age: 29, star: 71 },
-    { name: 'Flynn Downes', position: 'MF', age: 26, star: 72 },
-    { name: 'Adam Armstrong', position: 'FW', age: 28, star: 74 },
-  ],
-  'west-brom': [
-    { name: 'Josh Griffiths', position: 'GK', age: 24, star: 68 },
-    { name: 'Erik Pieters', position: 'DF', age: 37, star: 67 },
-    { name: 'Torbjorn Heggem', position: 'DF', age: 25, star: 68 },
-    { name: 'Jayson Molumby', position: 'MF', age: 26, star: 70 },
-    { name: 'Josh Maja', position: 'FW', age: 26, star: 70 },
-  ],
-  'sheffield-united': [
-    { name: 'Michael Cooper', position: 'GK', age: 27, star: 68 },
-    { name: 'Jack Robinson', position: 'DF', age: 32, star: 68 },
-    { name: 'Chris Basham', position: 'DF', age: 36, star: 66 },
-    { name: 'Gustavo Hamer', position: 'MF', age: 27, star: 72 },
-    { name: 'Tyrese Campbell', position: 'FW', age: 25, star: 69 },
-  ],
-  norwich: [
-    { name: 'Angus Gunn', position: 'GK', age: 29, star: 69 },
-    { name: 'Shane Duffy', position: 'DF', age: 33, star: 68 },
-    { name: 'Dimitris Giannoulis', position: 'DF', age: 28, star: 67 },
-    { name: 'Gabriel Sara', position: 'MF', age: 26, star: 71 },
-    { name: 'Borja Sainz', position: 'FW', age: 24, star: 71 },
-  ],
-  middlesbrough: [
-    { name: 'Seny Dieng', position: 'GK', age: 30, star: 67 },
-    { name: 'Dael Fry', position: 'DF', age: 28, star: 68 },
-    { name: 'Rav van den Berg', position: 'DF', age: 22, star: 67 },
-    { name: 'Hayden Hackney', position: 'MF', age: 23, star: 69 },
-    { name: 'Emmanuel Latte Lath', position: 'FW', age: 26, star: 71 },
-  ],
-  coventry: [
-    { name: 'Ben Wilson', position: 'GK', age: 30, star: 66 },
-    { name: 'Luis Binks', position: 'DF', age: 24, star: 67 },
-    { name: 'Jake Bidwell', position: 'DF', age: 31, star: 65 },
-    { name: 'Ben Sheaf', position: 'MF', age: 27, star: 68 },
-    { name: 'Ellis Simms', position: 'FW', age: 24, star: 69 },
-  ],
-  hull: [
-    { name: 'Ryan Allsop', position: 'GK', age: 32, star: 63 },
-    { name: 'Alfie Jones', position: 'DF', age: 26, star: 64 },
-    { name: 'Jaden Philogene', position: 'MF', age: 23, star: 68 },
-    { name: 'Fabio Carvalho', position: 'FW', age: 22, star: 68 },
-  ],
-  preston: [
-    { name: 'Freddie Woodman', position: 'GK', age: 28, star: 64 },
-    { name: 'Liam Lindsay', position: 'DF', age: 29, star: 63 },
-    { name: 'Ben Whiteman', position: 'MF', age: 27, star: 65 },
-    { name: 'Milutin Osmajic', position: 'FW', age: 24, star: 65 },
-  ],
-  millwall: [
-    { name: 'Liam Roberts', position: 'GK', age: 27, star: 62 },
-    { name: 'Zian Flemming', position: 'MF', age: 26, star: 65 },
-    { name: 'Duncan Watmore', position: 'FW', age: 30, star: 63 },
-  ],
-  blackburn: [
-    { name: 'Aynsley Pears', position: 'GK', age: 26, star: 65 },
-    { name: 'Dominic Hyam', position: 'DF', age: 28, star: 65 },
-    { name: 'Sondre Tronstad', position: 'MF', age: 29, star: 67 },
-    { name: 'Sam Gallagher', position: 'FW', age: 28, star: 65 },
-  ],
-  'bristol-city': [
-    { name: 'Max O\'Leary', position: 'GK', age: 28, star: 64 },
-    { name: 'Rob Dickie', position: 'DF', age: 28, star: 66 },
-    { name: 'Andy Rogers', position: 'MF', age: 25, star: 65 },
-    { name: 'Tommy Conway', position: 'FW', age: 22, star: 68 },
-  ],
-  swansea: [
-    { name: 'Lawrence Vigouroux', position: 'GK', age: 30, star: 64 },
-    { name: 'Ben Cabango', position: 'DF', age: 24, star: 67 },
-    { name: 'Matt Grimes', position: 'MF', age: 29, star: 67 },
-    { name: 'Josh Tymon', position: 'FW', age: 25, star: 63 },
-  ],
-  cardiff: [
-    { name: 'Ethan Horvath', position: 'GK', age: 29, star: 62 },
-    { name: 'Perry Ng', position: 'DF', age: 28, star: 63 },
-    { name: 'Callum O\'Dowda', position: 'MF', age: 29, star: 64 },
-    { name: 'Yakou Meite', position: 'FW', age: 28, star: 64 },
-  ],
-  qpr: [
-    { name: 'Asmir Begovic', position: 'GK', age: 37, star: 63 },
-    { name: 'Jimmy Dunne', position: 'DF', age: 27, star: 62 },
-    { name: 'Sinclair Armstrong', position: 'FW', age: 22, star: 64 },
-  ],
-  watford: [
-    { name: 'Daniel Bachmann', position: 'GK', age: 29, star: 66 },
-    { name: 'Ryan Andrews', position: 'DF', age: 22, star: 64 },
-    { name: 'Tom Dele-Bashiru', position: 'MF', age: 25, star: 67 },
-    { name: 'Vakoun Bayo', position: 'FW', age: 28, star: 65 },
-  ],
-  stoke: [
-    { name: 'Viktor Johansson', position: 'GK', age: 27, star: 66 },
-    { name: 'Ben Wilmot', position: 'DF', age: 25, star: 67 },
-    { name: 'Andrew Moran', position: 'MF', age: 21, star: 65 },
-    { name: 'Tom Cannon', position: 'FW', age: 22, star: 66 },
-  ],
-  derby: [
-    { name: 'Josh Vickers', position: 'GK', age: 28, star: 62 },
-    { name: 'Callum Elder', position: 'DF', age: 29, star: 62 },
-    { name: 'Max Bird', position: 'MF', age: 25, star: 64 },
-    { name: 'Kenzo Goudmijn', position: 'FW', age: 24, star: 64 },
-  ],
-  portsmouth: [
-    { name: 'Nicholas Bilokapic', position: 'GK', age: 25, star: 61 },
-    { name: 'Regan Poole', position: 'DF', age: 27, star: 61 },
-    { name: 'Colby Bishop', position: 'FW', age: 27, star: 65 },
-  ],
+const STAR_RATING_RANGE_BY_REPUTATION = {
+  5: [82, 92],
+  4: [76, 87],
+  3: [71, 84],
+  2: [65, 80],
+  1: [58, 75],
+}
+
+// Always leads with a GK, then cycles evenly through outfield lines so a
+// small star count still spreads across the pitch instead of clumping.
+function starPositionsForCount(count) {
+  const rest = ['DF', 'MF', 'FW']
+  const positions = ['GK']
+  for (let i = 1; i < count; i++) positions.push(rest[(i - 1) % rest.length])
+  return positions
+}
+
+export function generateStarPlayers(club, rng) {
+  const count = STAR_COUNT_BY_REPUTATION[club.reputation] ?? 5
+  const [lo, hi] = STAR_RATING_RANGE_BY_REPUTATION[club.reputation] ?? [65, 80]
+  const positions = starPositionsForCount(count)
+  const usedNames = new Set()
+  const stars = []
+
+  for (let i = 0; i < count; i++) {
+    let name = generateName(rng)
+    let attempts = 0
+    while (usedNames.has(name) && attempts < 10) {
+      name = generateName(rng)
+      attempts += 1
+    }
+    usedNames.add(name)
+
+    stars.push({
+      name,
+      position: positions[i],
+      age: 21 + Math.floor(rng() * 13), // 21-33
+      star: Math.round(lo + rng() * (hi - lo)),
+    })
+  }
+
+  return stars
 }
