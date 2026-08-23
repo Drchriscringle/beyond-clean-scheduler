@@ -4,21 +4,23 @@ import { SERIE_A_CLUBS } from '../data/serieAClubs.js'
 import { BUNDESLIGA_CLUBS } from '../data/bundesligaClubs.js'
 import { LIGUE_1_CLUBS } from '../data/ligue1Clubs.js'
 import { EREDIVISIE_CLUBS } from '../data/eredivisieClubs.js'
+import { PRIMEIRA_LIGA_CLUBS } from '../data/primeiraLigaClubs.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { pickBestXI } from './lineup.js'
 import { simulateMatch } from './matchSim.js'
 
 // European opponents are drawn from the shallow foreign pool (see
 // foreignClubs.js) plus every other fully-simulated top-flight league in
-// the game - La Liga, Serie A, the Bundesliga, Ligue 1 and the Eredivisie
-// all have real squads of their own now, so a Champions League/Europa
-// League run can pit the player against the likes of Real Madrid, Juventus,
-// Bayern Munich, PSG or Ajax directly, not just the shallow pool's Porto or
-// Shakhtar. Second-tier divisions (Segunda/Serie B/2. Bundesliga/Ligue 2/
-// Eerste Divisie) aren't eligible - continental competition is a
-// top-flight-only affair - and a manager's own top flight is excluded too,
-// so a La Liga club never draws another La Liga club in this abstraction.
-const CONTINENTAL_TOP_FLIGHTS = [LA_LIGA_CLUBS, SERIE_A_CLUBS, BUNDESLIGA_CLUBS, LIGUE_1_CLUBS, EREDIVISIE_CLUBS]
+// the game - La Liga, Serie A, the Bundesliga, Ligue 1, the Eredivisie and
+// the Primeira Liga all have real squads of their own now, so a Champions
+// League/Europa League run can pit the player against the likes of Real
+// Madrid, Juventus, Bayern Munich, PSG, Ajax or Benfica directly, not just
+// the shallow pool's Shakhtar. Second-tier divisions (Segunda/Serie B/2.
+// Bundesliga/Ligue 2/Eerste Divisie/Liga Portugal 2) aren't eligible -
+// continental competition is a top-flight-only affair - and a manager's
+// own top flight is excluded too, so a La Liga club never draws another La
+// Liga club in this abstraction.
+const CONTINENTAL_TOP_FLIGHTS = [LA_LIGA_CLUBS, SERIE_A_CLUBS, BUNDESLIGA_CLUBS, LIGUE_1_CLUBS, EREDIVISIE_CLUBS, PRIMEIRA_LIGA_CLUBS]
 
 export function europeanOpponentPool(playerDivision) {
   const topFlightClubs = CONTINENTAL_TOP_FLIGHTS.flat().filter((c) => c.division !== playerDivision)

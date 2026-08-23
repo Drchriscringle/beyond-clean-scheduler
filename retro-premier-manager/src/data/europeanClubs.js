@@ -11,10 +11,7 @@
 // just opposition drawn for someone else's cup run. Bayern Munich, Borussia
 // Dortmund and RB Leipzig graduated the same way into the Bundesliga (see
 // bundesligaClubs.js), Inter Milan, AC Milan, Juventus and Napoli into
-// Serie A (see serieAClubs.js), PSG into Ligue 1 (see ligue1Clubs.js), and
-// Ajax into the Eredivisie (see eredivisieClubs.js).
-export const EUROPEAN_CLUBS = [
-  { id: 'euro-porto', name: 'Porto', reputation: 3 },
-  { id: 'euro-benfica', name: 'Benfica', reputation: 3 },
-  { id: 'euro-shakhtar', name: 'Shakhtar Donetsk', reputation: 2 },
-]
+// Serie A (see serieAClubs.js), PSG into Ligue 1 (see ligue1Clubs.js), Ajax
+// into the Eredivisie (see eredivisieClubs.js), and Porto and Benfica into
+// the Primeira Liga (see primeiraLigaClubs.js).
+export const EUROPEAN_CLUBS = [{ id: 'euro-shakhtar', name: 'Shakhtar Donetsk', reputation: 2 }]

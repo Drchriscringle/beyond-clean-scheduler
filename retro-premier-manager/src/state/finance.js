@@ -76,6 +76,14 @@ export function tvIncomeForWeek(leaguePosition, division = 'PL') {
     const seasonPot = 5_000_000 - (leaguePosition - 1) * 90_000
     return Math.round(Math.max(seasonPot, 2_600_000) / 38)
   }
+  if (division === 'PRIMEIRALIGA') {
+    const seasonPot = 26_000_000 - (leaguePosition - 1) * 900_000
+    return Math.round(Math.max(seasonPot, 10_000_000) / 38)
+  }
+  if (division === 'LIGAPORTUGAL2') {
+    const seasonPot = 4_000_000 - (leaguePosition - 1) * 70_000
+    return Math.round(Math.max(seasonPot, 2_200_000) / 38)
+  }
   const seasonPot = 60_000_000 - (leaguePosition - 1) * 1_900_000
   return Math.round(Math.max(seasonPot, 22_000_000) / 38)
 }

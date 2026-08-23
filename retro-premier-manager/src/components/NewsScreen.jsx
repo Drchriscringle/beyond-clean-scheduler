@@ -49,6 +49,8 @@ export default function NewsScreen({ state, dispatch }) {
   const ligue2Results = results.filter((r) => state.clubs[r.home]?.division === 'LIGUE2')
   const eredivisieResults = results.filter((r) => state.clubs[r.home]?.division === 'EREDIVISIE')
   const eersteDivisieResults = results.filter((r) => state.clubs[r.home]?.division === 'EERSTEDIVISIE')
+  const primeiraLigaResults = results.filter((r) => state.clubs[r.home]?.division === 'PRIMEIRALIGA')
+  const ligaPortugal2Results = results.filter((r) => state.clubs[r.home]?.division === 'LIGAPORTUGAL2')
   const lastCupRound = state.cup?.history?.[state.cup.history.length - 1]
   const lastScottishCupRound = state.scottishCup?.history?.[state.scottishCup.history.length - 1]
   const awards = state.lastSeasonAwards
@@ -263,6 +265,34 @@ export default function NewsScreen({ state, dispatch }) {
           <div className="scrollbox">
             <ul>
               {eersteDivisieResults.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">PRIMEIRA LIGA RESULTS</div>
+          {primeiraLigaResults.length === 0 && <p>No Primeira Liga fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {primeiraLigaResults.map((r, i) => (
+                <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
+                  {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-title">LIGA PORTUGAL 2 RESULTS</div>
+          {ligaPortugal2Results.length === 0 && <p>No Liga Portugal 2 fixtures last week.</p>}
+          <div className="scrollbox">
+            <ul>
+              {ligaPortugal2Results.map((r, i) => (
                 <li key={i} className={r.home === state.playerClubId || r.away === state.playerClubId ? 'highlight-row' : ''}>
                   {CLUB_BY_ID[r.home].name} {r.homeGoals}-{r.awayGoals} {CLUB_BY_ID[r.away].name}
                 </li>

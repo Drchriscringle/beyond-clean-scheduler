@@ -21,6 +21,8 @@ const VIEW_DIVISIONS = [
   'LIGUE2',
   'EREDIVISIE',
   'EERSTEDIVISIE',
+  'PRIMEIRALIGA',
+  'LIGAPORTUGAL2',
 ]
 
 function zoneClass(position, division) {
@@ -34,7 +36,7 @@ function zoneClass(position, division) {
     if (position >= 18) return 'zone-relegation'
     return ''
   }
-  if (division === 'BUNDESLIGA' || division === 'LIGUE1' || division === 'EREDIVISIE') {
+  if (division === 'BUNDESLIGA' || division === 'LIGUE1' || division === 'EREDIVISIE' || division === 'PRIMEIRALIGA') {
     // 18-club league: bottom 3 relegated.
     if (position <= 4) return 'zone-europe'
     if (position >= 16) return 'zone-relegation'
@@ -46,7 +48,7 @@ function zoneClass(position, division) {
     if (position >= 18) return 'zone-relegation'
     return ''
   }
-  if (division === 'BUNDESLIGA2' || division === 'LIGUE2') {
+  if (division === 'BUNDESLIGA2' || division === 'LIGUE2' || division === 'LIGAPORTUGAL2') {
     // 18-club league: bottom 3 relegated.
     if (position <= 2) return 'zone-promotion'
     if (position <= 6) return 'zone-playoff'
@@ -232,7 +234,8 @@ export default function FixturesScreen({ state, dispatch }) {
               viewDivision === 'SERIEB' ||
               viewDivision === 'BUNDESLIGA2' ||
               viewDivision === 'LIGUE2' ||
-              viewDivision === 'EERSTEDIVISIE') && (
+              viewDivision === 'EERSTEDIVISIE' ||
+              viewDivision === 'LIGAPORTUGAL2') && (
               <>
                 <span className="zone-swatch zone-promotion" /> Automatic promotion &nbsp;
                 <span className="zone-swatch zone-playoff" /> Play-offs &nbsp;
@@ -250,7 +253,8 @@ export default function FixturesScreen({ state, dispatch }) {
               viewDivision === 'SERIEA' ||
               viewDivision === 'BUNDESLIGA' ||
               viewDivision === 'LIGUE1' ||
-              viewDivision === 'EREDIVISIE') && (
+              viewDivision === 'EREDIVISIE' ||
+              viewDivision === 'PRIMEIRALIGA') && (
               <>
                 <span className="zone-swatch zone-europe" /> Champions League/Europe &nbsp;
                 <span className="zone-swatch zone-relegation" /> Relegation

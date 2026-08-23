@@ -208,7 +208,7 @@ test('resolveEredivisiePromotionRelegation relegates the bottom 3 of the Eredivi
   assert.equal(Object.values(clubs).filter((c) => c.division === 'EERSTEDIVISIE').length, 20)
 })
 
-test('starting a new game as a Ligue 1 or Eredivisie club sets up all fourteen divisions correctly', () => {
+test('starting a new game as a Ligue 1 or Eredivisie club sets up all sixteen divisions correctly', () => {
   let state = gameReducer(makeInitialState(), { type: 'START_NEW_GAME', payload: { clubId: 'psg', managerName: 'Test' } })
 
   assert.equal(state.playerClubId, 'psg')
@@ -217,6 +217,6 @@ test('starting a new game as a Ligue 1 or Eredivisie club sets up all fourteen d
 
   const week1 = state.fixtures.find((f) => f.week === 1)
   const divisionsPlaying = new Set(week1.matches.map((m) => state.clubs[m.home].division))
-  assert.equal(divisionsPlaying.size, 14)
+  assert.equal(divisionsPlaying.size, 16)
   assert.equal(state.fixtures.length, 38)
 })

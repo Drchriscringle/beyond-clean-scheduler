@@ -121,16 +121,17 @@ test('the European opponent draw excludes domestic (English/Scottish) clubs, whi
   assert.ok(!['PL', 'CH', 'SPL', 'SCH'].includes(pool[pool.length - 1].division))
 })
 
-test("the European opponent pool now includes La Liga, Serie A, the Bundesliga, Ligue 1 and the Eredivisie (not just the shallow foreign pool), but excludes the player's own top flight and every second division", () => {
+test("the European opponent pool now includes La Liga, Serie A, the Bundesliga, Ligue 1, the Eredivisie and the Primeira Liga (not just the shallow foreign pool), but excludes the player's own top flight and every second division", () => {
   // A Premier League manager's pool should include clubs graduated into
-  // La Liga/Serie A/Bundesliga/Ligue 1/Eredivisie, since none of those is
-  // the player's own division.
+  // La Liga/Serie A/Bundesliga/Ligue 1/Eredivisie/Primeira Liga, since none
+  // of those is the player's own division.
   const plPool = europeanOpponentPool('PL')
   assert.ok(plPool.some((c) => c.id === 'real-madrid'))
   assert.ok(plPool.some((c) => c.id === 'juventus'))
   assert.ok(plPool.some((c) => c.id === 'bayern-munich'))
   assert.ok(plPool.some((c) => c.id === 'psg'))
   assert.ok(plPool.some((c) => c.id === 'ajax'))
+  assert.ok(plPool.some((c) => c.id === 'benfica'))
   assert.ok(
     !plPool.some(
       (c) =>
@@ -138,17 +139,20 @@ test("the European opponent pool now includes La Liga, Serie A, the Bundesliga, 
         c.division === 'SERIEB' ||
         c.division === 'BUNDESLIGA2' ||
         c.division === 'LIGUE2' ||
-        c.division === 'EERSTEDIVISIE',
+        c.division === 'EERSTEDIVISIE' ||
+        c.division === 'LIGAPORTUGAL2',
     ),
   )
 
   // A La Liga manager's own division is excluded, but Serie A/Bundesliga/
-  // Ligue 1/Eredivisie/the shallow foreign pool remain eligible.
+  // Ligue 1/Eredivisie/Primeira Liga/the shallow foreign pool remain
+  // eligible.
   const laLigaPool = europeanOpponentPool('LALIGA')
   assert.ok(!laLigaPool.some((c) => c.division === 'LALIGA'))
   assert.ok(laLigaPool.some((c) => c.id === 'juventus'))
   assert.ok(laLigaPool.some((c) => c.id === 'bayern-munich'))
   assert.ok(laLigaPool.some((c) => c.id === 'psg'))
   assert.ok(laLigaPool.some((c) => c.id === 'ajax'))
-  assert.ok(laLigaPool.some((c) => c.id === 'euro-porto'))
+  assert.ok(laLigaPool.some((c) => c.id === 'porto'))
+  assert.ok(laLigaPool.some((c) => c.id === 'euro-shakhtar'))
 })

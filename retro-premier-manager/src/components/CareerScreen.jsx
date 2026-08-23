@@ -29,7 +29,8 @@ export default function CareerScreen({ state }) {
         (h.division === 'SERIEB' && next.division === 'SERIEA') ||
         (h.division === 'BUNDESLIGA2' && next.division === 'BUNDESLIGA') ||
         (h.division === 'LIGUE2' && next.division === 'LIGUE1') ||
-        (h.division === 'EERSTEDIVISIE' && next.division === 'EREDIVISIE'))
+        (h.division === 'EERSTEDIVISIE' && next.division === 'EREDIVISIE') ||
+        (h.division === 'LIGAPORTUGAL2' && next.division === 'PRIMEIRALIGA'))
     )
   }).length
   const seasonsManaged = history.length

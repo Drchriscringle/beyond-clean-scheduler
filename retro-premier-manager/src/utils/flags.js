@@ -18,6 +18,8 @@ const DIVISION_COUNTRY = {
   LIGUE2: 'FRANCE',
   EREDIVISIE: 'NETHERLANDS',
   EERSTEDIVISIE: 'NETHERLANDS',
+  PRIMEIRALIGA: 'PORTUGAL',
+  LIGAPORTUGAL2: 'PORTUGAL',
 }
 
 const ENGLAND_SVG = `
@@ -75,6 +77,13 @@ const NETHERLANDS_SVG = `
 </svg>
 `.trim()
 
+const PORTUGAL_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300">
+  <rect width="500" height="300" fill="#ff0000"/>
+  <rect width="200" height="300" fill="#006600"/>
+</svg>
+`.trim()
+
 const FLAG_SVGS = {
   ENGLAND: ENGLAND_SVG,
   SCOTLAND: SCOTLAND_SVG,
@@ -83,6 +92,7 @@ const FLAG_SVGS = {
   GERMANY: GERMANY_SVG,
   FRANCE: FRANCE_SVG,
   NETHERLANDS: NETHERLANDS_SVG,
+  PORTUGAL: PORTUGAL_SVG,
 }
 
 // Style object for the `.pm97-app` shell: sets the `--flag-bg` custom

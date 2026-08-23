@@ -11,6 +11,8 @@ import { LIGUE_1_CLUBS } from '../data/ligue1Clubs.js'
 import { LIGUE_2_CLUBS } from '../data/ligue2Clubs.js'
 import { EREDIVISIE_CLUBS } from '../data/eredivisieClubs.js'
 import { EERSTE_DIVISIE_CLUBS } from '../data/eersteDivisieClubs.js'
+import { PRIMEIRA_LIGA_CLUBS } from '../data/primeiraLigaClubs.js'
+import { LIGA_PORTUGAL_2_CLUBS } from '../data/ligaPortugal2Clubs.js'
 import { rollWeather } from '../data/weather.js'
 import { generateSquadForClub } from '../data/generateSquad.js'
 import { generateFreeAgents } from '../data/freeAgents.js'
@@ -207,6 +209,8 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
     ...LIGUE_2_CLUBS,
     ...EREDIVISIE_CLUBS,
     ...EERSTE_DIVISIE_CLUBS,
+    ...PRIMEIRA_LIGA_CLUBS,
+    ...LIGA_PORTUGAL_2_CLUBS,
   ]) {
     const sponsorshipDeal = generateSponsorshipOffers(staticClub.reputation)[0]
     const merchandiseDeal = generateMerchandiseOffers(staticClub.reputation)[0]
@@ -254,6 +258,8 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const ligue2Ids = LIGUE_2_CLUBS.map((c) => c.id)
   const eredivisieIds = EREDIVISIE_CLUBS.map((c) => c.id)
   const eersteDivisieIds = EERSTE_DIVISIE_CLUBS.map((c) => c.id)
+  const primeiraLigaIds = PRIMEIRA_LIGA_CLUBS.map((c) => c.id)
+  const ligaPortugal2Ids = LIGA_PORTUGAL_2_CLUBS.map((c) => c.id)
   const fixtures = combineFixturesByWeek(
     generateSeasonFixtures(plIds, SEASON_WEEKS),
     generateSeasonFixtures(chIds, SEASON_WEEKS),
@@ -269,6 +275,8 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
     generateSeasonFixtures(ligue2Ids, SEASON_WEEKS),
     generateSeasonFixtures(eredivisieIds, SEASON_WEEKS),
     generateSeasonFixtures(eersteDivisieIds, SEASON_WEEKS),
+    generateSeasonFixtures(primeiraLigaIds, SEASON_WEEKS),
+    generateSeasonFixtures(ligaPortugal2Ids, SEASON_WEEKS),
   )
   const playerClub = clubs[clubId]
 
@@ -1127,6 +1135,18 @@ function resolveEredivisiePromotionRelegation(state, clubs) {
   })
 }
 
+// Same shape again for Portugal, recalibrated to the Primeira Liga's
+// smaller (18-club) divisions, same simplification reasoning as the
+// Bundesliga above.
+function resolvePrimeiraLigaPromotionRelegation(state, clubs) {
+  return resolveDivisionPromotionRelegation(state, clubs, {
+    topDivision: 'PRIMEIRALIGA',
+    bottomDivision: 'LIGAPORTUGAL2',
+    relegationCount: 3,
+    autoPromoteCount: 2,
+  })
+}
+
 function seasonRollover(state) {
   const leagueClubIds = playerLeagueClubIds(state)
   const playerClubId = state.playerClubId
@@ -1138,7 +1158,8 @@ function seasonRollover(state) {
     playerClubBefore.division === 'SERIEA' ||
     playerClubBefore.division === 'BUNDESLIGA' ||
     playerClubBefore.division === 'LIGUE1' ||
-    playerClubBefore.division === 'EREDIVISIE'
+    playerClubBefore.division === 'EREDIVISIE' ||
+    playerClubBefore.division === 'PRIMEIRALIGA'
       ? qualificationForPosition(finalPosition)
       : playerClubBefore.division === 'SPL'
         ? scottishQualificationForPosition(finalPosition)
@@ -1201,6 +1222,7 @@ function seasonRollover(state) {
   const { notice: bundesligaPromotionRelegationNotice } = resolveBundesligaPromotionRelegation(state, clubs)
   const { notice: ligue1PromotionRelegationNotice } = resolveLigue1PromotionRelegation(state, clubs)
   const { notice: eredivisiePromotionRelegationNotice } = resolveEredivisiePromotionRelegation(state, clubs)
+  const { notice: primeiraLigaPromotionRelegationNotice } = resolvePrimeiraLigaPromotionRelegation(state, clubs)
   const squads = {}
   const season = state.season + 1
   let releasedFromPlayerClub = []
@@ -1265,6 +1287,8 @@ function seasonRollover(state) {
   const newLigue2Ids = divisionClubIds(clubs, 'LIGUE2')
   const newEredivisieIds = divisionClubIds(clubs, 'EREDIVISIE')
   const newEersteDivisieIds = divisionClubIds(clubs, 'EERSTEDIVISIE')
+  const newPrimeiraLigaIds = divisionClubIds(clubs, 'PRIMEIRALIGA')
+  const newLigaPortugal2Ids = divisionClubIds(clubs, 'LIGAPORTUGAL2')
   const fixtures = combineFixturesByWeek(
     generateSeasonFixtures(newPlIds, SEASON_WEEKS),
     generateSeasonFixtures(newChIds, SEASON_WEEKS),
@@ -1280,6 +1304,8 @@ function seasonRollover(state) {
     generateSeasonFixtures(newLigue2Ids, SEASON_WEEKS),
     generateSeasonFixtures(newEredivisieIds, SEASON_WEEKS),
     generateSeasonFixtures(newEersteDivisieIds, SEASON_WEEKS),
+    generateSeasonFixtures(newPrimeiraLigaIds, SEASON_WEEKS),
+    generateSeasonFixtures(newLigaPortugal2Ids, SEASON_WEEKS),
   )
   const playerClub = {
     ...clubs[playerClubId],
@@ -1323,7 +1349,7 @@ function seasonRollover(state) {
     screen: jobOfferClubIds.length > 0 ? 'job-offers' : 'commercial',
     internationalOffer,
     notice:
-      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice} ${scottishPromotionRelegationNotice} ${laLigaPromotionRelegationNotice} ${serieAPromotionRelegationNotice} ${bundesligaPromotionRelegationNotice} ${ligue1PromotionRelegationNotice} ${eredivisiePromotionRelegationNotice}` +
+      `${objectiveResult.message} The ${state.season}/${String(state.season + 1).slice(2)} season has ended. ${promotionRelegationNotice} ${scottishPromotionRelegationNotice} ${laLigaPromotionRelegationNotice} ${serieAPromotionRelegationNotice} ${bundesligaPromotionRelegationNotice} ${ligue1PromotionRelegationNotice} ${eredivisiePromotionRelegationNotice} ${primeiraLigaPromotionRelegationNotice}` +
       (europeanQualification
         ? ` You've qualified for the ${europeanQualification === 'UCL' ? 'Champions League' : 'Europa League'} next season!`
         : '') +
@@ -1954,4 +1980,5 @@ export {
   resolveBundesligaPromotionRelegation,
   resolveLigue1PromotionRelegation,
   resolveEredivisiePromotionRelegation,
+  resolvePrimeiraLigaPromotionRelegation,
 }

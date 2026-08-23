@@ -12,6 +12,8 @@ import { LIGUE_1_CLUBS } from '../data/ligue1Clubs.js'
 import { LIGUE_2_CLUBS } from '../data/ligue2Clubs.js'
 import { EREDIVISIE_CLUBS } from '../data/eredivisieClubs.js'
 import { EERSTE_DIVISIE_CLUBS } from '../data/eersteDivisieClubs.js'
+import { PRIMEIRA_LIGA_CLUBS } from '../data/primeiraLigaClubs.js'
+import { LIGA_PORTUGAL_2_CLUBS } from '../data/ligaPortugal2Clubs.js'
 
 const DIVISION_CLUB_LISTS = {
   PL: CLUBS,
@@ -28,6 +30,8 @@ const DIVISION_CLUB_LISTS = {
   LIGUE2: LIGUE_2_CLUBS,
   EREDIVISIE: EREDIVISIE_CLUBS,
   EERSTEDIVISIE: EERSTE_DIVISIE_CLUBS,
+  PRIMEIRALIGA: PRIMEIRA_LIGA_CLUBS,
+  LIGAPORTUGAL2: LIGA_PORTUGAL_2_CLUBS,
 }
 import { formatMoney } from '../utils/format.js'
 import { RepStars } from './shared.jsx'
