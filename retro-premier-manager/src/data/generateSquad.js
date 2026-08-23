@@ -1,4 +1,4 @@
-import { STAR_PLAYERS } from './starPlayers.js'
+import { generateStarPlayers } from './starPlayers.js'
 import { generateName } from './namePool.js'
 import { pickPersonality } from '../state/personality.js'
 
@@ -136,7 +136,7 @@ function assignSquadNumbers(players, rng) {
 // player's own club, which is always generated at the baseline.
 export function generateSquadForClub(club, { abilityMultiplier = 1 } = {}) {
   const rng = mulberry32(hashString(club.id) ^ 0x9e3779b9)
-  const stars = STAR_PLAYERS[club.id] ?? []
+  const stars = generateStarPlayers(club, rng)
   const targetSize = TARGET_SQUAD_SIZE[club.reputation] ?? 24
   const players = []
   let idCounter = 0
