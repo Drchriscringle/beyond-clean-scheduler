@@ -11,8 +11,8 @@
 const EERSTE_DIVISIE_RAW = [
   {
     id: 'fc-volendam',
-    name: 'VV IJsselstad',
-    ground: 'IJsselstad Park',
+    name: 'Volendam Orange-and-Blacks',
+    ground: 'Volendam Orange-and-Blacks Arena',
     reputation: 3,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 3000 },
@@ -26,8 +26,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'roda-jc',
-    name: 'SV Broekland',
-    ground: 'Broekland Park',
+    name: 'Kerkrade Yellow-and-Blacks',
+    ground: 'Kerkrade Yellow-and-Blacks Arena',
     reputation: 3,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 5000 },
@@ -41,8 +41,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'de-graafschap',
-    name: 'FC Polderveld',
-    ground: 'Polderveld Arena',
+    name: 'Doetinchem Blue-and-Whites',
+    ground: 'Doetinchem Blue-and-Whites Ground',
     reputation: 3,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 3000 },
@@ -56,8 +56,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'vitesse',
-    name: 'SV Middenveld',
-    ground: 'Middenveld Stadium',
+    name: 'Arnhem Yellow-and-Blacks',
+    ground: 'Arnhem Yellow-and-Blacks Arena',
     reputation: 3,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 6500 },
@@ -71,8 +71,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'fc-eindhoven',
-    name: 'VV Oosterwijk',
-    ground: 'Oosterwijk Stadium',
+    name: 'Eindhoven Blue-and-Whites',
+    ground: 'Eindhoven Blue-and-Whites Stadium',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2200 },
@@ -86,8 +86,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'fc-dordrecht',
-    name: 'SC Torenvliet',
-    ground: 'Torenvliet Stadium Municipal',
+    name: 'Dordrecht Yellow-and-Blacks',
+    ground: 'Dordrecht Yellow-and-Blacks Arena',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2000 },
@@ -101,8 +101,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'mvv-maastricht',
-    name: 'SC Slotermeer',
-    ground: 'Slotermeer Stadium',
+    name: 'Maastricht Reds',
+    ground: 'Maastricht Reds Park',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2200 },
@@ -116,8 +116,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'helmond-sport',
-    name: 'SV Zuiderpark',
-    ground: 'Zuiderpark Park',
+    name: 'Helmond Reds',
+    ground: 'Helmond Reds Stadium',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1600 },
@@ -131,8 +131,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'fc-emmen',
-    name: 'VV Zandvliet',
-    ground: 'Zandvliet Ground',
+    name: 'Emmen Reds',
+    ground: 'Emmen Reds Ground',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2400 },
@@ -146,8 +146,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'excelsior',
-    name: 'VV Havenstad',
-    ground: 'Havenstad Arena',
+    name: 'Rotterdam Black-and-Reds',
+    ground: 'Rotterdam Black-and-Reds Park',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2200 },
@@ -161,8 +161,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'vvv-venlo',
-    name: 'SC Kloosterveen',
-    ground: 'Kloosterveen Park',
+    name: 'Venlo Yellow-and-Blacks',
+    ground: 'Venlo Yellow-and-Blacks Arena',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2000 },
@@ -176,8 +176,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'cambuur',
-    name: 'SV Grensburg',
-    ground: 'Grensburg Park',
+    name: 'Leeuwarden Yellow-and-Blues',
+    ground: 'Leeuwarden Yellow-and-Blues Arena',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2500 },
@@ -191,8 +191,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'fc-den-bosch',
-    name: 'FC Wolkenburg',
-    ground: 'Wolkenburg Ground',
+    name: 'Den Bosch Reds',
+    ground: 'Den Bosch Reds Stadium',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1800 },
@@ -206,8 +206,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'ado-den-haag',
-    name: 'SV Nachtegaalstad',
-    ground: 'Nachtegaalstad Stadium Municipal',
+    name: 'The Hague Yellow-and-Greens',
+    ground: 'The Hague Yellow-and-Greens Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2400 },
@@ -221,8 +221,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'top-oss',
-    name: 'VV Duinhoven',
-    ground: 'Duinhoven Stadium',
+    name: 'Oss Reds',
+    ground: 'Oss Reds Stadium',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1400 },
@@ -236,8 +236,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'telstar',
-    name: 'SV Zilverbeek',
-    ground: 'Zilverbeek Arena',
+    name: 'Velsen Blue-and-Whites',
+    ground: 'Velsen Blue-and-Whites Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1600 },
@@ -251,8 +251,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'ijsselmeervogels',
-    name: 'VV Duivenveen',
-    ground: 'Duivenveen Park',
+    name: 'Bunschoten Blue-and-Whites',
+    ground: 'Bunschoten Blue-and-Whites Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1200 },
@@ -266,8 +266,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'quick-boys',
-    name: 'FC Vlietstad',
-    ground: 'Vlietstad Stadium',
+    name: 'Katwijk Reds',
+    ground: 'Katwijk Reds Stadium',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1200 },
@@ -281,8 +281,8 @@ const EERSTE_DIVISIE_RAW = [
   },
   {
     id: 'hsv-hoek',
-    name: 'FC Klaverburg',
-    ground: 'Klaverburg Stadium Municipal',
+    name: 'Hoek Reds',
+    ground: 'Hoek Reds Park',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1000 },
@@ -297,7 +297,7 @@ const EERSTE_DIVISIE_RAW = [
   {
     id: 'achilles-29',
     name: "Achilles '29",
-    ground: 'Vaartstad Park',
+    ground: 'Groesbeek Blue-and-Whites Ground',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1000 },

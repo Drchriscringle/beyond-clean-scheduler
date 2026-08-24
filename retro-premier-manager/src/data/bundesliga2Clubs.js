@@ -11,8 +11,8 @@
 const BUNDESLIGA_2_RAW = [
   {
     id: 'hamburger-sv',
-    name: 'TSG Rheinbruck',
-    ground: 'Rheinbruck Arena',
+    name: 'Hamburg Blues',
+    ground: 'Hamburg Blues Stadium',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 10000 },
@@ -26,8 +26,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'fc-koln',
-    name: 'SC Bergfeld',
-    ground: 'Bergfeld Arena',
+    name: 'Cologne Reds',
+    ground: 'Cologne Reds Ground',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 9500 },
@@ -41,8 +41,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'schalke-04',
-    name: 'SSV Tannenberg',
-    ground: 'Tannenberg Park',
+    name: 'Gelsenkirchen Blues',
+    ground: 'Gelsenkirchen Blues Park',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 12000 },
@@ -56,8 +56,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'hertha-bsc',
-    name: 'Borussia Lindenhof',
-    ground: 'Lindenhof Stadium',
+    name: 'Berlin Blue-and-Whites',
+    ground: 'Berlin Blue-and-Whites Park',
     reputation: 3,
     stands: [
       { id: 'ostkurve', name: 'North Stand', capacity: 12000 },
@@ -71,8 +71,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'fortuna-dusseldorf',
-    name: 'Borussia Ravenswald',
-    ground: 'Ravenswald Park',
+    name: 'Dusseldorf Reds',
+    ground: 'Dusseldorf Reds Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 6000 },
@@ -86,8 +86,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'hannover-96',
-    name: '1. FC Grunwald',
-    ground: 'Grunwald Park',
+    name: 'Hannover Reds',
+    ground: 'Hannover Reds Park',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 6000 },
@@ -101,8 +101,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'karlsruher-sc',
-    name: 'SC Kronsberg',
-    ground: 'Kronsberg Park',
+    name: 'Karlsruhe Blues',
+    ground: 'Karlsruhe Blues Arena',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5000 },
@@ -116,8 +116,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'darmstadt-98',
-    name: 'VfB Lohbach',
-    ground: 'Lohbach Park',
+    name: 'Darmstadt Blues',
+    ground: 'Darmstadt Blues Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3500 },
@@ -131,8 +131,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'sc-paderborn',
-    name: 'SC Steinfeld',
-    ground: 'Steinfeld Stadium Municipal',
+    name: 'Paderborn Blues',
+    ground: 'Paderborn Blues Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3000 },
@@ -146,8 +146,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'fc-nurnberg',
-    name: 'VfL Wolfsheim',
-    ground: 'Wolfsheim Stadium',
+    name: 'Nuremberg Reds',
+    ground: 'Nuremberg Reds Arena',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 6000 },
@@ -161,8 +161,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'eintracht-braunschweig',
-    name: 'SV Rotenburg',
-    ground: 'Rotenburg Stadium Municipal',
+    name: 'Braunschweig Blue-and-Yellows',
+    ground: 'Braunschweig Blue-and-Yellows Park',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3000 },
@@ -176,8 +176,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'greuther-furth',
-    name: '1. FC Weissenfeld',
-    ground: 'Weissenfeld Ground',
+    name: 'Furth Greens',
+    ground: 'Furth Greens Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2800 },
@@ -191,8 +191,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'preussen-munster',
-    name: 'VfL Nordheim',
-    ground: 'Nordheim Stadium',
+    name: 'Munster Blue-and-Whites',
+    ground: 'Munster Blue-and-Whites Ground',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2200 },
@@ -206,8 +206,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'ssv-ulm',
-    name: 'TSG Schwarzwald',
-    ground: 'Schwarzwald Stadium Municipal',
+    name: 'Ulm Reds',
+    ground: 'Ulm Reds Park',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1800 },
@@ -221,8 +221,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'wehen-wiesbaden',
-    name: 'SC Waldkirchen',
-    ground: 'Waldkirchen Park',
+    name: 'Wiesbaden Reds',
+    ground: 'Wiesbaden Reds Stadium',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1600 },
@@ -236,8 +236,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'sv-elversberg',
-    name: 'VfB Feldkirch',
-    ground: 'Feldkirch Park',
+    name: 'Elversberg Blues',
+    ground: 'Elversberg Blues Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1500 },
@@ -251,8 +251,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'arminia-bielefeld',
-    name: 'VfB Sturmfeld',
-    ground: 'Sturmfeld Park',
+    name: 'Bielefeld Blue-and-Blacks',
+    ground: 'Bielefeld Blue-and-Blacks Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3000 },
@@ -266,8 +266,8 @@ const BUNDESLIGA_2_RAW = [
   },
   {
     id: 'hansa-rostock',
-    name: 'VfB Moosbach',
-    ground: 'Moosbach Stadium',
+    name: 'Rostock Blues',
+    ground: 'Rostock Blues Ground',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3500 },

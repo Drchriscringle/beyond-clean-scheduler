@@ -11,8 +11,8 @@
 const SEGUNDA_RAW = [
   {
     id: 'deportivo-la-coruna',
-    name: 'CD Cerroverde',
-    ground: 'Cerroverde Arena',
+    name: 'La Coruna Blue-and-Whites',
+    ground: 'La Coruna Blue-and-Whites Arena',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 6500 },
@@ -26,8 +26,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'malaga',
-    name: 'Atletico Cabomar',
-    ground: 'Cabomar Stadium Municipal',
+    name: 'Malaga Whites',
+    ground: 'Malaga Whites Park',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 7500 },
@@ -41,8 +41,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'real-zaragoza',
-    name: 'Atletico Almedina',
-    ground: 'Almedina Arena',
+    name: 'Zaragoza Whites',
+    ground: 'Zaragoza Whites Arena',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 8000 },
@@ -56,8 +56,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'granada',
-    name: 'UD Sancarlos',
-    ground: 'Sancarlos Stadium Municipal',
+    name: 'Granada Reds',
+    ground: 'Granada Reds Ground',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 7000 },
@@ -71,8 +71,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'levante',
-    name: 'Deportivo Puertoluna',
-    ground: 'Puertoluna Ground',
+    name: 'Valencia Blue-and-Granates',
+    ground: 'Valencia Blue-and-Granates Stadium',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5500 },
@@ -86,8 +86,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'eibar',
-    name: 'UD Montepiedra',
-    ground: 'Montepiedra Park',
+    name: 'Eibar Blue-and-Whites',
+    ground: 'Eibar Blue-and-Whites Stadium',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2500 },
@@ -101,8 +101,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'almeria',
-    name: 'Deportivo Costamar',
-    ground: 'Costamar Stadium',
+    name: 'Almeria Reds',
+    ground: 'Almeria Reds Stadium',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5000 },
@@ -116,8 +116,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'cadiz',
-    name: 'Deportivo Riofrio',
-    ground: 'Riofrio Arena',
+    name: 'Cadiz Yellows',
+    ground: 'Cadiz Yellows Ground',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5000 },
@@ -131,8 +131,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'elche',
-    name: 'CF Miralcampo',
-    ground: 'Miralcampo Ground',
+    name: 'Elche Greens',
+    ground: 'Elche Greens Arena',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5500 },
@@ -146,8 +146,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'sporting-gijon',
-    name: 'Atletico Belloriente',
-    ground: 'Belloriente Ground',
+    name: 'Gijon Reds',
+    ground: 'Gijon Reds Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5500 },
@@ -161,8 +161,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'racing-santander',
-    name: 'Deportivo Ribadulce',
-    ground: 'Ribadulce Stadium',
+    name: 'Santander Green-and-Whites',
+    ground: 'Santander Green-and-Whites Ground',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 6000 },
@@ -176,8 +176,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'real-oviedo',
-    name: 'Deportivo Vegabella',
-    ground: 'Vegabella Ground',
+    name: 'Oviedo Blues',
+    ground: 'Oviedo Blues Arena',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5500 },
@@ -191,8 +191,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'huesca',
-    name: 'UD Puertoalto',
-    ground: 'Puertoalto Ground',
+    name: 'Huesca Blue-and-Whites',
+    ground: 'Huesca Blue-and-Whites Park',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2200 },
@@ -206,8 +206,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'albacete',
-    name: 'Atletico Sierrablanca',
-    ground: 'Sierrablanca Stadium',
+    name: 'Albacete Whites',
+    ground: 'Albacete Whites Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3500 },
@@ -221,8 +221,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'burgos',
-    name: 'Deportivo Riohonda',
-    ground: 'Riohonda Park',
+    name: 'Burgos Whites',
+    ground: 'Burgos Whites Stadium',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3000 },
@@ -236,8 +236,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'tenerife',
-    name: 'Atletico Peñasol',
-    ground: 'Peñasol Stadium Municipal',
+    name: 'Tenerife Blues',
+    ground: 'Tenerife Blues Stadium',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5000 },
@@ -251,8 +251,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'mirandes',
-    name: 'Deportivo Montenegro',
-    ground: 'Montenegro Stadium Municipal',
+    name: 'Miranda Reds',
+    ground: 'Miranda Reds Stadium',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1800 },
@@ -266,8 +266,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'racing-ferrol',
-    name: 'Deportivo Losarcos',
-    ground: 'Losarcos Stadium',
+    name: 'Ferrol Green-and-Whites',
+    ground: 'Ferrol Green-and-Whites Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2500 },
@@ -281,8 +281,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'eldense',
-    name: 'Atletico Torresana',
-    ground: 'Torresana Park',
+    name: 'Elda Blues',
+    ground: 'Elda Blues Arena',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1500 },
@@ -296,8 +296,8 @@ const SEGUNDA_RAW = [
   },
   {
     id: 'cartagena',
-    name: 'Deportivo Trasmar',
-    ground: 'Trasmar Ground',
+    name: 'Cartagena Whites',
+    ground: 'Cartagena Whites Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3000 },

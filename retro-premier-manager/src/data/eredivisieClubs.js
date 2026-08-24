@@ -9,8 +9,8 @@
 const EREDIVISIE_RAW = [
   {
     id: 'ajax',
-    name: 'VV Vaartstad',
-    ground: 'Vaartstad Stadium',
+    name: 'Amsterdam Reds',
+    ground: 'Amsterdam Reds Ground',
     reputation: 5,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 15000 },
@@ -24,8 +24,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'psv',
-    name: 'VV Beekveld',
-    ground: 'Beekveld Arena',
+    name: 'Eindhoven Reds',
+    ground: 'Eindhoven Reds Arena',
     reputation: 4,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 9000 },
@@ -39,8 +39,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'feyenoord',
-    name: 'SV Wolkenburg',
-    ground: 'Wolkenburg Arena',
+    name: 'Rotterdam Reds',
+    ground: 'Rotterdam Reds Arena',
     reputation: 4,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 13000 },
@@ -54,8 +54,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'az-alkmaar',
-    name: 'VV Klaverburg',
-    ground: 'Klaverburg Park',
+    name: 'Alkmaar Reds',
+    ground: 'Alkmaar Reds Park',
     reputation: 3,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 5000 },
@@ -69,8 +69,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'fc-utrecht',
-    name: 'VV Binnenwater',
-    ground: 'Binnenwater Ground',
+    name: 'Utrecht Reds',
+    ground: 'Utrecht Reds Ground',
     reputation: 3,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 4500 },
@@ -84,8 +84,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'fc-twente',
-    name: 'FC Havenstad',
-    ground: 'Havenstad Stadium',
+    name: 'Enschede Reds',
+    ground: 'Enschede Reds Park',
     reputation: 3,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 5000 },
@@ -99,8 +99,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'fc-groningen',
-    name: 'SV Westerdam',
-    ground: 'Westerdam Stadium Municipal',
+    name: 'Groningen Green-and-Whites',
+    ground: 'Groningen Green-and-Whites Stadium',
     reputation: 3,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 3800 },
@@ -114,8 +114,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'sparta-rotterdam',
-    name: 'SV Zilverbeek',
-    ground: 'Zilverbeek Stadium Municipal',
+    name: 'Rotterdam Reds and Whites',
+    ground: 'Rotterdam Reds and Whites Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 3000 },
@@ -129,8 +129,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'nec-nijmegen',
-    name: 'VV Nachtegaalstad',
-    ground: 'Nachtegaalstad Arena',
+    name: 'Nijmegen Reds',
+    ground: 'Nijmegen Reds Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 3000 },
@@ -144,8 +144,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'go-ahead-eagles',
-    name: 'SV Meerhoek',
-    ground: 'Meerhoek Arena',
+    name: 'Deventer Yellow-and-Reds',
+    ground: 'Deventer Yellow-and-Reds Stadium',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2800 },
@@ -159,8 +159,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'heerenveen',
-    name: 'SC Vlietstad',
-    ground: 'Vlietstad Arena',
+    name: 'Heerenveen Blues',
+    ground: 'Heerenveen Blues Park',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 3200 },
@@ -174,8 +174,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'fortuna-sittard',
-    name: 'SV IJsselstad',
-    ground: 'IJsselstad Park',
+    name: 'Sittard Yellow-and-Blacks',
+    ground: 'Sittard Yellow-and-Blacks Arena',
     reputation: 2,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2200 },
@@ -189,8 +189,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'pec-zwolle',
-    name: 'SV Rietvelde',
-    ground: 'Rietvelde Stadium Municipal',
+    name: 'Zwolle Blues',
+    ground: 'Zwolle Blues Ground',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2500 },
@@ -204,8 +204,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'willem-ii',
-    name: 'VV Veenendorp',
-    ground: 'Veenendorp Arena',
+    name: 'Tilburg Reds',
+    ground: 'Tilburg Reds Ground',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2200 },
@@ -219,8 +219,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'heracles-almelo',
-    name: 'VV Duinhoven',
-    ground: 'Duinhoven Arena',
+    name: 'Almelo Blacks',
+    ground: 'Almelo Blacks Ground',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2000 },
@@ -234,8 +234,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'almere-city',
-    name: 'VV Zuiderpark',
-    ground: 'Zuiderpark Stadium',
+    name: 'Almere Blues',
+    ground: 'Almere Blues Stadium',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1600 },
@@ -249,8 +249,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'rkc-waalwijk',
-    name: 'SV Molenbeek',
-    ground: 'Molenbeek Stadium Municipal',
+    name: 'Waalwijk Yellow-and-Blues',
+    ground: 'Waalwijk Yellow-and-Blues Arena',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 1800 },
@@ -264,8 +264,8 @@ const EREDIVISIE_RAW = [
   },
   {
     id: 'nac-breda',
-    name: 'VV Rivierland',
-    ground: 'Rivierland Arena',
+    name: 'Breda Yellow-and-Blacks',
+    ground: 'Breda Yellow-and-Blacks Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'noord', name: 'North Stand', capacity: 2200 },

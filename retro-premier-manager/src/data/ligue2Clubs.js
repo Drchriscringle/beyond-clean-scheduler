@@ -10,8 +10,8 @@
 const LIGUE_2_RAW = [
   {
     id: 'saint-etienne',
-    name: 'Racing Sartrouge',
-    ground: 'Sartrouge Stadium',
+    name: 'Saint-Etienne Greens',
+    ground: 'Saint-Etienne Greens Ground',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 9500 },
@@ -25,8 +25,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'bordeaux',
-    name: 'AS Valserein',
-    ground: 'Valserein Ground',
+    name: 'Bordeaux Blue-and-Whites',
+    ground: 'Bordeaux Blue-and-Whites Stadium',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 9000 },
@@ -40,8 +40,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'guingamp',
-    name: 'FC Lisleroy',
-    ground: 'Lisleroy Stadium',
+    name: 'Guingamp Red-and-Blacks',
+    ground: 'Guingamp Red-and-Blacks Ground',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3500 },
@@ -55,8 +55,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'ajaccio',
-    name: 'US Roquevert',
-    ground: 'Roquevert Stadium',
+    name: 'Ajaccio Reds',
+    ground: 'Ajaccio Reds Stadium',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3000 },
@@ -70,8 +70,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'paris-fc',
-    name: 'Olympique Beaumarais',
-    ground: 'Beaumarais Park',
+    name: 'Paris Blue-and-Reds',
+    ground: 'Paris Blue-and-Reds Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5000 },
@@ -85,8 +85,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'grenoble',
-    name: 'US Montrivage',
-    ground: 'Montrivage Ground',
+    name: 'Grenoble Reds',
+    ground: 'Grenoble Reds Ground',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5000 },
@@ -100,8 +100,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'laval',
-    name: 'US Loirval',
-    ground: 'Loirval Park',
+    name: 'Laval Blue-and-Blacks',
+    ground: 'Laval Blue-and-Blacks Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3200 },
@@ -115,8 +115,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'amiens',
-    name: 'Stade Clairval',
-    ground: 'Clairval Stadium Municipal',
+    name: 'Amiens Reds',
+    ground: 'Amiens Reds Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3000 },
@@ -130,8 +130,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'pau',
-    name: 'Olympique Grandchamp',
-    ground: 'Grandchamp Stadium Municipal',
+    name: 'Pau Blue-and-Golds',
+    ground: 'Pau Blue-and-Golds Park',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2000 },
@@ -145,8 +145,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'rodez',
-    name: 'FC Vaucresson Sud',
-    ground: 'Vaucresson Sud Stadium Municipal',
+    name: 'Rodez Reds',
+    ground: 'Rodez Reds Ground',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1800 },
@@ -160,8 +160,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'dunkerque',
-    name: 'FC Vieuxpont',
-    ground: 'Vieuxpont Stadium',
+    name: 'Dunkirk Reds',
+    ground: 'Dunkirk Reds Park',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2200 },
@@ -175,8 +175,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'red-star',
-    name: 'Olympique Montjoli',
-    ground: 'Montjoli Ground',
+    name: 'Paris Reds',
+    ground: 'Paris Reds Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1800 },
@@ -190,8 +190,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'martigues',
-    name: 'Racing Rocheval',
-    ground: 'Rocheval Park',
+    name: 'Martigues Blue-and-Whites',
+    ground: 'Martigues Blue-and-Whites Ground',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1800 },
@@ -205,7 +205,7 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'troyes',
-    name: 'FC Combray',
+    name: 'Troyes Blue-and-Whites',
     ground: "Stade de l'Aube",
     reputation: 1,
     stands: [
@@ -220,8 +220,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'annecy',
-    name: 'FC Beaulande',
-    ground: 'Beaulande Arena',
+    name: 'Annecy Reds',
+    ground: 'Annecy Reds Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1500 },
@@ -235,8 +235,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'clermont',
-    name: 'Olympique Montfleuri',
-    ground: 'Montfleuri Park',
+    name: 'Clermont Blues',
+    ground: 'Clermont Blues Stadium',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3000 },
@@ -250,7 +250,7 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'caen',
-    name: 'Racing Clervaux',
+    name: 'Caen Reds',
     ground: "Stade Michel-d'Ornano",
     reputation: 1,
     stands: [
@@ -265,8 +265,8 @@ const LIGUE_2_RAW = [
   },
   {
     id: 'boulogne',
-    name: 'Olympique Hauterive',
-    ground: 'Hauterive Ground',
+    name: 'Boulogne Reds',
+    ground: 'Boulogne Reds Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1400 },

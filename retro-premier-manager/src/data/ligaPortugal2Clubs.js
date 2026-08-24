@@ -11,8 +11,8 @@
 const LIGA_PORTUGAL_2_RAW = [
   {
     id: 'uniao-leiria',
-    name: 'UD Vale Dourado',
-    ground: 'Vale Dourado Park',
+    name: 'Leiria Green-and-Whites',
+    ground: 'Leiria Green-and-Whites Stadium',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 4500 },
@@ -26,8 +26,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'penafiel',
-    name: 'CD Valeverde',
-    ground: 'Valeverde Ground',
+    name: 'Penafiel Reds',
+    ground: 'Penafiel Reds Ground',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3000 },
@@ -41,8 +41,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'feirense',
-    name: 'AD Fontedoura',
-    ground: 'Fontedoura Park',
+    name: 'Santa Maria da Feira Yellows',
+    ground: 'Santa Maria da Feira Yellows Stadium',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2500 },
@@ -56,8 +56,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'tondela',
-    name: 'CD Ponterosa',
-    ground: 'Ponterosa Ground',
+    name: 'Tondela Blues',
+    ground: 'Tondela Blues Park',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2800 },
@@ -71,8 +71,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'chaves',
-    name: 'GD Valdouro',
-    ground: 'Valdouro Stadium Municipal',
+    name: 'Chaves Reds',
+    ground: 'Chaves Reds Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2200 },
@@ -86,8 +86,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'mafra',
-    name: 'CF Ribeiralva',
-    ground: 'Ribeiralva Arena',
+    name: 'Mafra Reds',
+    ground: 'Mafra Reds Park',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1800 },
@@ -101,8 +101,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'torreense',
-    name: 'AD Pedraverde',
-    ground: 'Pedraverde Arena',
+    name: 'Torres Vedras Blue-and-Whites',
+    ground: 'Torres Vedras Blue-and-Whites Park',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1600 },
@@ -116,8 +116,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'leixoes',
-    name: 'GD Bragantina',
-    ground: 'Bragantina Arena',
+    name: 'Matosinhos Reds',
+    ground: 'Matosinhos Reds Park',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2000 },
@@ -131,8 +131,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'pacos-ferreira',
-    name: 'CF Cabovelho',
-    ground: 'Cabovelho Ground',
+    name: 'Pacos de Ferreira Blues',
+    ground: 'Pacos de Ferreira Blues Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2200 },
@@ -146,8 +146,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'sporting-covilha',
-    name: 'GD Fozdemar',
-    ground: 'Fozdemar Arena',
+    name: 'Covilha Green-and-Whites',
+    ground: 'Covilha Green-and-Whites Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1400 },
@@ -161,8 +161,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'uniao-santarem',
-    name: 'AD Lagoazul',
-    ground: 'Lagoazul Park',
+    name: 'Santarem Reds',
+    ground: 'Santarem Reds Park',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1200 },
@@ -176,8 +176,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'vilafranquense',
-    name: 'SC Montealto',
-    ground: 'Montealto Stadium Municipal',
+    name: 'Vila Franca Blues',
+    ground: 'Vila Franca Blues Ground',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1200 },
@@ -191,8 +191,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'oliveirense',
-    name: 'GD Ribeiragrande',
-    ground: 'Ribeiragrande Arena',
+    name: 'Oliveira de Azemeis Reds',
+    ground: 'Oliveira de Azemeis Reds Park',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1000 },
@@ -206,8 +206,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'academico-viseu',
-    name: 'UD Fozdouro',
-    ground: 'Fozdouro Stadium',
+    name: 'Viseu Blacks',
+    ground: 'Viseu Blacks Park',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1200 },
@@ -221,8 +221,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'felgueiras',
-    name: 'CD Montijoso',
-    ground: 'Montijoso Ground',
+    name: 'Felgueiras Reds',
+    ground: 'Felgueiras Reds Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 900 },
@@ -236,8 +236,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'trofense',
-    name: 'AD Corgamar',
-    ground: 'Corgamar Park',
+    name: 'Trofa Reds',
+    ground: 'Trofa Reds Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1000 },
@@ -251,8 +251,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'vizela',
-    name: 'AD Vilanova do Sul',
-    ground: 'Vilanova do Sul Stadium',
+    name: 'Vizela Whites',
+    ground: 'Vizela Whites Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1400 },
@@ -266,8 +266,8 @@ const LIGA_PORTUGAL_2_RAW = [
   },
   {
     id: 'uniao-madeira',
-    name: 'AD Bemposta',
-    ground: 'Bemposta Stadium Municipal',
+    name: 'Funchal Blues',
+    ground: 'Funchal Blues Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1000 },

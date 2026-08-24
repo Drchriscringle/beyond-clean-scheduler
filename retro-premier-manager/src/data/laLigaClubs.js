@@ -10,8 +10,8 @@
 const LA_LIGA_RAW = [
   {
     id: 'real-madrid',
-    name: 'Atletico Montepiedra',
-    ground: 'Montepiedra Ground',
+    name: 'Madrid Whites',
+    ground: 'Madrid Whites Stadium',
     reputation: 5,
     stands: [
       { id: 'fondo-norte', name: 'North Stand', capacity: 22000 },
@@ -25,8 +25,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'barcelona',
-    name: 'Atletico Valdesol',
-    ground: 'Valdesol Park',
+    name: 'Barcelona Blaugrana',
+    ground: 'Barcelona Blaugrana Park',
     reputation: 5,
     stands: [
       { id: 'tribuna', name: 'North Stand', capacity: 22000 },
@@ -40,8 +40,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'atletico-madrid',
-    name: 'Deportivo Ribadulce',
-    ground: 'Ribadulce Park',
+    name: 'Madrid Reds',
+    ground: 'Madrid Reds Ground',
     reputation: 4,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 18000 },
@@ -55,8 +55,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'sevilla',
-    name: 'Deportivo Torresana',
-    ground: 'Torresana Stadium Municipal',
+    name: 'Seville Reds',
+    ground: 'Seville Reds Arena',
     reputation: 4,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 11000 },
@@ -70,8 +70,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'athletic-bilbao',
-    name: 'UD Montesol',
-    ground: 'Montesol Arena',
+    name: 'Bilbao Lions',
+    ground: 'Bilbao Lions Park',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 13500 },
@@ -85,8 +85,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'real-sociedad',
-    name: 'CF Sierraverde',
-    ground: 'Sierraverde Park',
+    name: 'San Sebastian Blues',
+    ground: 'San Sebastian Blues Ground',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 10000 },
@@ -100,8 +100,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'villarreal',
-    name: 'Real Puertoalto',
-    ground: 'Puertoalto Stadium Municipal',
+    name: 'Villarreal Yellows',
+    ground: 'Villarreal Yellows Park',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 6000 },
@@ -115,8 +115,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'real-betis',
-    name: 'Deportivo Montenegro',
-    ground: 'Montenegro Stadium',
+    name: 'Seville Greens',
+    ground: 'Seville Greens Ground',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 15000 },
@@ -130,8 +130,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'valencia',
-    name: 'CD Vallamar',
-    ground: 'Vallamar Stadium',
+    name: 'Valencia Bats',
+    ground: 'Valencia Bats Ground',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 12500 },
@@ -145,8 +145,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'girona',
-    name: 'Atletico Alcornoque',
-    ground: 'Alcornoque Stadium Municipal',
+    name: 'Girona Reds',
+    ground: 'Girona Reds Arena',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3600 },
@@ -160,8 +160,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'osasuna',
-    name: 'UD Costamar',
-    ground: 'Costamar Stadium Municipal',
+    name: 'Pamplona Reds',
+    ground: 'Pamplona Reds Stadium',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 6000 },
@@ -175,8 +175,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'celta-vigo',
-    name: 'UD Sancarlos',
-    ground: 'Sancarlos Stadium',
+    name: 'Vigo Sky Blues',
+    ground: 'Vigo Sky Blues Ground',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 7200 },
@@ -190,8 +190,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'rayo-vallecano',
-    name: 'CF Trasmar',
-    ground: 'Trasmar Ground',
+    name: 'Vallecas Stripes',
+    ground: 'Vallecas Stripes Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3700 },
@@ -205,8 +205,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'mallorca',
-    name: 'Atletico Peñasol',
-    ground: 'Peñasol Stadium Municipal',
+    name: 'Mallorca Reds',
+    ground: 'Mallorca Reds Arena',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5800 },
@@ -220,8 +220,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'getafe',
-    name: 'Real Cabolargo',
-    ground: 'Cabolargo Stadium Municipal',
+    name: 'Getafe Blues',
+    ground: 'Getafe Blues Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 4300 },
@@ -235,8 +235,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'alaves',
-    name: 'Atletico Campoancho',
-    ground: 'Campoancho Stadium Municipal',
+    name: 'Vitoria Blue-and-Whites',
+    ground: 'Vitoria Blue-and-Whites Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 5000 },
@@ -250,8 +250,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'las-palmas',
-    name: 'UD Losarcos',
-    ground: 'Losarcos Stadium',
+    name: 'Las Palmas Yellows',
+    ground: 'Las Palmas Yellows Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 8200 },
@@ -265,8 +265,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'espanyol',
-    name: 'Atletico Sotoverde',
-    ground: 'Sotoverde Stadium',
+    name: 'Barcelona Blue-and-Whites',
+    ground: 'Barcelona Blue-and-Whites Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 10500 },
@@ -280,8 +280,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'leganes',
-    name: 'CF Villamora',
-    ground: 'Villamora Stadium',
+    name: 'Leganes Blue-and-Whites',
+    ground: 'Leganes Blue-and-Whites Park',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3300 },
@@ -295,8 +295,8 @@ const LA_LIGA_RAW = [
   },
   {
     id: 'real-valladolid',
-    name: 'Atletico Vallarena',
-    ground: 'Vallarena Stadium',
+    name: 'Valladolid Whites',
+    ground: 'Valladolid Whites Stadium',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 7000 },

@@ -12,4 +12,4 @@
 // primeiraLigaClubs.js and friends) moved out - a real division with
 // fixtures and its own European qualification, not just opposition drawn
 // for someone else's cup run.
-export const EUROPEAN_CLUBS = [{ id: 'euro-shakhtar', name: 'Zoryana Metalurh', reputation: 2 }]
+export const EUROPEAN_CLUBS = [{ id: 'euro-shakhtar', name: 'Donetsk Oranges', reputation: 2 }]

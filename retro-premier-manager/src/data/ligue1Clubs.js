@@ -8,8 +8,8 @@
 const LIGUE_1_RAW = [
   {
     id: 'psg',
-    name: 'Stade Chantelune',
-    ground: 'Chantelune Ground',
+    name: 'Paris Blues',
+    ground: 'Paris Blues Park',
     reputation: 5,
     stands: [
       { id: 'auteuil', name: 'North Stand', capacity: 12000 },
@@ -23,8 +23,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'marseille',
-    name: 'Racing Montjoli',
-    ground: 'Montjoli Stadium Municipal',
+    name: 'Marseille Whites',
+    ground: 'Marseille Whites Stadium Municipal',
     reputation: 4,
     stands: [
       { id: 'virage-nord', name: 'North Stand', capacity: 16000 },
@@ -38,8 +38,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'monaco',
-    name: 'US Beaulande',
-    ground: 'Beaulande Stadium Municipal',
+    name: 'Monaco Reds',
+    ground: 'Monaco Reds Arena',
     reputation: 4,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 4500 },
@@ -53,8 +53,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'lyon',
-    name: 'AS Valserein',
-    ground: 'Valserein Arena',
+    name: 'Lyon Blue-and-Whites',
+    ground: 'Lyon Blue-and-Whites Stadium',
     reputation: 4,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 12000 },
@@ -68,8 +68,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'lille',
-    name: 'FC Loirval',
-    ground: 'Loirval Arena',
+    name: 'Lille Reds',
+    ground: 'Lille Reds Arena',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 9500 },
@@ -83,8 +83,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'nice',
-    name: 'Stade Rocheval',
-    ground: 'Rocheval Stadium',
+    name: 'Nice Reds',
+    ground: 'Nice Reds Park',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 9000 },
@@ -98,8 +98,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'rennes',
-    name: 'Stade Beaumarais',
-    ground: 'Beaumarais Stadium Municipal',
+    name: 'Rennes Red-and-Blacks',
+    ground: 'Rennes Red-and-Blacks Stadium',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 7500 },
@@ -113,8 +113,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'lens',
-    name: 'AS Bellemare',
-    ground: 'Bellemare Park',
+    name: 'Lens Blood-and-Golds',
+    ground: 'Lens Blood-and-Golds Stadium Municipal',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 12000 },
@@ -128,8 +128,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'strasbourg',
-    name: 'Racing Roquevert',
-    ground: 'Roquevert Stadium Municipal',
+    name: 'Strasbourg Blues',
+    ground: 'Strasbourg Blues Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5000 },
@@ -143,8 +143,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'toulouse',
-    name: 'Olympique Clairval',
-    ground: 'Clairval Ground',
+    name: 'Toulouse Violets',
+    ground: 'Toulouse Violets Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 8000 },
@@ -158,8 +158,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'nantes',
-    name: 'Olympique Perreux',
-    ground: 'Perreux Ground',
+    name: 'Nantes Yellow-and-Greens',
+    ground: 'Nantes Yellow-and-Greens Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 9000 },
@@ -173,8 +173,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'montpellier',
-    name: 'Stade Montfleuri',
-    ground: 'Montfleuri Park',
+    name: 'Montpellier Blue-and-Oranges',
+    ground: 'Montpellier Blue-and-Oranges Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 7500 },
@@ -188,8 +188,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'brest',
-    name: 'FC Erville',
-    ground: 'Erville Park',
+    name: 'Brest Reds',
+    ground: 'Brest Reds Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3500 },
@@ -203,8 +203,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'reims',
-    name: 'FC Fontclaire',
-    ground: 'Fontclaire Stadium Municipal',
+    name: 'Reims Reds',
+    ground: 'Reims Reds Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 4500 },
@@ -218,8 +218,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'le-havre',
-    name: 'Racing Sartrouge',
-    ground: 'Sartrouge Ground',
+    name: 'Le Havre Blue-and-Blues',
+    ground: 'Le Havre Blue-and-Blues Ground',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 6000 },
@@ -233,8 +233,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'auxerre',
-    name: 'Stade Vieuxpont',
-    ground: 'Vieuxpont Ground',
+    name: 'Auxerre Whites',
+    ground: 'Auxerre Whites Stadium',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3800 },
@@ -248,8 +248,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'angers',
-    name: 'Racing Grandchamp',
-    ground: 'Grandchamp Stadium Municipal',
+    name: 'Angers Blacks',
+    ground: 'Angers Blacks Ground',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 4500 },
@@ -263,8 +263,8 @@ const LIGUE_1_RAW = [
   },
   {
     id: 'metz',
-    name: 'Olympique Clervaux',
-    ground: 'Clervaux Ground',
+    name: 'Metz Maroons',
+    ground: 'Metz Maroons Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 6500 },

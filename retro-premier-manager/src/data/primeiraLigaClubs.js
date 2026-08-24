@@ -9,8 +9,8 @@
 const PRIMEIRA_LIGA_RAW = [
   {
     id: 'benfica',
-    name: 'SC Serrafina',
-    ground: 'Serrafina Park',
+    name: 'Lisbon Reds',
+    ground: 'Lisbon Reds Arena',
     reputation: 5,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 16000 },
@@ -24,8 +24,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'porto',
-    name: 'CD Montealto',
-    ground: 'Montealto Arena',
+    name: 'Porto Blue-and-Whites',
+    ground: 'Porto Blue-and-Whites Stadium',
     reputation: 4,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 13000 },
@@ -39,8 +39,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'sporting-cp',
-    name: 'AD Ribeiralva',
-    ground: 'Ribeiralva Arena',
+    name: 'Lisbon Green-and-Whites',
+    ground: 'Lisbon Green-and-Whites Park',
     reputation: 4,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 12500 },
@@ -54,8 +54,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'braga',
-    name: 'SC Lagoazul',
-    ground: 'Lagoazul Ground',
+    name: 'Braga Reds',
+    ground: 'Braga Reds Arena',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 7500 },
@@ -69,8 +69,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'vitoria-guimaraes',
-    name: 'GD Ribeiragrande',
-    ground: 'Ribeiragrande Arena',
+    name: 'Guimaraes Whites',
+    ground: 'Guimaraes Whites Stadium',
     reputation: 3,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 6000 },
@@ -84,8 +84,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'boavista',
-    name: 'AD Serrasanta',
-    ground: 'Serrasanta Arena',
+    name: 'Porto Chequers',
+    ground: 'Porto Chequers Arena',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 4500 },
@@ -99,8 +99,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'famalicao',
-    name: 'GD Pedraverde',
-    ground: 'Pedraverde Stadium Municipal',
+    name: 'Famalicao Whites',
+    ground: 'Famalicao Whites Ground',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3200 },
@@ -114,8 +114,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'moreirense',
-    name: 'CD Aldeanova',
-    ground: 'Aldeanova Arena',
+    name: 'Moreira Greens',
+    ground: 'Moreira Greens Stadium',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2500 },
@@ -129,8 +129,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'rio-ave',
-    name: 'GD Ribeiroverde',
-    ground: 'Ribeiroverde Stadium',
+    name: 'Vila do Conde Whites',
+    ground: 'Vila do Conde Whites Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2800 },
@@ -144,8 +144,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'gil-vicente',
-    name: 'UD Serralonga',
-    ground: 'Serralonga Ground',
+    name: 'Barcelos Reds',
+    ground: 'Barcelos Reds Ground',
     reputation: 2,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 3000 },
@@ -159,8 +159,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'casa-pia',
-    name: 'UD Terranova do Sado',
-    ground: 'Terranova do Sado Stadium',
+    name: 'Lisbon Blues',
+    ground: 'Lisbon Blues Arena',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1800 },
@@ -174,8 +174,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'estoril',
-    name: 'CF Vilaflor',
-    ground: 'Vilaflor Stadium',
+    name: 'Estoril Yellow-and-Blues',
+    ground: 'Estoril Yellow-and-Blues Park',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2000 },
@@ -189,8 +189,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'arouca',
-    name: 'CD Alcantina',
-    ground: 'Alcantina Park',
+    name: 'Arouca Yellows',
+    ground: 'Arouca Yellows Stadium',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1500 },
@@ -204,8 +204,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'santa-clara',
-    name: 'SC Montijoso',
-    ground: 'Montijoso Park',
+    name: 'Ponta Delgada Whites',
+    ground: 'Ponta Delgada Whites Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2200 },
@@ -219,8 +219,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'nacional',
-    name: 'CF Valeverde',
-    ground: 'Valeverde Ground',
+    name: 'Funchal Blacks',
+    ground: 'Funchal Blacks Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 2000 },
@@ -234,8 +234,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'estrela-amadora',
-    name: 'SC Corgamar',
-    ground: 'Corgamar Arena',
+    name: 'Amadora Reds',
+    ground: 'Amadora Reds Stadium',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1600 },
@@ -249,8 +249,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'alverca',
-    name: 'GD Fontedoura',
-    ground: 'Fontedoura Ground',
+    name: 'Alverca Blues',
+    ground: 'Alverca Blues Ground',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1200 },
@@ -264,8 +264,8 @@ const PRIMEIRA_LIGA_RAW = [
   },
   {
     id: 'avs',
-    name: 'UD Ponterosa',
-    ground: 'Ponterosa Stadium',
+    name: 'Vila das Aves Whites',
+    ground: 'Vila das Aves Whites Park',
     reputation: 1,
     stands: [
       { id: 'norte', name: 'North Stand', capacity: 1400 },

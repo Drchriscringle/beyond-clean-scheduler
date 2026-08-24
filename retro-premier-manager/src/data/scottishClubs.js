@@ -7,8 +7,8 @@
 const SCOTTISH_PREMIERSHIP_RAW = [
   {
     id: 'celtic',
-    name: 'Glentarrow Rangers',
-    ground: 'Glentarrow Ground',
+    name: 'Glasgow Green-and-Whites',
+    ground: 'Glasgow Green-and-Whites Stadium Municipal',
     reputation: 3,
     stands: [
       { id: 'jock-stein', name: 'North Stand', capacity: 15800 },
@@ -22,8 +22,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'rangers',
-    name: 'Dornlie Rangers',
-    ground: 'Dornlie Stadium Municipal',
+    name: 'Glasgow Blues',
+    ground: 'Glasgow Blues Arena',
     reputation: 3,
     stands: [
       { id: 'copland', name: 'North Stand', capacity: 12700 },
@@ -37,8 +37,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'aberdeen',
-    name: 'Kelvinside FC',
-    ground: 'Kelvinside Stadium',
+    name: 'Aberdeen Reds',
+    ground: 'Aberdeen Reds Ground',
     reputation: 2,
     stands: [
       { id: 'south', name: 'North Stand', capacity: 5800 },
@@ -52,8 +52,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'hearts',
-    name: 'Cairnhill Athletic',
-    ground: 'Cairnhill Stadium',
+    name: 'Edinburgh Maroons',
+    ground: 'Edinburgh Maroons Park',
     reputation: 2,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 6500 },
@@ -67,8 +67,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'hibernian',
-    name: 'Invermoor Athletic',
-    ground: 'Invermoor Park',
+    name: 'Edinburgh Greens',
+    ground: 'Edinburgh Greens Ground',
     reputation: 2,
     stands: [
       { id: 'east', name: 'North Stand', capacity: 6100 },
@@ -82,8 +82,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'dundee-united',
-    name: 'Ferrindale Rovers',
-    ground: 'Ferrindale Stadium',
+    name: 'Dundee Tangerines',
+    ground: 'Dundee Tangerines Arena',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 4300 },
@@ -97,8 +97,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'motherwell',
-    name: 'Lochend Academical',
-    ground: 'Lochend Park',
+    name: 'Motherwell Claret-and-Amber',
+    ground: 'Motherwell Claret-and-Amber Park',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 4500 },
@@ -112,8 +112,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'kilmarnock',
-    name: 'Auchterlie FC',
-    ground: 'Auchterlie Ground',
+    name: 'Kilmarnock Blue-and-Whites',
+    ground: 'Kilmarnock Blue-and-Whites Ground',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 5200 },
@@ -127,8 +127,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'st-mirren',
-    name: 'Ardgowan Rangers',
-    ground: 'Ardgowan Arena',
+    name: 'Paisley Buddies',
+    ground: 'Paisley Buddies Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 2200 },
@@ -142,8 +142,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'livingston',
-    name: 'Glenross FC',
-    ground: 'Glenross Arena',
+    name: 'Livingston Lions',
+    ground: 'Livingston Lions Stadium',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 3000 },
@@ -157,8 +157,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'st-johnstone',
-    name: 'Craigallan United',
-    ground: 'Craigallan Arena',
+    name: 'Perth Saints',
+    ground: 'Perth Saints Ground',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 3000 },
@@ -172,8 +172,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
   },
   {
     id: 'ross-county',
-    name: 'Cluny Rovers',
-    ground: 'Cluny Arena',
+    name: 'Dingwall Staggies',
+    ground: 'Dingwall Staggies Arena',
     reputation: 1,
     stands: [
       { id: 'jail-end', name: 'North Stand', capacity: 2000 },
@@ -190,8 +190,8 @@ const SCOTTISH_PREMIERSHIP_RAW = [
 const SCOTTISH_CHAMPIONSHIP_RAW = [
   {
     id: 'dundee',
-    name: 'Lammermuir Rangers',
-    ground: 'Lammermuir Stadium Municipal',
+    name: 'Dundee Dark Blues',
+    ground: 'Dundee Dark Blues Ground',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 3200 },
@@ -205,8 +205,8 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   },
   {
     id: 'partick-thistle',
-    name: 'Braeburn United',
-    ground: 'Braeburn Park',
+    name: 'Glasgow Jags',
+    ground: 'Glasgow Jags Park',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 2800 },
@@ -220,7 +220,7 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   },
   {
     id: 'raith-rovers',
-    name: 'Moray Vale United',
+    name: 'Kirkcaldy Rovers',
     ground: "Stark's Park",
     reputation: 1,
     stands: [
@@ -235,8 +235,8 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   },
   {
     id: 'airdrieonians',
-    name: 'Balnaglen Academical',
-    ground: 'Balnaglen Stadium Municipal',
+    name: 'Airdrie Diamonds',
+    ground: 'Airdrie Diamonds Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 3200 },
@@ -250,8 +250,8 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   },
   {
     id: 'ayr-united',
-    name: 'Dunvegan Thistle',
-    ground: 'Dunvegan Arena',
+    name: 'Ayr Honest Men',
+    ground: 'Ayr Honest Men Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 3000 },
@@ -266,7 +266,7 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   {
     id: 'queens-park',
     name: "Queen's Park",
-    ground: 'Kilbride Arena',
+    ground: 'Glasgow Spiders Arena',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 1500 },
@@ -280,8 +280,8 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   },
   {
     id: 'greenock-morton',
-    name: 'Strathmore Academical',
-    ground: 'Strathmore Stadium Municipal',
+    name: 'Greenock Ton',
+    ground: 'Greenock Ton Park',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 3200 },
@@ -295,8 +295,8 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   },
   {
     id: 'arbroath',
-    name: 'Kirkallan Rovers',
-    ground: 'Kirkallan Park',
+    name: 'Arbroath Red Lichties',
+    ground: 'Arbroath Red Lichties Stadium',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 1800 },
@@ -310,8 +310,8 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   },
   {
     id: 'falkirk',
-    name: 'Ardgowan 2 FC',
-    ground: 'Ardgowan 2 Ground',
+    name: 'Falkirk Bairns',
+    ground: 'Falkirk Bairns Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 2400 },
@@ -325,8 +325,8 @@ const SCOTTISH_CHAMPIONSHIP_RAW = [
   },
   {
     id: 'hamilton',
-    name: 'Lammermuir 2 FC',
-    ground: 'Lammermuir 2 Ground',
+    name: 'Hamilton Accies',
+    ground: 'Hamilton Accies Ground',
     reputation: 1,
     stands: [
       { id: 'main', name: 'North Stand', capacity: 1900 },

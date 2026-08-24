@@ -10,8 +10,8 @@
 const SERIE_A_RAW = [
   {
     id: 'inter-milan',
-    name: 'Calcio Fiumara',
-    ground: 'Fiumara Stadium Municipal',
+    name: 'Milan Black-and-Blues',
+    ground: 'Milan Black-and-Blues Arena',
     reputation: 4,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 16500 },
@@ -25,8 +25,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'ac-milan',
-    name: 'FC Terrarossa',
-    ground: 'Terrarossa Arena',
+    name: 'Milan Red-and-Blacks',
+    ground: 'Milan Red-and-Blacks Park',
     reputation: 4,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 16500 },
@@ -40,8 +40,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'juventus',
-    name: 'AC Fiumelago',
-    ground: 'Fiumelago Stadium',
+    name: 'Turin Black-and-Whites',
+    ground: 'Turin Black-and-Whites Stadium',
     reputation: 4,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 10500 },
@@ -55,8 +55,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'napoli',
-    name: 'SS Sanremo Nord',
-    ground: 'Sanremo Nord Ground',
+    name: 'Naples Blues',
+    ground: 'Naples Blues Park',
     reputation: 4,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 13500 },
@@ -70,8 +70,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'roma',
-    name: 'FC Selvapiana',
-    ground: 'Selvapiana Arena',
+    name: 'Rome Maroons',
+    ground: 'Rome Maroons Arena',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 10000 },
@@ -85,8 +85,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'lazio',
-    name: 'AC Torvaianica',
-    ground: 'Torvaianica Stadium Municipal',
+    name: 'Rome Sky Blues',
+    ground: 'Rome Sky Blues Stadium Municipal',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 10000 },
@@ -100,8 +100,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'atalanta',
-    name: 'US Lagorosso',
-    ground: 'Lagorosso Park',
+    name: 'Bergamo Blue-and-Blacks',
+    ground: 'Bergamo Blue-and-Blacks Stadium Municipal',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 6000 },
@@ -115,8 +115,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'fiorentina',
-    name: 'AS Belmonte',
-    ground: 'Belmonte Stadium Municipal',
+    name: 'Florence Violets',
+    ground: 'Florence Violets Stadium',
     reputation: 3,
     stands: [
       { id: 'fiesole', name: 'North Stand', capacity: 8500 },
@@ -130,7 +130,7 @@ const SERIE_A_RAW = [
   },
   {
     id: 'bologna',
-    name: 'AS Collesanto',
+    name: 'Bologna Red-and-Blues',
     ground: "Stadio Renato Dall'Ara",
     reputation: 3,
     stands: [
@@ -145,8 +145,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'torino',
-    name: 'AC Poggioreale',
-    ground: 'Poggioreale Stadium Municipal',
+    name: 'Turin Maroons',
+    ground: 'Turin Maroons Arena',
     reputation: 2,
     stands: [
       { id: 'maratona', name: 'North Stand', capacity: 6500 },
@@ -160,8 +160,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'udinese',
-    name: 'Calcio Rocchetta',
-    ground: 'Rocchetta Stadium Municipal',
+    name: 'Udine Black-and-Whites',
+    ground: 'Udine Black-and-Whites Arena',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 4500 },
@@ -175,8 +175,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'genoa',
-    name: 'Calcio Marecalmo',
-    ground: 'Marecalmo Ground',
+    name: 'Genoa Red-and-Blues',
+    ground: 'Genoa Red-and-Blues Park',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 6000 },
@@ -190,8 +190,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'cagliari',
-    name: 'FC Torreverde',
-    ground: 'Torreverde Stadium',
+    name: 'Cagliari Reds',
+    ground: 'Cagliari Reds Ground',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 4000 },
@@ -205,8 +205,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'verona',
-    name: 'Calcio Portosanto',
-    ground: 'Portosanto Stadium Municipal',
+    name: 'Verona Yellow-and-Blues',
+    ground: 'Verona Yellow-and-Blues Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5000 },
@@ -220,8 +220,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'empoli',
-    name: 'Calcio Riviera Alta',
-    ground: 'Riviera Alta Ground',
+    name: 'Empoli Blues',
+    ground: 'Empoli Blues Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3500 },
@@ -235,8 +235,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'lecce',
-    name: 'Calcio Ponteverde',
-    ground: 'Ponteverde Stadium Municipal',
+    name: 'Lecce Yellow-and-Reds',
+    ground: 'Lecce Yellow-and-Reds Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 4500 },
@@ -250,8 +250,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'parma',
-    name: 'SS Montorio',
-    ground: 'Montorio Park',
+    name: 'Parma Yellow-and-Blues',
+    ground: 'Parma Yellow-and-Blues Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 4000 },
@@ -265,8 +265,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'como',
-    name: 'Calcio Marmorata',
-    ground: 'Marmorata Ground',
+    name: 'Como Blue-and-Whites',
+    ground: 'Como Blue-and-Whites Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2500 },
@@ -280,8 +280,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'venezia',
-    name: 'US Castelmare',
-    ground: 'Castelmare Arena',
+    name: 'Venice Orange-and-Greens',
+    ground: 'Venice Orange-and-Greens Park',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2000 },
@@ -295,8 +295,8 @@ const SERIE_A_RAW = [
   },
   {
     id: 'monza',
-    name: 'US Montefiore',
-    ground: 'Montefiore Stadium',
+    name: 'Monza Red-and-Whites',
+    ground: 'Monza Red-and-Whites Park',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3300 },

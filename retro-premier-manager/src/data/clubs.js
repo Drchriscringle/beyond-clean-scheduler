@@ -21,8 +21,8 @@ import { LIGA_PORTUGAL_2_CLUBS } from './ligaPortugal2Clubs.js'
 const PL_CLUBS_RAW = [
   {
     id: 'arsenal',
-    name: 'Bramcote Rovers',
-    ground: 'Bramcote Stadium',
+    name: 'Islington Reds',
+    ground: 'Islington Reds Ground',
     reputation: 5,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 15200 },
@@ -36,8 +36,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'aston-villa',
-    name: 'Camborne United',
-    ground: 'Camborne Stadium',
+    name: 'Aston Claret',
+    ground: 'Aston Claret Park',
     reputation: 4,
     stands: [
       { id: 'holte', name: 'North Stand', capacity: 13500 },
@@ -51,8 +51,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'bournemouth',
-    name: 'Brackwell United',
-    ground: 'Brackwell Stadium Municipal',
+    name: 'Bournemouth Reds',
+    ground: 'Bournemouth Reds Park',
     reputation: 2,
     stands: [
       { id: 'south', name: 'North Stand', capacity: 3200 },
@@ -66,8 +66,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'brentford',
-    name: 'Fenwick City',
-    ground: 'Fenwick Stadium Municipal',
+    name: 'Brentford Bees',
+    ground: 'Brentford Bees Stadium',
     reputation: 2,
     stands: [
       { id: 'south', name: 'North Stand', capacity: 4700 },
@@ -81,8 +81,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'brighton',
-    name: 'Stonegate Rovers',
-    ground: 'Stonegate Stadium',
+    name: 'Brighton Seagulls',
+    ground: 'Brighton Seagulls Park',
     reputation: 3,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 8500 },
@@ -96,8 +96,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'burnley',
-    name: 'Bramwell City',
-    ground: 'Bramwell Ground',
+    name: 'Burnley Clarets',
+    ground: 'Burnley Clarets Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'longside', name: 'North Stand', capacity: 6600 },
@@ -111,8 +111,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'chelsea',
-    name: 'Greenmoor Albion',
-    ground: 'Greenmoor Stadium',
+    name: 'Chelsea Blues',
+    ground: 'Chelsea Blues Arena',
     reputation: 5,
     stands: [
       { id: 'matthew-harding', name: 'North Stand', capacity: 10884 },
@@ -126,8 +126,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'crystal-palace',
-    name: 'Whitmore Athletic',
-    ground: 'Whitmore Park',
+    name: 'Crystal Palace Eagles',
+    ground: 'Crystal Palace Eagles Park',
     reputation: 2,
     stands: [
       { id: 'holmesdale', name: 'North Stand', capacity: 7200 },
@@ -141,8 +141,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'everton',
-    name: 'Corbridge Wanderers',
-    ground: 'Corbridge Stadium Municipal',
+    name: 'Liverpool Blues',
+    ground: 'Liverpool Blues Arena',
     reputation: 3,
     stands: [
       { id: 'south', name: 'North Stand', capacity: 13500 },
@@ -156,8 +156,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'fulham',
-    name: 'Hollowgate Albion',
-    ground: 'Hollowgate Park',
+    name: 'Fulham Whites',
+    ground: 'Fulham Whites Ground',
     reputation: 2,
     stands: [
       { id: 'riverside', name: 'North Stand', capacity: 8000 },
@@ -171,8 +171,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'leeds',
-    name: 'Northolme United',
-    ground: 'Northolme Stadium Municipal',
+    name: 'Leeds Whites',
+    ground: 'Leeds Whites Ground',
     reputation: 1,
     stands: [
       { id: 'south', name: 'North Stand', capacity: 10000 },
@@ -186,8 +186,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'liverpool',
-    name: 'Farleigh Rovers',
-    ground: 'Farleigh Ground',
+    name: 'Liverpool City',
+    ground: 'Liverpool City Ground',
     reputation: 5,
     stands: [
       { id: 'kop', name: 'North Stand', capacity: 12800 },
@@ -201,8 +201,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'man-city',
-    name: 'Longmere Rovers',
-    ground: 'Longmere Stadium Municipal',
+    name: 'Manchester Sky Blues',
+    ground: 'Manchester Sky Blues Stadium Municipal',
     reputation: 5,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 13500 },
@@ -216,8 +216,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'man-utd',
-    name: 'Dunmore Rovers',
-    ground: 'Dunmore Stadium Municipal',
+    name: 'Manchester Reds',
+    ground: 'Manchester Reds Park',
     reputation: 5,
     stands: [
       { id: 'stretford', name: 'North Stand', capacity: 20500 },
@@ -231,7 +231,7 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'newcastle',
-    name: 'Redbridge Athletic',
+    name: 'Newcastle Magpies',
     ground: "St James' Park",
     reputation: 4,
     stands: [
@@ -246,8 +246,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'forest',
-    name: 'Thornbury FC',
-    ground: 'Thornbury Arena',
+    name: 'Nottingham Reds',
+    ground: 'Nottingham Reds Park',
     reputation: 3,
     stands: [
       { id: 'trent-end', name: 'North Stand', capacity: 7800 },
@@ -261,8 +261,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'sunderland',
-    name: 'Marlowe Rovers',
-    ground: 'Marlowe Arena',
+    name: 'Sunderland Black Cats',
+    ground: 'Sunderland Black Cats Park',
     reputation: 1,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 12500 },
@@ -276,8 +276,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'tottenham',
-    name: 'Copperfield United',
-    ground: 'Copperfield Stadium Municipal',
+    name: 'Tottenham Whites',
+    ground: 'Tottenham Whites Arena',
     reputation: 5,
     stands: [
       { id: 'south', name: 'North Stand', capacity: 17500 },
@@ -291,8 +291,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'west-ham',
-    name: 'Kingswood Town',
-    ground: 'Kingswood Stadium',
+    name: 'West Ham Claret',
+    ground: 'West Ham Claret Stadium',
     reputation: 3,
     stands: [
       { id: 'east', name: 'North Stand', capacity: 16000 },
@@ -306,8 +306,8 @@ const PL_CLUBS_RAW = [
   },
   {
     id: 'wolves',
-    name: 'Eastcombe Albion',
-    ground: 'Eastcombe Stadium Municipal',
+    name: 'Wolverhampton Gold',
+    ground: 'Wolverhampton Gold Ground',
     reputation: 2,
     stands: [
       { id: 'steve-bull', name: 'North Stand', capacity: 9300 },
@@ -327,8 +327,8 @@ const PL_CLUBS_RAW = [
 const CHAMPIONSHIP_CLUBS_RAW = [
   {
     id: 'leicester',
-    name: 'Ashvale FC',
-    ground: 'Ashvale Ground',
+    name: 'Leicester Foxes',
+    ground: 'Leicester Foxes Arena',
     reputation: 3,
     stands: [
       { id: 'kop', name: 'North Stand', capacity: 8500 },
@@ -342,8 +342,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'ipswich',
-    name: 'Hartfield United',
-    ground: 'Hartfield Stadium Municipal',
+    name: 'Ipswich Blues',
+    ground: 'Ipswich Blues Park',
     reputation: 3,
     stands: [
       { id: 'sir-bobby-robson', name: 'North Stand', capacity: 7800 },
@@ -357,7 +357,7 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'southampton',
-    name: 'Ravensworth City',
+    name: 'Southampton Saints',
     ground: "St Mary's Stadium",
     reputation: 3,
     stands: [
@@ -372,8 +372,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'west-brom',
-    name: 'Elmsworth Rovers',
-    ground: 'Elmsworth Stadium Municipal',
+    name: 'West Bromwich Throstles',
+    ground: 'West Bromwich Throstles Park',
     reputation: 2,
     stands: [
       { id: 'smethwick', name: 'North Stand', capacity: 6500 },
@@ -387,8 +387,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'sheffield-united',
-    name: 'Hartsdale Albion',
-    ground: 'Hartsdale Stadium Municipal',
+    name: 'Sheffield Blades',
+    ground: 'Sheffield Blades Arena',
     reputation: 2,
     stands: [
       { id: 'kop', name: 'North Stand', capacity: 8200 },
@@ -402,8 +402,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'norwich',
-    name: 'Delford Wanderers',
-    ground: 'Delford Ground',
+    name: 'Norwich Canaries',
+    ground: 'Norwich Canaries Ground',
     reputation: 2,
     stands: [
       { id: 'barclay', name: 'North Stand', capacity: 7200 },
@@ -417,8 +417,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'middlesbrough',
-    name: 'Millhaven Albion',
-    ground: 'Millhaven Ground',
+    name: 'Middlesbrough Reds',
+    ground: 'Middlesbrough Reds Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'south', name: 'North Stand', capacity: 8000 },
@@ -432,8 +432,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'coventry',
-    name: 'Blackmere Athletic',
-    ground: 'Blackmere Arena',
+    name: 'Coventry Sky Blues',
+    ground: 'Coventry Sky Blues Arena',
     reputation: 2,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 8200 },
@@ -447,8 +447,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'hull',
-    name: 'Kirkstone Athletic',
-    ground: 'Kirkstone Stadium',
+    name: 'Hull Tigers',
+    ground: 'Hull Tigers Park',
     reputation: 1,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 6500 },
@@ -462,8 +462,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'preston',
-    name: 'Sedgefield Town',
-    ground: 'Sedgefield Park',
+    name: 'Preston Whites',
+    ground: 'Preston Whites Ground',
     reputation: 1,
     stands: [
       { id: 'bill-shankly-kop', name: 'North Stand', capacity: 6000 },
@@ -477,8 +477,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'millwall',
-    name: 'Kelburn Wanderers',
-    ground: 'Kelburn Park',
+    name: 'Millwall Lions',
+    ground: 'Millwall Lions Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 5200 },
@@ -492,8 +492,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'blackburn',
-    name: 'Wintershaw United',
-    ground: 'Wintershaw Park',
+    name: 'Blackburn Blue-and-Whites',
+    ground: 'Blackburn Blue-and-Whites Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'riverside', name: 'North Stand', capacity: 6200 },
@@ -507,8 +507,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'bristol-city',
-    name: 'Wrenfield Wanderers',
-    ground: 'Wrenfield Ground',
+    name: 'Bristol Reds',
+    ground: 'Bristol Reds Arena',
     reputation: 2,
     stands: [
       { id: 'atyeo', name: 'North Stand', capacity: 7000 },
@@ -522,8 +522,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'swansea',
-    name: 'Thistlewood Town',
-    ground: 'Thistlewood Arena',
+    name: 'Swansea Whites',
+    ground: 'Swansea Whites Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 5500 },
@@ -537,8 +537,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'cardiff',
-    name: 'Oldbrook City',
-    ground: 'Oldbrook Park',
+    name: 'Cardiff Bluebirds',
+    ground: 'Cardiff Bluebirds Park',
     reputation: 1,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 8500 },
@@ -552,8 +552,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'qpr',
-    name: 'Southwold City',
-    ground: 'Southwold Ground',
+    name: 'Queens Park Rangers',
+    ground: 'Queens Park Rangers Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'ellerslie-road', name: 'North Stand', capacity: 4600 },
@@ -567,8 +567,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'watford',
-    name: 'Yewbridge Town',
-    ground: 'Yewbridge Stadium Municipal',
+    name: 'Watford Hornets',
+    ground: 'Watford Hornets Ground',
     reputation: 2,
     stands: [
       { id: 'rookery', name: 'North Stand', capacity: 6000 },
@@ -582,8 +582,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'stoke',
-    name: 'Fallowfield United',
-    ground: 'Fallowfield Park',
+    name: 'Stoke Reds',
+    ground: 'Stoke Reds Ground',
     reputation: 2,
     stands: [
       { id: 'boothen-end', name: 'North Stand', capacity: 7800 },
@@ -597,8 +597,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'derby',
-    name: 'Marchbank FC',
-    ground: 'Marchbank Stadium Municipal',
+    name: 'Derby Rams',
+    ground: 'Derby Rams Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'north', name: 'North Stand', capacity: 8500 },
@@ -612,8 +612,8 @@ const CHAMPIONSHIP_CLUBS_RAW = [
   },
   {
     id: 'portsmouth',
-    name: 'Ashcombe Rovers',
-    ground: 'Ashcombe Arena',
+    name: 'Portsmouth Blues',
+    ground: 'Portsmouth Blues Ground',
     reputation: 1,
     stands: [
       { id: 'fratton', name: 'North Stand', capacity: 5000 },

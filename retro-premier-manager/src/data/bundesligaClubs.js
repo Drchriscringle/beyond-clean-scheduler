@@ -10,8 +10,8 @@
 const BUNDESLIGA_RAW = [
   {
     id: 'bayern-munich',
-    name: '1. FC Steinfeld',
-    ground: 'Steinfeld Park',
+    name: 'Munich Reds',
+    ground: 'Munich Reds Stadium',
     reputation: 5,
     stands: [
       { id: 'sued', name: 'North Stand', capacity: 22000 },
@@ -25,8 +25,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'borussia-dortmund',
-    name: 'VfB Tannenberg',
-    ground: 'Tannenberg Park',
+    name: 'Dortmund Yellows',
+    ground: 'Dortmund Yellows Park',
     reputation: 4,
     stands: [
       { id: 'suedtribune', name: 'North Stand', capacity: 25000 },
@@ -40,8 +40,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'rb-leipzig',
-    name: 'SV Weissenfeld',
-    ground: 'Weissenfeld Stadium',
+    name: 'Leipzig Reds',
+    ground: 'Leipzig Reds Stadium Municipal',
     reputation: 4,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 11000 },
@@ -55,8 +55,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'bayer-leverkusen',
-    name: 'Borussia Feldkirch',
-    ground: 'Feldkirch Park',
+    name: 'Leverkusen Reds',
+    ground: 'Leverkusen Reds Arena',
     reputation: 4,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 8000 },
@@ -70,8 +70,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'vfb-stuttgart',
-    name: 'SV Klarenberg',
-    ground: 'Klarenberg Stadium',
+    name: 'Stuttgart Whites',
+    ground: 'Stuttgart Whites Stadium Municipal',
     reputation: 3,
     stands: [
       { id: 'cannstatter', name: 'North Stand', capacity: 10000 },
@@ -85,8 +85,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'eintracht-frankfurt',
-    name: 'FC Talheim',
-    ground: 'Talheim Stadium Municipal',
+    name: 'Frankfurt Reds',
+    ground: 'Frankfurt Reds Arena',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 12000 },
@@ -100,8 +100,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'vfl-wolfsburg',
-    name: 'SC Eisenbach',
-    ground: 'Eisenbach Arena',
+    name: 'Wolfsburg Green-and-Whites',
+    ground: 'Wolfsburg Green-and-Whites Ground',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 6000 },
@@ -115,8 +115,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'borussia-monchengladbach',
-    name: '1. FC Sonnental',
-    ground: 'Sonnental Ground',
+    name: 'Monchengladbach Whites',
+    ground: 'Monchengladbach Whites Arena',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 9000 },
@@ -130,8 +130,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'sc-freiburg',
-    name: 'VfB Rotenburg',
-    ground: 'Rotenburg Park',
+    name: 'Freiburg Reds',
+    ground: 'Freiburg Reds Park',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5500 },
@@ -145,8 +145,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'werder-bremen',
-    name: 'SC Nebelheim',
-    ground: 'Nebelheim Ground',
+    name: 'Bremen Greens',
+    ground: 'Bremen Greens Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'ost', name: 'North Stand', capacity: 8000 },
@@ -160,8 +160,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'union-berlin',
-    name: 'FC Grunwald',
-    ground: 'Grunwald Park',
+    name: 'Berlin Reds',
+    ground: 'Berlin Reds Park',
     reputation: 2,
     stands: [
       { id: 'waldseite', name: 'North Stand', capacity: 5000 },
@@ -175,8 +175,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'fc-augsburg',
-    name: '1. FC Sturmau',
-    ground: 'Sturmau Arena',
+    name: 'Augsburg Reds',
+    ground: 'Augsburg Reds Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5000 },
@@ -190,8 +190,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'mainz-05',
-    name: 'SV Ostmoor',
-    ground: 'Ostmoor Park',
+    name: 'Mainz Reds',
+    ground: 'Mainz Reds Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5000 },
@@ -205,8 +205,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'tsg-hoffenheim',
-    name: 'Borussia Auengrund',
-    ground: 'Auengrund Stadium Municipal',
+    name: 'Hoffenheim Blues',
+    ground: 'Hoffenheim Blues Park',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 4500 },
@@ -220,8 +220,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'vfl-bochum',
-    name: 'SSV Kronsberg',
-    ground: 'Kronsberg Stadium',
+    name: 'Bochum Blues',
+    ground: 'Bochum Blues Arena',
     reputation: 1,
     stands: [
       { id: 'ost', name: 'North Stand', capacity: 3500 },
@@ -235,8 +235,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'holstein-kiel',
-    name: '1. FC Schwarzwald',
-    ground: 'Schwarzwald Ground',
+    name: 'Kiel Blues',
+    ground: 'Kiel Blues Park',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2500 },
@@ -250,8 +250,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'fc-st-pauli',
-    name: 'TSG Dornstadt',
-    ground: 'Dornstadt Stadium Municipal',
+    name: 'Hamburg Brown-and-Whites',
+    ground: 'Hamburg Brown-and-Whites Ground',
     reputation: 1,
     stands: [
       { id: 'suedkurve', name: 'North Stand', capacity: 5000 },
@@ -265,8 +265,8 @@ const BUNDESLIGA_RAW = [
   },
   {
     id: 'fc-heidenheim',
-    name: 'FC Wolfsheim',
-    ground: 'Wolfsheim Ground',
+    name: 'Heidenheim Reds',
+    ground: 'Heidenheim Reds Ground',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2200 },

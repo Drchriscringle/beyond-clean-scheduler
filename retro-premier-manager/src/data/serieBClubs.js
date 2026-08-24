@@ -11,8 +11,8 @@
 const SERIE_B_RAW = [
   {
     id: 'sampdoria',
-    name: 'FC Valgrande',
-    ground: 'Valgrande Stadium',
+    name: 'Genoa Blucerchiati',
+    ground: 'Genoa Blucerchiati Stadium Municipal',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5500 },
@@ -26,8 +26,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'palermo',
-    name: 'AS Costalunga',
-    ground: 'Costalunga Ground',
+    name: 'Palermo Pink-and-Blacks',
+    ground: 'Palermo Pink-and-Blacks Ground',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 7500 },
@@ -41,8 +41,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'bari',
-    name: 'AC Lagorosso',
-    ground: 'Lagorosso Park',
+    name: 'Bari Whites',
+    ground: 'Bari Whites Stadium Municipal',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 8000 },
@@ -56,8 +56,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'sassuolo',
-    name: 'AS Collesanto',
-    ground: 'Collesanto Stadium',
+    name: 'Sassuolo Green-and-Blacks',
+    ground: 'Sassuolo Green-and-Blacks Stadium',
     reputation: 3,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5500 },
@@ -71,8 +71,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'cremonese',
-    name: 'AC Castelnero',
-    ground: 'Castelnero Stadium Municipal',
+    name: 'Cremona Greys',
+    ground: 'Cremona Greys Stadium',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3500 },
@@ -86,8 +86,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'pisa',
-    name: 'AC Rocchetta',
-    ground: 'Rocchetta Arena',
+    name: 'Pisa Blue-and-Whites',
+    ground: 'Pisa Blue-and-Whites Arena',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3000 },
@@ -101,8 +101,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'spezia',
-    name: 'AC Selvapiana',
-    ground: 'Selvapiana Stadium',
+    name: 'La Spezia Whites',
+    ground: 'La Spezia Whites Arena',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2500 },
@@ -116,8 +116,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'cesena',
-    name: 'AS Colletorto',
-    ground: 'Colletorto Stadium Municipal',
+    name: 'Cesena Whites',
+    ground: 'Cesena Whites Arena',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3500 },
@@ -131,8 +131,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'frosinone',
-    name: 'US Portosanto',
-    ground: 'Portosanto Park',
+    name: 'Frosinone Yellow-and-Blues',
+    ground: 'Frosinone Yellow-and-Blues Ground',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3000 },
@@ -146,8 +146,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'modena',
-    name: 'SS Roccascura',
-    ground: 'Roccascura Park',
+    name: 'Modena Yellow-and-Blues',
+    ground: 'Modena Yellow-and-Blues Park',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3200 },
@@ -161,8 +161,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'reggiana',
-    name: 'SS Fontanelle',
-    ground: 'Fontanelle Stadium Municipal',
+    name: 'Reggio Emilia Stripes',
+    ground: 'Reggio Emilia Stripes Park',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3200 },
@@ -176,8 +176,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'salernitana',
-    name: 'FC Marmorata',
-    ground: 'Marmorata Stadium',
+    name: 'Salerno Maroons',
+    ground: 'Salerno Maroons Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 5000 },
@@ -191,8 +191,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'brescia',
-    name: 'SS Castelmare',
-    ground: 'Castelmare Stadium Municipal',
+    name: 'Brescia Blues',
+    ground: 'Brescia Blues Stadium Municipal',
     reputation: 2,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 3500 },
@@ -206,8 +206,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'cosenza',
-    name: 'AS Piandoro',
-    ground: 'Piandoro Ground',
+    name: 'Cosenza Reds',
+    ground: 'Cosenza Reds Ground',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2000 },
@@ -221,8 +221,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'catanzaro',
-    name: 'AC Marecalmo',
-    ground: 'Marecalmo Park',
+    name: 'Catanzaro Yellow-and-Reds',
+    ground: 'Catanzaro Yellow-and-Reds Park',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 2200 },
@@ -236,8 +236,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'cittadella',
-    name: 'US Sabbiano',
-    ground: 'Sabbiano Stadium',
+    name: 'Cittadella Orange-and-Greys',
+    ground: 'Cittadella Orange-and-Greys Stadium Municipal',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1500 },
@@ -251,8 +251,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'carrarese',
-    name: 'AC Montebianco',
-    ground: 'Montebianco Stadium Municipal',
+    name: 'Carrara Blue-and-Yellows',
+    ground: 'Carrara Blue-and-Yellows Stadium',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1500 },
@@ -266,8 +266,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'sudtirol',
-    name: 'US Sassaia',
-    ground: 'Sassaia Stadium',
+    name: 'Bolzano Reds',
+    ground: 'Bolzano Reds Park',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1800 },
@@ -281,8 +281,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'juve-stabia',
-    name: 'SS Vallesera',
-    ground: 'Vallesera Stadium',
+    name: 'Castellammare Stripes',
+    ground: 'Castellammare Stripes Stadium',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1500 },
@@ -296,8 +296,8 @@ const SERIE_B_RAW = [
   },
   {
     id: 'mantova',
-    name: 'AC Poggioreale',
-    ground: 'Poggioreale Arena',
+    name: 'Mantua Whites',
+    ground: 'Mantua Whites Arena',
     reputation: 1,
     stands: [
       { id: 'nord', name: 'North Stand', capacity: 1400 },
