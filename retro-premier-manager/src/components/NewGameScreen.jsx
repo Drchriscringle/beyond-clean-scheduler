@@ -96,8 +96,8 @@ export default function NewGameScreen({ dispatch }) {
       )}
 
       <div className="panel">
-        <div className="panel-title">PREMIER MANAGER '97 — NEW GAME</div>
-        <p>Select a club to take charge of for the 2025/26 season.</p>
+        <div className="panel-title">FANTASY FOOTBALL MANAGER 2026/27 — NEW GAME</div>
+        <p>Select a club to take charge of for the 2026/27 season.</p>
         <div className="tabs" style={{ marginBottom: 8 }}>
           {Object.keys(DIVISION_CLUB_LISTS).map((d) => (
             <button key={d} className={`tab${division === d ? ' active' : ''}`} onClick={() => chooseDivision(d)}>

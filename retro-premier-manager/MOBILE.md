@@ -5,15 +5,13 @@ codebase ships as a native app on both stores. The `android/` and `ios/` folders
 native project shells that load the built web app (`dist/`) inside a WebView — there's
 no separate mobile codebase to maintain.
 
-## Before you sell it: real club names
+## Real club names: resolved
 
-This game uses real football clubs (Arsenal, Real Madrid, Bayern Munich, Benfica,
-Porto, PSG, Juventus, etc.) and their reputations. Player names were already
-fictionalized. Selling a paid app that trades on real club trademarks without a
-license is a legal risk — clubs and leagues do pursue this, and Apple/Google will
-pull an app if a rights holder complains. Decide whether to fictionalize club
-names/badges too before you submit for sale. (Ask me to do this and I will — it's
-the same pattern used for the player name pool.)
+Every club across all 16 divisions is now fully fictional — invented names,
+grounds and stand names, generated per-nation so the flavour still fits (e.g.
+Portuguese-sounding names for the Primeira Liga, German for the Bundesliga).
+Player names were already fictionalized before this. Nothing in the shipped
+game trades on a real club's identity anymore.
 
 ## Rebuilding after a code change
 

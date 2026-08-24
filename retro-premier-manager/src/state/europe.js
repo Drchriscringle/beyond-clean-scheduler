@@ -13,9 +13,9 @@ import { simulateMatch } from './matchSim.js'
 // foreignClubs.js) plus every other fully-simulated top-flight league in
 // the game - La Liga, Serie A, the Bundesliga, Ligue 1, the Eredivisie and
 // the Primeira Liga all have real squads of their own now, so a Champions
-// League/Europa League run can pit the player against the likes of Real
-// Madrid, Juventus, Bayern Munich, PSG, Ajax or Benfica directly, not just
-// the shallow pool's Shakhtar. Second-tier divisions (Segunda/Serie B/2.
+// League/Europa League run can pit the player against one of those
+// divisions' own clubs directly, not just the shallow pool. Second-tier
+// divisions (Segunda/Serie B/2.
 // Bundesliga/Ligue 2/Eerste Divisie/Liga Portugal 2) aren't eligible -
 // continental competition is a top-flight-only affair - and a manager's
 // own top flight is excluded too, so a La Liga club never draws another La

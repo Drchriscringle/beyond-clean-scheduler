@@ -87,7 +87,7 @@ export function makeInitialState() {
     screen: 'new-game',
     managerName: '',
     playerClubId: null,
-    season: 2025,
+    season: 2026,
     week: 0,
     clubs: {},
     squads: {},
@@ -191,7 +191,7 @@ function startNewGame(state, { clubId, managerName, difficulty = 'normal', saveS
   const standings = {}
   const lineups = {}
   const tactics = {}
-  const season = 2025
+  const season = 2026
   const abilityMultiplier = aiAbilityMultiplier(difficulty)
 
   for (const staticClub of [

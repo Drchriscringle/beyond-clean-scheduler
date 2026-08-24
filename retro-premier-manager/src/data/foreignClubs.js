@@ -5,7 +5,7 @@ import { EUROPEAN_CLUBS } from './europeanClubs.js'
 // need this), it's only used here for display and to group the transfer
 // market's foreign pool by league.
 const EURO_LEAGUE_BY_ID = {
-  'euro-shakhtar': 'Ukrainian Premier League',
+  'euro-shakhtar': 'Eastern Premier League',
 }
 
 const BANK_BALANCE_PER_REPUTATION = 25_000_000

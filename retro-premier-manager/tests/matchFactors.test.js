@@ -32,8 +32,8 @@ test('pitchWeatherPenalty gets strictly worse as the home pitch facility level d
 test('isDerbyMatch/derbyLabel recognise known rivalries in either order and reject unlisted pairings', () => {
   assert.ok(isDerbyMatch('celtic', 'rangers'))
   assert.ok(isDerbyMatch('rangers', 'celtic'))
-  assert.equal(derbyLabel('celtic', 'rangers'), 'Old Firm')
-  assert.equal(derbyLabel('rangers', 'celtic'), 'Old Firm')
+  assert.equal(derbyLabel('celtic', 'rangers'), 'The Old Rivalry')
+  assert.equal(derbyLabel('rangers', 'celtic'), 'The Old Rivalry')
   assert.equal(isDerbyMatch('celtic', 'aberdeen'), false)
   assert.equal(derbyLabel('celtic', 'aberdeen'), null)
 })
