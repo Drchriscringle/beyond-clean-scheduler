@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Retro Premier Manager</string>
+    <string name="title_activity_main">Retro Premier Manager</string>
+    <string name="package_name">com.retropremiermanager.app</string>
+    <string name="custom_url_scheme">com.retropremiermanager.app</string>
+</resources>

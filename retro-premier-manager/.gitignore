@@ -2,3 +2,22 @@ node_modules
 dist
 .DS_Store
 *.local
+
+# Android build output (native project itself is committed)
+android/app/build
+android/build
+android/.gradle
+android/local.properties
+android/captures
+android/.externalNativeBuild
+android/.cxx
+android/app/src/main/assets/public
+
+# iOS build output (native project itself is committed)
+ios/App/Pods
+ios/App/App/public
+ios/App/build
+ios/App/DerivedData
+ios/App/Podfile.lock
+**/xcuserdata/
+*.xcuserstate
