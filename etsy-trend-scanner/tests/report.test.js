@@ -10,6 +10,7 @@ import { buildReport } from '../src/report/build.js'
 import {
   buildLongTail,
   buildRecommendation,
+  ipWarningFor,
   chooseForm,
   deadlineFor,
   suggestPrice,
@@ -185,6 +186,19 @@ test('a recommendation draws its tags from phrases people actually search', () =
   assert.ok(rec.tags.indexOf('whimsigothic wall') < rec.tags.indexOf('filler tag'))
 })
 
+test('a name-shaped trend carries a trademark warning; a generic one does not', () => {
+  assert.equal(ipWarningFor({ trending: { ipRisk: 'low' } }), null)
+  assert.equal(ipWarningFor({ trending: null }), null)
+
+  const high = ipWarningFor({ trending: { ipRisk: 'high', ipReason: 'named entity' } })
+  assert.equal(high.risk, 'high')
+  assert.match(high.text, /trademark or copyright/)
+  assert.match(high.text, /Sell the style/)
+
+  const medium = ipWarningFor({ detail: { trending: { ipRisk: 'medium' } } })
+  assert.match(medium.text, /check for a trademark/)
+})
+
 test('the full pipeline turns stored snapshots into a written report', () => {
   withTempConfig((config) => {
     const demoConfig = writeDemoData({ config, today: TODAY })
@@ -223,6 +237,13 @@ test('the full pipeline turns stored snapshots into a written report', () => {
     assert.match(markdown, /## Long-tail phrases worth claiming/)
     assert.match(html, /People also search for/)
     assert.match(html, /Long-tail phrases worth claiming/)
+
+    // Discovery provenance and the trademark warning both reach the reader.
+    assert.match(markdown, /Why this is here/)
+    assert.match(markdown, /Trademark risk/)
+    assert.match(html, /Why this is here/)
+    assert.match(html, /Trademark risk/)
+    assert.match(html, /What discovery saw today/)
   })
 })
 

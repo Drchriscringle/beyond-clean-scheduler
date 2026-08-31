@@ -143,6 +143,35 @@ export function deadlineFor(scored, form, { today = new Date(), profile = {} } =
   return null
 }
 
+/**
+ * Trend discovery surfaces films, shows, characters, bands and people, because
+ * that is a large share of what actually trends — and a large share of what
+ * sells on Etsy. It is also the fastest way to a takedown notice, a suspended
+ * shop, or worse.
+ *
+ * The tool will not decide this for you, because the line is genuinely
+ * situational: a generic craft term is yours to sell, a protected title is not,
+ * and there is real space in between (parody, commentary, public-domain works,
+ * and pieces merely inspired by a style). What it will not do is hand you a
+ * name-shaped trend without saying which side of that line it is likely on.
+ */
+export function ipWarningFor(scored) {
+  const risk = scored.trending?.ipRisk ?? scored.detail?.trending?.ipRisk
+  if (!risk || risk === 'low') return null
+  const reason = scored.trending?.ipReason ?? scored.detail?.trending?.ipReason
+  return {
+    risk,
+    reason,
+    text:
+      risk === 'high'
+        ? 'Likely someone else\'s trademark or copyright — it reads as a name, title or brand. ' +
+          'Selling merchandise of a protected work without a licence gets listings removed and shops suspended. ' +
+          'Sell the style, the aesthetic or the generic subject around it, not the named thing itself.'
+        : 'Contains capitalised names, so check for a trademark before listing. ' +
+          'If it names a real product, work or person, sell the surrounding theme rather than the name.',
+  }
+}
+
 export function buildRecommendation(scored, { config = {}, today = new Date() } = {}) {
   const profile = config.profile ?? {}
   const form = chooseForm(scored, profile)
@@ -189,6 +218,8 @@ export function buildRecommendation(scored, { config = {}, today = new Date() } 
     deadline: deadlineFor(scored, form, { today, profile }),
     tags,
     related,
+    trending: scored.trending ?? scored.detail?.trending ?? null,
+    ipWarning: ipWarningFor(scored),
   }
 }
 
@@ -252,7 +283,10 @@ export const SECTIONS = [
  * Group scored keywords into report sections, capping each so the daily read
  * stays short enough to actually act on.
  */
-export function buildReportModel(scoredRows, { config = {}, today = new Date(), longTail = [] } = {}) {
+export function buildReportModel(
+  scoredRows,
+  { config = {}, today = new Date(), longTail = [], discovery = null } = {},
+) {
   const size = config.reportSize ?? 12
   const recommendations = scoredRows.map((row) => buildRecommendation(row, { config, today }))
 
@@ -271,6 +305,7 @@ export function buildReportModel(scoredRows, { config = {}, today = new Date(), 
     generatedAt: new Date().toISOString(),
     geo: config.geo ?? 'US',
     totalScanned: scoredRows.length,
+    discovery,
     sections,
     recommendations,
     longTail: buildLongTail(longTail),

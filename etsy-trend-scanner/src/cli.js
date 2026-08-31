@@ -9,6 +9,7 @@
  *   demo      build a report from bundled sample data, no API key needed
  *   keywords  show the current keyword universe
  *   related   show what people also search for around one term
+ *   trending  show today's raw trend harvest and what the screen kept
  *   calendar  show upcoming seasonal listing deadlines
  */
 
@@ -19,6 +20,8 @@ import { SnapshotStore } from './store.js'
 import { EtsyClient, summariseListings } from './sources/etsy.js'
 import { TrendsClient } from './sources/googleTrends.js'
 import { SuggestClient } from './sources/suggest.js'
+import { TrendingClient } from './sources/trending.js'
+import { screenCandidates } from './analyze/sellable.js'
 import { SOURCE_LABELS, mergeRelated } from './analyze/related.js'
 import { activeSeasonalThemes, upcomingEvents } from './seasonal.js'
 import { buildKeywordUniverse } from './keywords.js'
@@ -37,6 +40,7 @@ Commands:
   keywords    Print the keyword universe that would be scanned
   calendar    Print upcoming seasonal listing deadlines
   related     Show what people also search for around a term
+  trending    Show today's raw trend harvest and what the screen kept
 
 Options:
   --limit <n>        Cap keywords scanned this run
@@ -44,6 +48,8 @@ Options:
   --no-etsy          Skip the Etsy API
   --no-trends        Skip Google Trends
   --no-suggest       Skip search autocomplete
+  --no-discovery     Skip trend discovery and scan the watchlist only
+  --all              trending: show rejected terms too, with the reason
   --geo <code>       Override market country (default US)
   --date <ISO>       Treat this date as "today" (for backfills and tests)
   --json             Print the report model as JSON instead of text
@@ -121,6 +127,7 @@ async function main() {
     useEtsy: args.flags.etsy !== false,
     useTrends: args.flags.trends !== false,
     useSuggest: args.flags.suggest !== false,
+    useDiscovery: args.flags.discovery !== false,
     limit: args.flags.limit ? Number(args.flags.limit) : undefined,
     only:
       typeof args.flags.only === 'string'
@@ -199,6 +206,11 @@ async function main() {
       break
     }
 
+    case 'trending': {
+      await showTrending(config, today, logger, args.flags.all === true)
+      break
+    }
+
     case 'calendar': {
       for (const event of upcomingEvents(today)) {
         process.stdout.write(
@@ -273,6 +285,67 @@ async function showRelated(term, config, logger) {
   }
 }
 
+/**
+ * The raw harvest, before anything is scanned. Worth looking at on a first run:
+ * it shows how much of a day's trending traffic is news rather than product,
+ * which is the thing that makes unseeded discovery hard.
+ */
+async function showTrending(config, today, logger, showAll) {
+  const trending = new TrendingClient({
+    geo: config.geo,
+    language: config.language,
+    limits: config.limits,
+    logger,
+  })
+  const suggest = new SuggestClient({
+    geo: config.geo,
+    language: config.language,
+    limits: config.limits,
+    logger,
+  })
+
+  const harvest = await trending.collect(today)
+  for (const error of harvest.errors) process.stdout.write(`note: ${error}\n`)
+  if (harvest.candidates.length === 0) {
+    process.stdout.write('Nothing came back from the trending feeds.\n')
+    return
+  }
+
+  const screened = await screenCandidates(harvest.candidates, suggest, {
+    maxProbes: config.discovery?.maxCommercialProbes ?? 25,
+    minCommercialScore: config.discovery?.minCommercialScore ?? 30,
+    logger,
+  })
+
+  process.stdout.write(`\nTrending in ${config.geo} — ${harvest.candidates.length} terms harvested\n\n`)
+  process.stdout.write('SELLABLE\n')
+  for (const row of screened.qualified) {
+    const volume = Number.isFinite(row.traffic) ? `${row.traffic.toLocaleString('en-US')}+` : '—'
+    const ip = row.ip.risk === 'low' ? '' : `  [${row.ip.risk} trademark risk]`
+    process.stdout.write(
+      `  ${String(row.commerce.score ?? '—').padStart(3)}  ${row.term.padEnd(34)} ${volume.padStart(10)}${ip}\n`,
+    )
+  }
+
+  process.stdout.write(`\nNO BUYING INTENT (${screened.unsellable.length})\n`)
+  for (const row of screened.unsellable.slice(0, showAll ? 999 : 8)) {
+    process.stdout.write(`  ${String(row.commerce.score ?? 0).padStart(3)}  ${row.term}\n`)
+  }
+
+  process.stdout.write(`\nNOT A PRODUCT (${screened.rejected.length})\n`)
+  const byReason = {}
+  for (const row of screened.rejected) {
+    ;(byReason[row.shape.reason] ??= []).push(row.term)
+  }
+  for (const [reason, terms] of Object.entries(byReason).sort((a, b) => b[1].length - a[1].length)) {
+    const shown = showAll ? terms : terms.slice(0, 3)
+    process.stdout.write(
+      `  ${reason.padEnd(12)} ${terms.length.toString().padStart(3)}  ${shown.join(', ')}` +
+        `${terms.length > shown.length ? ', …' : ''}\n`,
+    )
+  }
+}
+
 async function doctor(config, today) {
   const out = (msg) => process.stdout.write(`${msg}\n`)
   out('etsy-trends doctor')
@@ -318,6 +391,18 @@ async function doctor(config, today) {
     suggestProbe.ok
       ? `autocomplete      OK (${suggestProbe.suggestions.length} suggestions for "soy candle")`
       : `autocomplete      FAILED — ${suggestProbe.error}`,
+  )
+
+  const trending = new TrendingClient({
+    geo: config.geo,
+    language: config.language,
+    limits: config.limits,
+  })
+  const harvest = await trending.collect(today)
+  out(
+    harvest.ok
+      ? `trend discovery   OK (${harvest.candidates.length} terms trending in ${config.geo})`
+      : `trend discovery   FAILED — ${harvest.errors.join('; ')}`,
   )
 
   const events = upcomingEvents(today).slice(0, 3)

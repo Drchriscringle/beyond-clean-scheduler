@@ -37,6 +37,24 @@ function renderRow(row, index) {
   lines.push(row.rationale)
   lines.push('')
 
+  if (row.trending) {
+    const feeds = (row.trending.sources ?? [])
+      .map((source) => (source === 'wikipedia' ? 'Wikipedia spike' : 'Google trending'))
+      .join(' + ')
+    const volume = Number.isFinite(row.trending.traffic)
+      ? `${row.trending.traffic.toLocaleString('en-US')}+ searches today`
+      : 'trending today'
+    lines.push(`> **Why this is here:** ${volume}${feeds ? ` (${feeds})` : ''}.` +
+      (row.trending.headlines?.[0] ? ` "${row.trending.headlines[0]}"` : ''))
+    lines.push('')
+  }
+
+  if (row.ipWarning) {
+    lines.push(`> [!WARNING]`)
+    lines.push(`> **Trademark risk (${row.ipWarning.risk}).** ${row.ipWarning.text}`)
+    lines.push('')
+  }
+
   if (row.product) {
     const price = row.price
     lines.push(

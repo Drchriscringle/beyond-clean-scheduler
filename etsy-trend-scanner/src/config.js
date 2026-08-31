@@ -76,10 +76,36 @@ export const DEFAULT_CONFIG = {
     // Etsy competition lookup of their own, so the long tail arrives with a
     // listing count attached rather than as a bare suggestion.
     relatedProbesPerScan: 20,
+    trendingRequestDelayMs: 500,
   },
 
   // How many related searches to keep per keyword.
   relatedPerKeyword: 12,
+
+  // Open-ended trend discovery. This is the primary way niches enter the scan:
+  // the trending feeds are unseeded, so the tool finds what is actually moving
+  // rather than only what someone thought to watch for.
+  discovery: {
+    enabled: true,
+    // Trending terms harvested per run, before any screening.
+    maxCandidates: 60,
+    // Survivors of the free shape screen that get an autocomplete commerce
+    // probe. Highest-traffic first, so the budget goes where it matters.
+    maxCommercialProbes: 25,
+    // Qualified trends that get the full Etsy + Trends treatment.
+    maxQualified: 15,
+    // Commercial-intent score a trend must clear to count as sellable at all.
+    minCommercialScore: 30,
+  },
+
+  // The seed niches are now an optional watchlist, not the universe. Turn this
+  // on to keep a fixed set of terms in every scan alongside whatever discovery
+  // turns up — useful for tracking niches you already sell in, and for giving
+  // the supply-history series some stable members.
+  watchlist: {
+    enabled: false,
+    maxKeywords: 12,
+  },
 
   // How many days of stored snapshots the report reads.
   historyDays: 90,

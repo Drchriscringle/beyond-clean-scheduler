@@ -90,6 +90,47 @@ function renderLongTail(rows = []) {
     </table></div></section>`
 }
 
+/** Why this term is in the report at all — the provenance of a discovered trend. */
+function renderTrendingWhy(trending) {
+  if (!trending) return ''
+  const feeds = (trending.sources ?? [])
+    .map((source) => (source === 'wikipedia' ? 'Wikipedia spike' : 'Google trending'))
+    .join(' + ')
+  const volume = Number.isFinite(trending.traffic)
+    ? `${trending.traffic.toLocaleString('en-US')}+ searches today`
+    : 'trending today'
+  const headline = trending.headlines?.[0]
+  return `<p class="why"><strong>Why this is here:</strong> ${escapeHtml(volume)}${
+    feeds ? ` <span class="muted">(${escapeHtml(feeds)})</span>` : ''
+  }${headline ? `<br><span class="muted">“${escapeHtml(headline)}”</span>` : ''}</p>`
+}
+
+function renderIpWarning(warning) {
+  if (!warning) return ''
+  return `<p class="warn"><strong>Trademark risk (${escapeHtml(warning.risk)}).</strong> ${escapeHtml(
+    warning.text,
+  )}</p>`
+}
+
+/** What discovery saw and threw away — so a quiet day explains itself. */
+function renderDiscovery(discovery) {
+  if (!discovery) return ''
+  const reasons = Object.entries(discovery.rejectionReasons ?? {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([reason, count]) => `${escapeHtml(reason)} ${count}`)
+    .join(' · ')
+  return `<section class="discovery"><h2>What discovery saw today</h2>
+    <p class="blurb">Nothing here was seeded. These are the terms the unseeded trending feeds
+    returned, and what survived the screen for things that can actually be sold.</p>
+    <div class="stats">
+      <div><strong>${discovery.harvested}</strong><span>terms trending</span></div>
+      <div><strong>${discovery.rejectedByShape}</strong><span>not a product</span></div>
+      <div><strong>${discovery.rejectedAsUnsellable}</strong><span>no buying intent</span></div>
+      <div><strong>${discovery.qualified}</strong><span>worth scanning</span></div>
+    </div>
+    ${reasons ? `<p class="blurb">Thrown out as: ${reasons}</p>` : ''}</section>`
+}
+
 function renderCard(row) {
   const meta = CLASS_META[row.classification] ?? CLASS_META['insufficient-data']
   const price = row.price
@@ -109,6 +150,8 @@ function renderCard(row) {
       ${row.product ? `<span class="badge subtle">${escapeHtml(row.product.format)}</span>` : ''}
     </p>
     <p class="rationale">${escapeHtml(row.rationale)}</p>
+    ${renderTrendingWhy(row.trending)}
+    ${renderIpWarning(row.ipWarning)}
     ${
       row.product
         ? `<dl class="facts">
@@ -207,6 +250,15 @@ border-top:3px solid var(--steady)}
 .muted{color:var(--muted)}
 .tags{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px}
 .tags code{font-size:.72rem;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.why{margin:0 0 10px;padding:8px 11px;background:var(--bg);border-radius:8px;font-size:.83rem}
+.warn{margin:0 0 10px;padding:8px 11px;border-radius:8px;font-size:.83rem;
+background:var(--bg);border:1px solid var(--avoid);color:var(--ink)}
+.warn strong{color:var(--avoid)}
+.discovery .stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.discovery .stats div{flex:1 1 120px;background:var(--panel);border:1px solid var(--line);
+border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.discovery .stats strong{font-size:1.5rem;line-height:1.1}
+.discovery .stats span{color:var(--muted);font-size:.75rem}
 .related{margin:0 0 12px}
 .related-head{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;
 letter-spacing:.06em;margin-bottom:5px}
@@ -258,6 +310,7 @@ footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:v
       : ''
   }
 </header>
+${renderDiscovery(model.discovery)}
 ${sections}
 ${renderLongTail(model.longTail)}
 <footer>Scores are relative rankings built from public search-interest data and Etsy listing supply.
