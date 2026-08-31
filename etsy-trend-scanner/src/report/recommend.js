@@ -8,7 +8,7 @@
 
 import { formsForProfile } from '../keywords.js'
 import { suggestTags, suggestTitle } from '../analyze/tags.js'
-import { CLASSES } from '../analyze/score.js'
+import { CLASSES, competitionScore } from '../analyze/score.js'
 import { addDays, toISODate } from '../seasonal.js'
 
 const ACTION_BY_CLASS = {
@@ -150,12 +150,21 @@ export function buildRecommendation(scored, { config = {}, today = new Date() } 
   const season = scored.detail?.season
   const personalisable = (scored.detail?.personalisableShare ?? 0) >= 0.4
 
+  // Tags come from phrases people actually search, strongest first. A phrase
+  // confirmed by more than one feed beats a rising query seen only by Google,
+  // and both beat a tag mined from competitors' listings.
+  const related = scored.related ?? scored.detail?.related ?? []
+  const searchPhrases = [
+    ...related.filter((row) => row.crossConfirmed),
+    ...related.filter((row) => !row.crossConfirmed),
+  ].map((row) => ({ query: row.query }))
+
   const tags = suggestTags({
     term: scored.term,
     form: form?.form,
     topTags: scored.detail?.topTags ?? [],
-    risingQueries: scored.detail?.rising?.top ?? [],
-    seasonalTheme: season?.missed ? null : season?.eventId?.replace(/-/g, ' '),
+    risingQueries: searchPhrases.length ? searchPhrases : (scored.detail?.rising?.top ?? []),
+    seasonalTheme: season?.missed ? null : season?.eventLabel,
     personalisable,
   })
 
@@ -172,14 +181,44 @@ export function buildRecommendation(scored, { config = {}, today = new Date() } 
           term: scored.term,
           form: form.form,
           format: form.format,
-          seasonalTheme: season?.missed ? null : season?.event,
+          seasonalTheme: season?.missed ? null : season?.eventLabel,
           personalisable,
         })
       : null,
     price: suggestPrice(scored, form),
     deadline: deadlineFor(scored, form, { today, profile }),
     tags,
+    related,
   }
+}
+
+/**
+ * The long tail: "people also search for" phrases that came back from their own
+ * Etsy lookup with a low listing count.
+ *
+ * These are not niches to build a shop around — they are the specific phrases
+ * to put in a title and tags so a new listing has something it can actually
+ * rank for on day one.
+ */
+export function buildLongTail(rows = [], { limit = 10 } = {}) {
+  return rows
+    .map((row) => {
+      const listings = row.etsy?.totalListings ?? null
+      const roomToRank = competitionScore(listings)
+      return {
+        ...row,
+        listings,
+        roomToRank,
+        medianPrice: row.etsy?.medianPrice ?? null,
+        // An untagged phrase with few listings is the best case: buyers say it,
+        // sellers have not claimed it.
+        priority:
+          (roomToRank ?? 40) + (row.untagged ? 15 : 0) + (row.breakout ? 15 : 0) + row.score,
+      }
+    })
+    .filter((row) => row.listings === null || row.listings > 0)
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, limit)
 }
 
 export const SECTIONS = [
@@ -213,7 +252,7 @@ export const SECTIONS = [
  * Group scored keywords into report sections, capping each so the daily read
  * stays short enough to actually act on.
  */
-export function buildReportModel(scoredRows, { config = {}, today = new Date() } = {}) {
+export function buildReportModel(scoredRows, { config = {}, today = new Date(), longTail = [] } = {}) {
   const size = config.reportSize ?? 12
   const recommendations = scoredRows.map((row) => buildRecommendation(row, { config, today }))
 
@@ -234,6 +273,7 @@ export function buildReportModel(scoredRows, { config = {}, today = new Date() }
     totalScanned: scoredRows.length,
     sections,
     recommendations,
+    longTail: buildLongTail(longTail),
   }
 }
 

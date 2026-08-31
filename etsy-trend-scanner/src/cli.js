@@ -8,14 +8,18 @@
  *   doctor    check credentials and connectivity before you rely on it
  *   demo      build a report from bundled sample data, no API key needed
  *   keywords  show the current keyword universe
+ *   related   show what people also search for around one term
+ *   calendar  show upcoming seasonal listing deadlines
  */
 
 import { loadConfig } from './config.js'
 import { runScan } from './scan.js'
 import { buildReport } from './report/build.js'
 import { SnapshotStore } from './store.js'
-import { EtsyClient } from './sources/etsy.js'
+import { EtsyClient, summariseListings } from './sources/etsy.js'
 import { TrendsClient } from './sources/googleTrends.js'
+import { SuggestClient } from './sources/suggest.js'
+import { SOURCE_LABELS, mergeRelated } from './analyze/related.js'
 import { activeSeasonalThemes, upcomingEvents } from './seasonal.js'
 import { buildKeywordUniverse } from './keywords.js'
 import { writeDemoData } from './demo.js'
@@ -32,12 +36,14 @@ Commands:
   demo        Build a report from bundled sample data (no API key required)
   keywords    Print the keyword universe that would be scanned
   calendar    Print upcoming seasonal listing deadlines
+  related     Show what people also search for around a term
 
 Options:
   --limit <n>        Cap keywords scanned this run
   --only <terms>     Comma-separated keywords to scan instead of the universe
   --no-etsy          Skip the Etsy API
   --no-trends        Skip Google Trends
+  --no-suggest       Skip search autocomplete
   --geo <code>       Override market country (default US)
   --date <ISO>       Treat this date as "today" (for backfills and tests)
   --json             Print the report model as JSON instead of text
@@ -114,6 +120,7 @@ async function main() {
     logger,
     useEtsy: args.flags.etsy !== false,
     useTrends: args.flags.trends !== false,
+    useSuggest: args.flags.suggest !== false,
     limit: args.flags.limit ? Number(args.flags.limit) : undefined,
     only:
       typeof args.flags.only === 'string'
@@ -181,6 +188,17 @@ async function main() {
       break
     }
 
+    case 'related': {
+      const term = args._.slice(1).join(' ').trim()
+      if (!term) {
+        process.stderr.write('Usage: etsy-trends related "<term>"\n')
+        process.exitCode = 1
+        break
+      }
+      await showRelated(term, config, logger)
+      break
+    }
+
     case 'calendar': {
       for (const event of upcomingEvents(today)) {
         process.stdout.write(
@@ -194,6 +212,64 @@ async function main() {
     default:
       process.stderr.write(`Unknown command: ${command}\n\n${USAGE}`)
       process.exitCode = 1
+  }
+}
+
+/**
+ * Ad-hoc lookup: every related-search feed for one term, side by side. Useful
+ * for sanity-checking a niche before committing a listing to it.
+ */
+async function showRelated(term, config, logger) {
+  const trends = new TrendsClient({
+    geo: config.geo,
+    language: config.language,
+    limits: config.limits,
+    logger,
+  })
+  const suggest = new SuggestClient({
+    geo: config.geo,
+    language: config.language,
+    limits: config.limits,
+    logger,
+  })
+  const etsy = config.etsyApiKey
+    ? new EtsyClient({ apiKey: config.etsyApiKey, limits: config.limits, logger })
+    : null
+
+  const [trendsResult, suggestResult, etsyResult] = await Promise.all([
+    trends.collect(term),
+    suggest.collect(term),
+    etsy ? etsy.searchActiveListings(term).catch(() => null) : Promise.resolve(null),
+  ])
+
+  const rows = mergeRelated({
+    term,
+    trendsTop: trendsResult.ok ? trendsResult.top : [],
+    trendsRising: trendsResult.ok ? trendsResult.rising : [],
+    suggestions: suggestResult.ok ? suggestResult.suggestions : [],
+    topTags: etsyResult ? summariseListings(etsyResult).topTags : [],
+    limit: 25,
+  })
+
+  process.stdout.write(`People also search for — "${term}" (${config.geo})\n\n`)
+  if (!trendsResult.ok) process.stdout.write(`  google trends unavailable: ${trendsResult.error}\n`)
+  if (!suggestResult.ok) process.stdout.write(`  autocomplete unavailable: ${suggestResult.error}\n`)
+  if (!rows.length) {
+    process.stdout.write('  nothing found.\n')
+    return
+  }
+
+  for (const row of rows) {
+    const marks = [
+      row.breakout ? 'BREAKOUT' : null,
+      row.crossConfirmed ? 'confirmed' : null,
+      row.inEtsyTags ? null : 'untagged on Etsy',
+    ].filter(Boolean)
+    process.stdout.write(
+      `  ${String(Math.round(row.score)).padStart(3)}  ${row.query.padEnd(38)} ` +
+        `${row.sources.map((source) => SOURCE_LABELS[source] ?? source).join(', ')}` +
+        `${marks.length ? `  [${marks.join(', ')}]` : ''}\n`,
+    )
   }
 }
 
@@ -231,6 +307,18 @@ async function doctor(config, today) {
   const trends = new TrendsClient({ geo: config.geo, language: config.language, limits: config.limits })
   const probe = await trends.collect('soy candle')
   out(probe.ok ? 'google trends     OK' : `google trends     FAILED — ${probe.error}`)
+
+  const suggest = new SuggestClient({
+    geo: config.geo,
+    language: config.language,
+    limits: config.limits,
+  })
+  const suggestProbe = await suggest.collect('soy candle')
+  out(
+    suggestProbe.ok
+      ? `autocomplete      OK (${suggestProbe.suggestions.length} suggestions for "soy candle")`
+      : `autocomplete      FAILED — ${suggestProbe.error}`,
+  )
 
   const events = upcomingEvents(today).slice(0, 3)
   out('')

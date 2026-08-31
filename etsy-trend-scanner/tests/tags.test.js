@@ -22,6 +22,8 @@ test('fitTag truncates on a word boundary instead of rejecting', () => {
   const fitted = fitTag('whimsigothic wall art print')
   assert.ok(fitted.length <= MAX_TAG_LENGTH)
   assert.equal(fitted, 'whimsigothic wall')
+  // A truncation must not leave the tag dangling on a preposition.
+  assert.equal(fitTag('christmas gift for her'), 'christmas gift')
   assert.equal(fitTag('short'), 'short')
   assert.equal(fitTag(''), null)
   assert.equal(fitTag('supercalifragilisticexpialidocious'), null, 'a single over-long word cannot be fitted')

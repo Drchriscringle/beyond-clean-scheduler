@@ -3,10 +3,10 @@
 A daily "what should I list on Etsy next" report.
 
 It watches a universe of Etsy niches, measures **demand** (search interest and
-its rate of change), **supply** (how many sellers are already there and how fast
-that number is growing) and **timing** (how long is left to rank for the next
-occasion), then tells you what to make, what to charge, what to tag it, and by
-when.
+its rate of change), **related searches** (what people also type around a term),
+**supply** (how many sellers are already there and how fast that number is
+growing) and **timing** (how long is left to rank for the next occasion), then
+tells you what to make, what to charge, what to tag it, and by when.
 
 The distinction the whole tool is built around:
 
@@ -43,13 +43,14 @@ npm run daily         # scan + report
 
 Getting an Etsy API key: register an app at
 <https://www.etsy.com/developers/register>. You want the **keystring** from the
-app's page. The free tier is ample — a full daily scan of 60 keywords costs 60
-requests against a 10,000/day allowance.
+app's page. The free tier is ample — a full daily scan of 60 keywords plus 20
+long-tail lookups costs 80 requests against a 10,000/day allowance.
 
-The tool works without a key, on search demand and the seasonal calendar alone,
-and says so at the top of every report it produces that way. You lose
-competition counts, price bands and tag mining, which is most of what makes the
-recommendations concrete.
+The tool works without a key, on search demand, related searches and the
+seasonal calendar alone, and says so at the top of every report it produces that
+way. You lose competition counts, price bands, tag mining and the listing counts
+behind the long-tail table, which is most of what makes the recommendations
+concrete.
 
 ### Commands
 
@@ -60,11 +61,12 @@ recommendations concrete.
 | `npm run daily` | Both. This is what you schedule. |
 | `npm run doctor` | Check keys, connectivity, and how much history you have |
 | `npm run demo` | Build a report from bundled sample data |
+| `node src/cli.js related "soy candle"` | What people also search for around one term, across every feed |
 | `node src/cli.js keywords` | Print the keyword universe that would be scanned |
 | `node src/cli.js calendar` | Print upcoming seasonal listing deadlines |
 
 Useful flags: `--only "term one,term two"`, `--limit 20`, `--geo GB`,
-`--no-trends`, `--date 2026-09-15`, `--json`, `--quiet`.
+`--no-trends`, `--no-suggest`, `--date 2026-09-15`, `--json`, `--quiet`.
 
 ### Daily on a schedule
 
@@ -75,6 +77,45 @@ data alone. Locally, `0 6 * * * cd /path/to/etsy-trend-scanner && npm run daily`
 in cron does the same job.
 
 ---
+
+## What people are also searching for
+
+Around every niche the scanner pulls the phrases sitting next to it in people's
+heads, from four independent feeds:
+
+| feed | what it is | side |
+|---|---|---|
+| Google related queries | the "people also search for" list | buyer |
+| Google rising queries | the same feed, filtered to what is growing fast | buyer |
+| Search autocomplete | the exact phrasing people type, long tail included | buyer |
+| Etsy tag co-occurrence | tags on the niche's live listings | seller |
+
+Three are buyer-side, one is seller-side, and the interesting information is in
+where they disagree. A phrase confirmed by more than one feed is a real search
+rather than an artefact of one endpoint — those are marked **confirmed**. A
+phrase buyers type that sellers here have *not* tagged is marked as a **gap**,
+and it is the most useful thing in the report: demand with nobody claiming it.
+
+The report uses this three ways:
+
+- **Tags and titles** are built from confirmed search phrases, strongest first,
+  rather than from whatever competitors happen to be tagging.
+- **Every recommendation** carries its own "people also search for" line, with
+  the untapped phrases called out separately.
+- **A second scan pass** takes the strongest phrases across all niches and gives
+  each one its own Etsy competition lookup, so the report ends with a
+  **long-tail table**: phrases people search that came back thin on Etsy, with a
+  listing count attached. Those are not niches to build a shop around — they are
+  the specific wording to put in a title so a brand-new listing has something it
+  can rank for on day one.
+
+New phrases that clear the bar are also added to the watched keyword universe
+permanently, so the tool's coverage grows from what buyers are actually typing
+rather than from the seed list alone.
+
+```bash
+node src/cli.js related "soy candle"   # look one term up on demand
+```
 
 ## How it decides
 
@@ -127,9 +168,22 @@ Worth being straight about, because plenty of tools in this space are not:
   own 12-month peak — so they are not comparable between keywords. The tool
   never treats them as volume; cross-keyword comparison is carried by the Etsy
   listing counts, which are absolute.
-- **The Trends endpoint is unofficial.** It rate-limits hard and its response
-  shape can change. Failures are recorded, never fatal; a scan that loses Trends
-  still writes a snapshot so tomorrow's momentum calculation has today's row.
+- **The Trends and autocomplete endpoints are unofficial.** Both are Google
+  internals — the ones behind the Trends site and the browser search bar — not
+  supported APIs. Trends rate-limits hard; both can change shape without notice.
+  Failures are recorded, never fatal; a scan that loses one still writes a
+  snapshot so tomorrow's momentum calculation has today's row.
+
+- **Autocomplete is phrasing, not volume.** It tells you a completion is common
+  enough for Google to offer it and roughly how it ranks against its siblings.
+  It does not tell you how many people searched it, and nothing here pretends
+  otherwise — which is why a suggestion only becomes a recommendation once
+  another feed or an Etsy listing count backs it up.
+
+- **Etsy has no public "related searches" endpoint.** The seller-side view here
+  is tag co-occurrence across the niche's live listings, which is a good proxy
+  for what sellers *believe* buyers search — not Etsy's own search data, which
+  is not published.
 - **Nothing here scrapes etsy.com.** Everything comes from the documented Open
   API v3 with an application key, which is both more reliable and within Etsy's
   terms.
@@ -149,13 +203,13 @@ src/
   store.js          daily snapshot persistence
   scan.js           collection orchestration
   demo.js           deterministic sample data
-  sources/          etsy.js, googleTrends.js, http.js
-  analyze/          momentum.js, score.js, tags.js
+  sources/          etsy.js, googleTrends.js, suggest.js, http.js
+  analyze/          momentum.js, score.js, related.js, tags.js
   report/           build.js, recommend.js, markdown.js, html.js
 tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 77 tests, all offline
+npm test     # 96 tests, all offline
 npm run lint
 ```

@@ -17,6 +17,13 @@ function money(value) {
   return Number.isFinite(value) ? `$${value.toFixed(2)}` : '—'
 }
 
+/** A related phrase with whatever the feeds said about it. */
+function relatedLabel(entry) {
+  if (entry.breakout) return `${entry.query} _(breakout)_`
+  if (entry.growth) return `${entry.query} _(${entry.growth})_`
+  return entry.query
+}
+
 function renderRow(row, index) {
   const lines = []
   const score = row.opportunity === null ? '—' : `${row.opportunity}/100`
@@ -47,6 +54,18 @@ function renderRow(row, index) {
   }
   if (row.title) lines.push(`- **Title draft:** ${row.title}`)
   if (row.tags?.length) lines.push(`- **Tags:** \`${row.tags.join('`, `')}\``)
+
+  const related = row.related ?? []
+  if (related.length) {
+    lines.push(`- **People also search for:** ${related.slice(0, 6).map(relatedLabel).join(', ')}`)
+    const gap = related.filter((entry) => entry.crossConfirmed && !entry.inEtsyTags).slice(0, 4)
+    if (gap.length) {
+      lines.push(
+        `- **Not yet tagged by sellers here:** ${gap.map((entry) => entry.query).join(', ')} ` +
+          '— put these in the title and tags',
+      )
+    }
+  }
 
   if (row.evidence?.length) {
     lines.push('')
@@ -106,6 +125,30 @@ export function renderMarkdown(model, { notes = [] } = {}) {
     } else {
       section.rows.forEach((row, i) => out.push(renderRow(row, i + 1)))
     }
+  }
+
+  if (model.longTail?.length) {
+    out.push('## Long-tail phrases worth claiming')
+    out.push('')
+    out.push(
+      '_Phrases people search that came back thin on Etsy. Not niches to build a shop around — ' +
+        'specific wording to put in titles and tags so a new listing has something it can rank for on day one._',
+    )
+    out.push('')
+    out.push('| Phrase | Etsy listings | Room to rank | Seen in | From |')
+    out.push('|---|---:|---:|---|---|')
+    for (const row of model.longTail) {
+      const listings = Number.isFinite(row.listings) ? row.listings.toLocaleString('en-US') : '—'
+      const room = Number.isFinite(row.roomToRank) ? `${row.roomToRank}/100` : '—'
+      const flags = [row.breakout ? 'breakout' : null, row.untagged ? 'untagged by sellers' : null]
+        .filter(Boolean)
+        .join(', ')
+      out.push(
+        `| ${row.query}${flags ? ` _(${flags})_` : ''} | ${listings} | ${room} | ` +
+          `${row.sources.length} ${row.sources.length === 1 ? 'source' : 'sources'} | ${row.parent} |`,
+      )
+    }
+    out.push('')
   }
 
   out.push('---')

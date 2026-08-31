@@ -23,6 +23,9 @@ export function cleanTag(raw) {
   return tag
 }
 
+/** Words a tag should never end on once truncated — "christmas gift for". */
+const DANGLING_WORDS = new Set(['for', 'with', 'and', 'the', 'to', 'of', 'a', 'in', 'on', 'by'])
+
 /** Truncate on a word boundary so a long phrase still yields a legal tag. */
 export function fitTag(raw) {
   const tag = String(raw ?? '')
@@ -32,14 +35,15 @@ export function fitTag(raw) {
     .trim()
   if (!tag) return null
   if (tag.length <= MAX_TAG_LENGTH) return tag
-  const words = tag.split(' ')
-  let out = ''
-  for (const word of words) {
-    const next = out ? `${out} ${word}` : word
-    if (next.length > MAX_TAG_LENGTH) break
-    out = next
+
+  const words = []
+  for (const word of tag.split(' ')) {
+    const candidate = [...words, word].join(' ')
+    if (candidate.length > MAX_TAG_LENGTH) break
+    words.push(word)
   }
-  return out || null
+  while (words.length > 1 && DANGLING_WORDS.has(words[words.length - 1])) words.pop()
+  return words.join(' ') || null
 }
 
 function shareMap(topTags) {

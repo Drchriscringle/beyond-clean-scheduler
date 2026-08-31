@@ -7,7 +7,13 @@ import { join } from 'node:path'
 import { DEFAULT_CONFIG } from '../src/config.js'
 import { writeDemoData } from '../src/demo.js'
 import { buildReport } from '../src/report/build.js'
-import { buildRecommendation, chooseForm, deadlineFor, suggestPrice } from '../src/report/recommend.js'
+import {
+  buildLongTail,
+  buildRecommendation,
+  chooseForm,
+  deadlineFor,
+  suggestPrice,
+} from '../src/report/recommend.js'
 import { renderMarkdown } from '../src/report/markdown.js'
 import { escapeHtml, renderHtml } from '../src/report/html.js'
 import { CLASSES } from '../src/analyze/score.js'
@@ -133,6 +139,52 @@ test('a recommendation names a product, a price, tags and a title', () => {
   assert.ok(rec.deadline.startBy < rec.deadline.liveBy)
 })
 
+test('buildLongTail ranks thin, untagged phrases first', () => {
+  const rows = buildLongTail([
+    { query: 'crowded phrase', parent: 'a', sources: ['trendsTop', 'autocomplete'], score: 5,
+      untagged: false, etsy: { totalListings: 180_000 } },
+    { query: 'thin untagged phrase', parent: 'a', sources: ['trendsTop', 'autocomplete'], score: 5,
+      untagged: true, etsy: { totalListings: 320 } },
+  ])
+
+  assert.equal(rows[0].query, 'thin untagged phrase')
+  assert.equal(rows[0].listings, 320)
+  assert.ok(rows[0].roomToRank > rows[1].roomToRank)
+})
+
+test('buildLongTail keeps phrases that never got an Etsy lookup', () => {
+  const rows = buildLongTail([
+    { query: 'unpriced phrase', parent: 'a', sources: ['trendsTop'], score: 4, etsy: null },
+  ])
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].listings, null)
+  assert.equal(rows[0].roomToRank, null)
+})
+
+test('a recommendation draws its tags from phrases people actually search', () => {
+  const rec = buildRecommendation(
+    {
+      term: 'whimsigothic',
+      classification: CLASSES.EARLY,
+      opportunity: 80,
+      confidence: 'high',
+      parts: {},
+      related: [
+        { query: 'whimsigothic wall art', sources: ['trendsRising', 'autocomplete'], crossConfirmed: true },
+        { query: 'whimsigothic rug', sources: ['autocomplete'], crossConfirmed: false },
+      ],
+      detail: { digitalShare: 0.5, topTags: [{ tag: 'filler tag' }] },
+      evidence: [],
+    },
+    { config: DEFAULT_CONFIG, today: TODAY },
+  )
+
+  // The cross-confirmed phrase outranks both the single-source one and the
+  // tag mined from competitors' listings.
+  assert.ok(rec.tags.includes('whimsigothic wall'), rec.tags.join(', '))
+  assert.ok(rec.tags.indexOf('whimsigothic wall') < rec.tags.indexOf('filler tag'))
+})
+
 test('the full pipeline turns stored snapshots into a written report', () => {
   withTempConfig((config) => {
     const demoConfig = writeDemoData({ config, today: TODAY })
@@ -164,7 +216,28 @@ test('the full pipeline turns stored snapshots into a written report', () => {
     const html = readFileSync(result.paths.html, 'utf8')
     assert.match(html, /<!doctype html>/)
     assert.match(html, /prefers-color-scheme/)
+
+    // Related searches reach both renderings.
+    assert.ok(result.model.longTail.length > 0, 'the sample produces long-tail phrases')
+    assert.match(markdown, /People also search for:/)
+    assert.match(markdown, /## Long-tail phrases worth claiming/)
+    assert.match(html, /People also search for/)
+    assert.match(html, /Long-tail phrases worth claiming/)
   })
+})
+
+test('a report with no related data renders without the long-tail section', () => {
+  const model = {
+    date: '2026-08-31',
+    generatedAt: '2026-08-31T00:00:00.000Z',
+    geo: 'US',
+    totalScanned: 0,
+    sections: [],
+    recommendations: [],
+    longTail: [],
+  }
+  assert.ok(!renderMarkdown(model).includes('Long-tail phrases'))
+  assert.ok(!renderHtml(model).includes('Long-tail phrases'))
 })
 
 test('reporting before any scan fails with an instruction, not a stack trace', () => {

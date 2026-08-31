@@ -11,6 +11,7 @@
  */
 
 import { clamp, entryRateScore, risingBoost, seriesMomentum, squash, supplyMomentum } from './momentum.js'
+import { describeRelated, mergeRelated } from './related.js'
 import { normalisedWeights } from '../config.js'
 import { seasonalFit } from '../seasonal.js'
 
@@ -66,15 +67,22 @@ function pick(...values) {
  *
  * @param {object} input
  * @param {string} input.term
- * @param {object} input.etsy    summarised Etsy metrics for today
- * @param {object} input.trends  {series, rising} for today
- * @param {Array}  input.history stored snapshot rows for this term, oldest first
+ * @param {object} input.etsy     summarised Etsy metrics for today
+ * @param {object} input.trends   {series, rising, top} for today
+ * @param {object} input.suggest  {suggestions} from search autocomplete
+ * @param {Array}  input.related  pre-merged related searches, if the snapshot
+ *                                already carries them; recomputed otherwise so
+ *                                older snapshots still benefit from changes to
+ *                                the merge logic
+ * @param {Array}  input.history  stored snapshot rows for this term, oldest first
  */
 export function scoreKeyword({
   term,
   category = 'uncategorised',
   etsy = {},
   trends = {},
+  suggest = {},
+  related,
   history = [],
   config = {},
   today = new Date(),
@@ -85,6 +93,16 @@ export function scoreKeyword({
 
   const momentum = seriesMomentum(trends.series ?? [])
   const rising = risingBoost(trends.rising ?? [])
+  const relatedRows =
+    related ??
+    mergeRelated({
+      term,
+      trendsTop: trends.top ?? [],
+      trendsRising: trends.rising ?? [],
+      suggestions: suggest.suggestions ?? [],
+      topTags: etsy.topTags ?? [],
+      limit: config.relatedPerKeyword ?? 12,
+    })
   const supply = supplyMomentum(history)
   const season = seasonalFit({ term, today, profile, effortDays })
 
@@ -143,7 +161,8 @@ export function scoreKeyword({
     classification: classify({ parts, momentum, rising, season, supply, etsy }),
     parts,
     missing,
-    evidence: buildEvidence({ momentum, rising, supply, season, etsy, parts }),
+    evidence: buildEvidence({ momentum, rising, supply, season, etsy, parts, related: relatedRows }),
+    related: relatedRows,
     detail: {
       momentum,
       rising,
@@ -156,6 +175,7 @@ export function scoreKeyword({
       digitalShare: etsy.digitalShare ?? null,
       personalisableShare: etsy.personalisableShare ?? null,
       topTags: etsy.topTags ?? [],
+      related: relatedRows,
       historyDays: history.length,
     },
   }
@@ -199,7 +219,7 @@ function formatPct(value) {
   return `${pct >= 0 ? '+' : ''}${pct}%`
 }
 
-export function buildEvidence({ momentum, rising, supply, season, etsy, parts }) {
+export function buildEvidence({ momentum, rising, supply, season, etsy, parts, related = [] }) {
   const lines = []
 
   if (Number.isFinite(momentum?.growth)) {
@@ -211,7 +231,17 @@ export function buildEvidence({ momentum, rising, supply, season, etsy, parts })
   if (Number.isFinite(parts.demand)) {
     lines.push(`Sitting at ${parts.demand}% of its own 12-month search peak`)
   }
-  if (rising?.top?.length) {
+  // The merged related list already folds in the rising queries, so the raw
+  // rising feed is only reported when the merge produced nothing.
+  const relatedLine = describeRelated(related)
+  if (relatedLine) {
+    const confirmed = related.filter((row) => row.crossConfirmed).length
+    lines.push(
+      confirmed > 0
+        ? `${relatedLine} — ${confirmed} of these confirmed by more than one search feed`
+        : relatedLine,
+    )
+  } else if (rising?.top?.length) {
     const listed = rising.top
       .slice(0, 3)
       .map((row) => `"${row.query}" ${row.growth}`.trim())
@@ -222,6 +252,7 @@ export function buildEvidence({ momentum, rising, supply, season, etsy, parts })
         : `Rising related searches: ${listed}`,
     )
   }
+
   if (Number.isFinite(etsy?.totalListings)) {
     lines.push(`${etsy.totalListings.toLocaleString('en-US')} active Etsy listings competing`)
   }

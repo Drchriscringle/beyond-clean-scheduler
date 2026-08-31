@@ -142,19 +142,21 @@ test('evidence explains the numbers behind the score', () => {
   const text = result.evidence.join('\n')
   assert.match(text, /9,737 active Etsy listings/)
   assert.match(text, /Median asking price \$29\.00/)
-  assert.match(text, /breakout related search/)
+  assert.match(text, /People also search for: "sourdough starter gift" \(breakout\)/)
   assert.match(text, /Competing listings \+\d+% in \d+ days/)
 })
 
-test('the breakout count in the evidence matches the queries it lists', () => {
+test('the raw rising feed is only reported when nothing merged', () => {
+  // These rising queries are all filtered out by the related merge (too short,
+  // or a marketplace name), so the term falls back to Google's raw rising list.
   const result = scoreKeyword({
     term: 'whimsigothic',
     etsy: { totalListings: 2500 },
     trends: {
       series: climbingSeries(),
       rising: [
-        { query: 'a', value: 5000, breakout: true, formatted: 'Breakout' },
-        { query: 'b', value: 900, formatted: '+900%' },
+        { query: 'mug', value: 5000, breakout: true, formatted: 'Breakout' },
+        { query: 'etsy', value: 900, formatted: '+900%' },
       ],
     },
     config,

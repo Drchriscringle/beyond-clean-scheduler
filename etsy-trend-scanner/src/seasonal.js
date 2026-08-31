@@ -68,6 +68,9 @@ export function easterSunday(year) {
 }
 
 /**
+ * `shortName` is the label that goes into listing titles and tags — the full
+ * `name` is for the report's own prose and is far too long for either.
+ *
  * `peakLeadDays` is how far before the event search interest tops out.
  * `rankDays` is how long a listing typically needs to be live before it can
  * compete for that peak — bigger for the crowded events.
@@ -75,6 +78,7 @@ export function easterSunday(year) {
 export const EVENTS = [
   {
     id: 'valentines',
+    shortName: 'valentines',
     name: "Valentine's Day",
     date: (y) => new Date(Date.UTC(y, 1, 14)),
     peakLeadDays: 12,
@@ -83,6 +87,7 @@ export const EVENTS = [
   },
   {
     id: 'easter',
+    shortName: 'easter',
     name: 'Easter',
     date: easterSunday,
     peakLeadDays: 10,
@@ -91,6 +96,7 @@ export const EVENTS = [
   },
   {
     id: 'mothers-day-us',
+    shortName: 'mothers day',
     name: "Mother's Day (US/CA/AU)",
     date: (y) => nthWeekdayOf(y, 4, 0, 2),
     peakLeadDays: 14,
@@ -99,6 +105,7 @@ export const EVENTS = [
   },
   {
     id: 'mothers-day-uk',
+    shortName: 'mothers day',
     name: "Mother's Day (UK, Mothering Sunday)",
     date: (y) => addDays(easterSunday(y), -21),
     peakLeadDays: 12,
@@ -107,6 +114,7 @@ export const EVENTS = [
   },
   {
     id: 'graduation',
+    shortName: 'graduation',
     name: 'Graduation season',
     date: (y) => new Date(Date.UTC(y, 4, 25)),
     peakLeadDays: 21,
@@ -115,6 +123,7 @@ export const EVENTS = [
   },
   {
     id: 'fathers-day',
+    shortName: 'fathers day',
     name: "Father's Day",
     date: (y) => nthWeekdayOf(y, 5, 0, 3),
     peakLeadDays: 12,
@@ -123,6 +132,7 @@ export const EVENTS = [
   },
   {
     id: 'wedding-season',
+    shortName: 'wedding',
     name: 'Peak wedding season',
     date: (y) => new Date(Date.UTC(y, 6, 1)),
     peakLeadDays: 90,
@@ -131,6 +141,7 @@ export const EVENTS = [
   },
   {
     id: 'back-to-school',
+    shortName: 'back to school',
     name: 'Back to school',
     date: (y) => new Date(Date.UTC(y, 7, 20)),
     peakLeadDays: 21,
@@ -139,6 +150,7 @@ export const EVENTS = [
   },
   {
     id: 'halloween',
+    shortName: 'halloween',
     name: 'Halloween',
     date: (y) => new Date(Date.UTC(y, 9, 31)),
     peakLeadDays: 18,
@@ -147,6 +159,7 @@ export const EVENTS = [
   },
   {
     id: 'thanksgiving',
+    shortName: 'thanksgiving',
     name: 'Thanksgiving',
     date: (y) => nthWeekdayOf(y, 10, 4, 4),
     peakLeadDays: 14,
@@ -155,6 +168,7 @@ export const EVENTS = [
   },
   {
     id: 'q4-gifting',
+    shortName: 'christmas',
     name: 'Q4 gifting rush (Black Friday to Christmas)',
     date: (y) => new Date(Date.UTC(y, 11, 12)),
     peakLeadDays: 28,
@@ -170,6 +184,7 @@ export const EVENTS = [
   },
   {
     id: 'new-year',
+    shortName: 'new year',
     name: 'New Year reset',
     date: (y) => new Date(Date.UTC(y, 0, 1)),
     peakLeadDays: 5,
@@ -294,6 +309,7 @@ export function seasonalFit({
         score: Math.round(score),
         event: event.name,
         eventId: event.id,
+        eventLabel: event.shortName,
         eventDate: toISODate(event.date),
         peakDate: toISODate(event.peakDate),
         listByDate: toISODate(listByDate),

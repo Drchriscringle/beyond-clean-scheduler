@@ -11,6 +11,7 @@
 
 import { join } from 'node:path'
 import { SnapshotStore } from './store.js'
+import { longTailCandidates, mergeRelated } from './analyze/related.js'
 import { addDays, toISODate } from './seasonal.js'
 
 /** Deterministic PRNG so the sample report is stable across runs. */
@@ -44,6 +45,17 @@ const ARCHETYPES = [
       { query: 'whimsigothic mirror', value: 900, formatted: '+900%' },
       { query: 'whimsigothic bedroom', value: 420, formatted: '+420%' },
     ],
+    alsoSearched: [
+      { query: 'whimsigothic decor', value: 100 },
+      { query: 'whimsigothic bedroom', value: 74 },
+      { query: 'wavy mirror', value: 51 },
+    ],
+    suggestions: [
+      'whimsigothic wall art',
+      'whimsigothic bedroom decor',
+      'whimsigothic squiggle mirror',
+      'whimsigothic print set',
+    ],
     tags: ['whimsigothic', 'wavy mirror', '70s decor', 'squiggle art', 'maximalist'],
   },
   {
@@ -55,6 +67,11 @@ const ARCHETYPES = [
     digitalShare: 0.7,
     personalisableShare: 0.1,
     rising: [{ query: 'crochet plushie pattern', value: 260, formatted: '+260%' }],
+    alsoSearched: [
+      { query: 'crochet plushie pattern', value: 100 },
+      { query: 'amigurumi pattern', value: 68 },
+    ],
+    suggestions: ['crochet plushie pattern free', 'crochet plushie kit', 'crochet plushie easy'],
     tags: ['crochet pattern', 'amigurumi', 'plushie pattern', 'pdf pattern', 'beginner crochet'],
   },
   {
@@ -66,6 +83,11 @@ const ARCHETYPES = [
     digitalShare: 0.25,
     personalisableShare: 0.35,
     rising: [{ query: 'vintage halloween decor', value: 180, formatted: '+180%' }],
+    alsoSearched: [
+      { query: 'vintage halloween decor', value: 100 },
+      { query: 'halloween mantel decor', value: 55 },
+    ],
+    suggestions: ['halloween decor outdoor', 'halloween decor vintage', 'halloween decor handmade'],
     tags: ['halloween decor', 'spooky decor', 'fall decor', 'ghost decor', 'vintage halloween'],
   },
   {
@@ -77,6 +99,11 @@ const ARCHETYPES = [
     digitalShare: 0.02,
     personalisableShare: 0.92,
     rising: [],
+    alsoSearched: [
+      { query: 'gold name necklace', value: 100 },
+      { query: 'dainty name necklace', value: 62 },
+    ],
+    suggestions: ['personalised name necklace gold', 'personalised name necklace uk'],
     tags: ['name necklace', 'custom necklace', 'gift for her', 'personalised gift', 'dainty jewelry'],
   },
   {
@@ -89,6 +116,8 @@ const ARCHETYPES = [
     digitalShare: 0.98,
     personalisableShare: 0.05,
     rising: [],
+    alsoSearched: [{ query: '20oz tumbler wrap', value: 100 }],
+    suggestions: ['tumbler wrap png seamless', 'tumbler wrap png free'],
     tags: ['tumbler wrap', 'sublimation png', '20oz tumbler', 'seamless design', 'digital download'],
   },
   {
@@ -103,6 +132,16 @@ const ARCHETYPES = [
       { query: 'sourdough starter gift', value: 5000, breakout: true, formatted: 'Breakout' },
       { query: 'bread lover gift', value: 310, formatted: '+310%' },
     ],
+    alsoSearched: [
+      { query: 'sourdough starter gift', value: 100 },
+      { query: 'sourdough bread kit', value: 71 },
+      { query: 'bread lover gift', value: 44 },
+    ],
+    suggestions: [
+      'sourdough gift basket',
+      'sourdough gift for baker',
+      'sourdough starter jar gift',
+    ],
     tags: ['sourdough gift', 'baker gift', 'bread lover', 'kitchen decor', 'foodie gift'],
   },
   {
@@ -114,6 +153,11 @@ const ARCHETYPES = [
     digitalShare: 0.3,
     personalisableShare: 0.6,
     rising: [{ query: 'personalised christmas gift', value: 220, formatted: '+220%' }],
+    alsoSearched: [
+      { query: 'personalised christmas gift', value: 100 },
+      { query: 'christmas gift for her', value: 80 },
+    ],
+    suggestions: ['christmas gift for grandma', 'christmas gift box personalised'],
     tags: ['christmas gift', 'stocking filler', 'secret santa', 'xmas gift', 'holiday decor'],
   },
   {
@@ -125,6 +169,8 @@ const ARCHETYPES = [
     digitalShare: 0.6,
     personalisableShare: 0.7,
     rising: [{ query: 'teacher appreciation gift', value: 150, formatted: '+150%' }],
+    alsoSearched: [{ query: 'teacher appreciation gift', value: 100 }],
+    suggestions: ['teacher gift personalised', 'teacher gift end of year'],
     tags: ['teacher gift', 'thank you teacher', 'teacher appreciation', 'end of year', 'classroom'],
   },
 ]
@@ -198,22 +244,61 @@ export function writeDemoData({ config, today = new Date(), days = 31 } = {}) {
             ? {
                 series: weeklySeries(archetype, date, rng),
                 rising: archetype.rising,
-                top: archetype.rising,
+                top: archetype.alsoSearched ?? [],
               }
             : { series: [], rising: [] },
+        suggest:
+          dayOffset === 0
+            ? {
+                suggestions: (archetype.suggestions ?? []).map((query, rank) => ({ query, rank })),
+              }
+            : undefined,
       }
     }
     store.save({
       date: toISODate(date),
       generatedAt: new Date(date).toISOString(),
       geo: demoConfig.geo,
-      sources: { etsy: true, googleTrends: true },
+      sources: { etsy: true, googleTrends: true, autocomplete: true },
       notes: ['Sample data — generated by `etsy-trends demo`, not collected from live APIs.'],
       keywords,
+      longTail: dayOffset === 0 ? demoLongTail(keywords, rng) : [],
     })
   }
 
   return demoConfig
+}
+
+/**
+ * Run the same related-search merge the real scan uses, then attach plausible
+ * Etsy counts — long-tail phrases genuinely do come back an order of magnitude
+ * thinner than their parent niche, which is the point of chasing them.
+ */
+function demoLongTail(keywords, rng) {
+  const relatedByTerm = {}
+  for (const [term, row] of Object.entries(keywords)) {
+    relatedByTerm[term] = mergeRelated({
+      term,
+      trendsTop: row.trends?.top ?? [],
+      trendsRising: row.trends?.rising ?? [],
+      suggestions: row.suggest?.suggestions ?? [],
+      topTags: row.etsy?.topTags ?? [],
+    })
+  }
+
+  const exclude = new Set(Object.keys(keywords))
+  return longTailCandidates(relatedByTerm, { limit: 12, exclude }).map((candidate) => {
+    const parentListings = keywords[candidate.parent]?.etsy?.totalListings ?? 20000
+    const divisor = candidate.untagged ? 40 + rng() * 60 : 8 + rng() * 12
+    return {
+      ...candidate,
+      etsy: {
+        ok: true,
+        totalListings: Math.max(60, Math.round(parentListings / divisor)),
+        medianPrice: keywords[candidate.parent]?.etsy?.medianPrice ?? null,
+      },
+    }
+  })
 }
 
 export { ARCHETYPES }

@@ -41,6 +41,11 @@ export function scoreSnapshot(store, { config, today = new Date() } = {}) {
       category: row.category,
       etsy: row.etsy?.ok ? row.etsy : (row.etsy ?? {}),
       trends: row.trends?.ok === false ? {} : (row.trends ?? {}),
+      suggest: row.suggest?.ok === false ? {} : (row.suggest ?? {}),
+      // Snapshots written before related-search merging existed carry no
+      // `related`; passing undefined makes the scorer rebuild it from the raw
+      // feeds, so old history keeps working.
+      related: row.related,
       history,
       config,
       today,
@@ -95,7 +100,7 @@ export function buildReport({ config, today = new Date(), write = true } = {}) {
     throw new Error('No snapshots found. Run `npm run scan` first.')
   }
 
-  const model = buildReportModel(scored, { config, today })
+  const model = buildReportModel(scored, { config, today, longTail: latest.longTail ?? [] })
   const notes = buildNotes(latest, store)
   const markdown = renderMarkdown(model, { notes })
   const html = renderHtml(model, { notes })

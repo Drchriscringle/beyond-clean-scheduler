@@ -41,6 +41,18 @@ const okEtsy = {
   },
 }
 
+const okSuggest = {
+  async collect(term) {
+    return {
+      ok: true,
+      suggestions: [
+        { query: `${term} wall art`, rank: 0 },
+        { query: `${term} bedroom`, rank: 1 },
+      ],
+    }
+  },
+}
+
 const okTrends = {
   async collect(term) {
     return {
@@ -60,6 +72,7 @@ test('a scan writes one snapshot row per keyword', async () => {
       logger: () => {},
       etsyClient: okEtsy,
       trendsClient: okTrends,
+      suggestClient: okSuggest,
       only: ['whimsigothic', 'soy candle'],
     })
 
@@ -80,6 +93,7 @@ test('a scan records breakout queries as new keywords to watch', async () => {
       logger: () => {},
       etsyClient: okEtsy,
       trendsClient: okTrends,
+      suggestClient: okSuggest,
       only: ['whimsigothic'],
     })
 
@@ -98,6 +112,7 @@ test('a Google Trends outage still produces a usable snapshot', async () => {
       logger: () => {},
       etsyClient: okEtsy,
       trendsClient: { collect: async () => ({ ok: false, error: 'HTTP 429' }) },
+      suggestClient: okSuggest,
       only: ['whimsigothic'],
     })
 
@@ -115,6 +130,7 @@ test('a missing Etsy key is reported in the snapshot rather than aborting', asyn
         today: TODAY,
         logger: () => {},
         trendsClient: okTrends,
+        suggestClient: okSuggest,
         only: ['whimsigothic'],
       })
 
@@ -127,7 +143,7 @@ test('a missing Etsy key is reported in the snapshot rather than aborting', asyn
   )
 })
 
-test('--no-trends and --no-etsy are honoured', async () => {
+test('sources can be switched off individually', async () => {
   await withConfig(async (config) => {
     const { snapshot } = await runScan({
       config,
@@ -135,11 +151,97 @@ test('--no-trends and --no-etsy are honoured', async () => {
       logger: () => {},
       etsyClient: okEtsy,
       useTrends: false,
+      useSuggest: false,
       only: ['whimsigothic'],
     })
     assert.equal(snapshot.sources.googleTrends, false)
+    assert.equal(snapshot.sources.autocomplete, false)
     assert.equal(snapshot.keywords.whimsigothic.trends, undefined)
+    assert.equal(snapshot.keywords.whimsigothic.suggest, undefined)
     assert.equal(snapshot.notes.length, 0)
+  })
+})
+
+test('the long tail gets its own Etsy lookup after the main pass', async () => {
+  await withConfig(async (config) => {
+    const looked = []
+    const countingEtsy = {
+      configured: true,
+      async searchActiveListings(keyword) {
+        looked.push(keyword)
+        return {
+          total: keyword.includes('wall art') ? 140 : 1234,
+          listings: [{ price: { amount: 2400, divisor: 100 }, tags: ['whimsigothic'] }],
+        }
+      },
+    }
+
+    const { snapshot } = await runScan({
+      config,
+      today: TODAY,
+      logger: () => {},
+      etsyClient: countingEtsy,
+      // Google's rising feed and autocomplete agree on the same phrase, which
+      // is what makes it worth an extra lookup.
+      trendsClient: {
+        collect: async () => ({
+          ok: true,
+          series: [{ date: '2026-08-01', value: 10 }],
+          rising: [
+            { query: 'whimsigothic wall art', value: 5000, breakout: true, formatted: 'Breakout' },
+          ],
+          top: [],
+        }),
+      },
+      suggestClient: okSuggest,
+      only: ['whimsigothic'],
+    })
+
+    assert.ok(looked.includes('whimsigothic'), 'the niche itself is scanned')
+    assert.ok(looked.includes('whimsigothic wall art'), 'and so is the long-tail phrase')
+
+    const longTail = snapshot.longTail.find((row) => row.query === 'whimsigothic wall art')
+    assert.equal(longTail.parent, 'whimsigothic')
+    assert.equal(longTail.etsy.totalListings, 140)
+    assert.equal(longTail.untagged, true, 'sellers here have not tagged it')
+  })
+})
+
+test('the long tail is still listed when there is no Etsy key to price it', async () => {
+  await withConfig(
+    async (config) => {
+      const { snapshot } = await runScan({
+        config,
+        today: TODAY,
+        logger: () => {},
+        trendsClient: okTrends,
+        suggestClient: okSuggest,
+        only: ['whimsigothic'],
+      })
+      assert.ok(snapshot.longTail.length > 0)
+      assert.equal(snapshot.longTail[0].etsy, null)
+    },
+    { etsyApiKey: '' },
+  )
+})
+
+test('related searches are merged and stored per keyword', async () => {
+  await withConfig(async (config) => {
+    const { snapshot } = await runScan({
+      config,
+      today: TODAY,
+      logger: () => {},
+      etsyClient: okEtsy,
+      trendsClient: okTrends,
+      suggestClient: okSuggest,
+      only: ['whimsigothic'],
+    })
+
+    const related = snapshot.keywords.whimsigothic.related
+    assert.ok(related.length > 0)
+    assert.ok(related.some((row) => row.sources.includes('autocomplete')))
+    assert.ok(related.some((row) => row.sources.includes('trendsRising')))
+    assert.equal(snapshot.keywords.whimsigothic.suggest.suggestions.length, 2)
   })
 })
 
@@ -151,6 +253,7 @@ test('the keyword cap is respected so a scan cannot run away with the API budget
       logger: () => {},
       etsyClient: okEtsy,
       trendsClient: okTrends,
+      suggestClient: okSuggest,
       limit: 3,
     })
     assert.equal(Object.keys(snapshot.keywords).length, 3)

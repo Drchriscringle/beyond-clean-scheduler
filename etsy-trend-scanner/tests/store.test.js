@@ -109,14 +109,16 @@ test('the keyword universe merges seeds with discoveries and honours the cap', (
   assert.equal(universe[1].term, 'beeswax candle', 'the newest discovery survives the cap')
 })
 
-test('harvestDiscoveries keeps breakouts and big movers only', () => {
+test('harvestDiscoveries keeps breakouts and big movers from the rising feed', () => {
   const found = harvestDiscoveries('whimsigothic', {
-    rising: [
-      { query: 'Whimsigothic Mirror', value: 5000, breakout: true },
-      { query: 'whimsigothic bedroom', value: 400 },
-      { query: 'whimsigothic', value: 20 },
-      { query: 'etsy', value: 9000, breakout: true },
-    ],
+    trends: {
+      rising: [
+        { query: 'Whimsigothic Mirror', value: 5000, breakout: true },
+        { query: 'whimsigothic bedroom', value: 400 },
+        { query: 'whimsigothic', value: 20 },
+        { query: 'etsy', value: 9000, breakout: true },
+      ],
+    },
   })
 
   assert.deepEqual(
@@ -124,6 +126,35 @@ test('harvestDiscoveries keeps breakouts and big movers only', () => {
     ['whimsigothic mirror', 'whimsigothic bedroom'],
   )
   assert.equal(found[0].parent, 'whimsigothic')
+})
+
+test('harvestDiscoveries also keeps cross-confirmed related searches', () => {
+  const found = harvestDiscoveries('whimsigothic', {
+    trends: { rising: [] },
+    related: [
+      // Seen by Google and by autocomplete: a real search.
+      {
+        query: 'whimsigothic wall art',
+        sources: ['trendsTop', 'autocomplete'],
+        crossConfirmed: true,
+        inEtsyTags: false,
+      },
+      // Only autocomplete and Etsy tags, no demand feed: not promoted.
+      {
+        query: 'whimsigothic frame',
+        sources: ['autocomplete', 'etsyTags'],
+        crossConfirmed: true,
+        inEtsyTags: true,
+      },
+      // Single source: not promoted.
+      { query: 'whimsigothic rug', sources: ['autocomplete'], crossConfirmed: false },
+    ],
+  })
+
+  assert.deepEqual(
+    found.map((row) => row.term),
+    ['whimsigothic wall art'],
+  )
 })
 
 test('formsForProfile only returns formats the shop can actually make', () => {

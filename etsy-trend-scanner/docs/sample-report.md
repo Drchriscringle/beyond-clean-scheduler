@@ -19,13 +19,15 @@ Climbing fast and still thin on competition — this is the window where a new l
 - **Price:** $31.99 — market $14.00–$38.00
 - **Start by 2026-09-06, live by 2026-09-14** — trend window — competition typically fills in within a fortnight
 - **Title draft:** Whimsigothic Printable Wall Art Set | Instant Download
-- **Tags:** `whimsigothic`, `printable wall art`, `whimsigothic wall`, `whimsigothic mirror`, `whimsigothic bedroom`, `wavy mirror`, `70s decor`, `squiggle art`, `maximalist`
+- **Tags:** `whimsigothic`, `printable wall art`, `whimsigothic wall`, `whimsigothic bedroom`, `wavy mirror`, `whimsigothic decor`, `70s decor`, `squiggle art`, `maximalist`
+- **People also search for:** whimsigothic wall art _(breakout)_, whimsigothic bedroom _(+420%)_, wavy mirror, whimsigothic decor, whimsigothic mirror _(+900%)_, whimsigothic bedroom decor
+- **Not yet tagged by sellers here:** whimsigothic wall art, whimsigothic bedroom — put these in the title and tags
 
 <details><summary>Evidence</summary>
 
 - Search interest +227% over the last 4 weeks vs the prior 12
 - Sitting at 86% of its own 12-month search peak
-- 1 breakout related search on Google — "whimsigothic wall art" Breakout, "whimsigothic mirror" +900%, "whimsigothic bedroom" +420%
+- People also search for: "whimsigothic wall art" (breakout), "whimsigothic bedroom" +420%, "wavy mirror", "whimsigothic decor" — 3 of these confirmed by more than one search feed
 - 2,518 active Etsy listings competing
 - Competing listings +5% in 28 days (2,408 to 2,518)
 - Median asking price $24.00 (typical range $14.00-$38.00)
@@ -42,13 +44,15 @@ Demand is at its peak but so is competition — only worth it with a distinct an
 - **Make:** sourdough gift ceramic mug _(print-on-demand, ~2d)_
 - **Price:** $23.99 — market $18.00–$45.00
 - **Title draft:** Sourdough Gift Ceramic Mug | Personalised | Ships Free
-- **Tags:** `sourdough gift`, `ceramic mug`, `sourdough starter`, `bread lover gift`, `personalised`, `custom gift`, `baker gift`, `bread lover`, `kitchen decor`, `foodie gift`
+- **Tags:** `sourdough gift`, `ceramic mug`, `sourdough starter`, `bread lover gift`, `sourdough bread kit`, `personalised`, `custom gift`, `baker gift`, `bread lover`, `kitchen decor`, `foodie gift`
+- **People also search for:** sourdough starter gift _(breakout)_, bread lover gift _(+310%)_, sourdough bread kit, sourdough gift basket, sourdough gift for baker, sourdough starter jar gift
+- **Not yet tagged by sellers here:** sourdough starter gift, bread lover gift — put these in the title and tags
 
 <details><summary>Evidence</summary>
 
 - Search interest +46% over the last 4 weeks vs the prior 12
 - Sitting at 92% of its own 12-month search peak
-- 1 breakout related search on Google — "sourdough starter gift" Breakout, "bread lover gift" +310%
+- People also search for: "sourdough starter gift" (breakout), "bread lover gift" +310%, "sourdough bread kit", "sourdough gift basket" — 2 of these confirmed by more than one search feed
 - 9,737 active Etsy listings competing
 - Competing listings +9% in 28 days (8,953 to 9,737)
 - Median asking price $29.00 (typical range $18.00-$45.00)
@@ -65,13 +69,15 @@ Demand is at its peak but so is competition — only worth it with a distinct an
 - **Make:** crochet plushie PDF pattern _(digital-download, ~3d)_
 - **Price:** $15.99 — market $12.00–$32.00
 - **Title draft:** Crochet Plushie PDF Pattern | Instant Download
-- **Tags:** `crochet plushie`, `crochet plushie pdf`, `pdf pattern`, `crochet pattern`, `amigurumi`, `plushie pattern`, `beginner crochet`
+- **Tags:** `crochet plushie`, `crochet plushie pdf`, `pdf pattern`, `amigurumi pattern`, `crochet plushie kit`, `crochet pattern`, `amigurumi`, `plushie pattern`, `beginner crochet`
+- **People also search for:** crochet plushie pattern _(+260%)_, amigurumi pattern, crochet plushie pattern free, crochet plushie kit, crochet plushie easy, crochet pattern
+- **Not yet tagged by sellers here:** crochet plushie pattern — put these in the title and tags
 
 <details><summary>Evidence</summary>
 
 - Search interest +25% over the last 4 weeks vs the prior 12
 - Sitting at 98% of its own 12-month search peak
-- Rising related searches: "crochet plushie pattern" +260%
+- People also search for: "crochet plushie pattern" +260%, "amigurumi pattern", "crochet plushie pattern free", "crochet plushie kit" — 1 of these confirmed by more than one search feed
 - 68,761 active Etsy listings competing
 - Competing listings +12% in 28 days (61,489 to 68,761)
 - Median asking price $19.00 (typical range $12.00-$32.00)
@@ -92,14 +98,16 @@ Occasion demand is coming and the listing needs time on the shelf to rank for it
 - **Make:** christmas gift printable wall art set _(digital-download, ~1d)_
 - **Price:** $20.99 — market $15.00–$44.00
 - **Start by 2026-09-03, live by 2026-09-11** — Q4 gifting rush (Black Friday to Christmas) peak on 2026-11-14
-- **Title draft:** Christmas Gift Printable Wall Art Set | Personalised | Q4 Gifting Rush (Black Friday To Christmas)
-- **Tags:** `christmas gift`, `printable wall art`, `personalised`, `q4 gifting`, `custom gift`, `stocking filler`, `secret santa`, `xmas gift`, `holiday decor`
+- **Title draft:** Christmas Gift Printable Wall Art Set | Personalised | Christmas
+- **Tags:** `christmas gift`, `printable wall art`, `personalised`, `christmas gift box`, `christmas`, `custom gift`, `stocking filler`, `secret santa`, `xmas gift`, `holiday decor`
+- **People also search for:** personalised christmas gift _(+220%)_, christmas gift for her, christmas gift for grandma, christmas gift box personalised, stocking filler, secret santa
+- **Not yet tagged by sellers here:** personalised christmas gift — put these in the title and tags
 
 <details><summary>Evidence</summary>
 
 - Search interest +114% over the last 4 weeks vs the prior 12
 - Sitting at 89% of its own 12-month search peak
-- Rising related searches: "personalised christmas gift" +220%
+- People also search for: "personalised christmas gift" +220%, "christmas gift for her", "christmas gift for grandma", "christmas gift box personalised" — 1 of these confirmed by more than one search feed
 - 1,440,136 active Etsy listings competing
 - Competing listings +15% in 28 days (1,252,431 to 1,440,136)
 - Median asking price $26.00 (typical range $15.00-$44.00)
@@ -121,12 +129,14 @@ Reliable but flat. Fine for catalogue depth, not a growth bet.
 - **Make:** personalised name necklace jewellery piece _(handmade-physical, ~6d)_
 - **Price:** $28.99 — market $22.00–$58.00
 - **Title draft:** Personalised Name Necklace Jewellery Piece | Personalised | Handmade
-- **Tags:** `personalised name`, `jewellery piece`, `personalised`, `custom gift`, `name necklace`, `custom necklace`, `gift for her`, `personalised gift`, `dainty jewelry`
+- **Tags:** `personalised name`, `jewellery piece`, `gold name necklace`, `dainty name necklace`, `personalised`, `custom gift`, `name necklace`, `custom necklace`, `gift for her`, `personalised gift`, `dainty jewelry`
+- **People also search for:** gold name necklace, personalised name necklace gold, dainty name necklace, personalised name necklace uk, custom necklace, gift for her
 
 <details><summary>Evidence</summary>
 
 - Search interest -10% over the last 4 weeks vs the prior 12
 - Sitting at 85% of its own 12-month search peak
+- People also search for: "gold name necklace", "personalised name necklace gold", "dainty name necklace", "personalised name necklace uk"
 - 221,840 active Etsy listings competing
 - Competing listings +3% in 28 days (214,514 to 221,840)
 - Median asking price $34.00 (typical range $22.00-$58.00)
@@ -142,6 +152,22 @@ _Crowded or past peak — listing here now buys you nothing._
 - **halloween decor** — Sellers are entering faster than buyers are arriving. (Search interest +39% over the last 4 weeks vs the prior 12)
 - **tumbler wrap png** — Sellers are entering faster than buyers are arriving. (Search interest -35% over the last 4 weeks vs the prior 12)
 
+## Long-tail phrases worth claiming
+
+_Phrases people search that came back thin on Etsy. Not niches to build a shop around — specific wording to put in titles and tags so a new listing has something it can rank for on day one._
+
+| Phrase | Etsy listings | Room to rank | Seen in | From |
+|---|---:|---:|---|---|
+| sourdough starter gift _(breakout, untagged by sellers)_ | 113 | 100/100 | 2 sources | sourdough gift |
+| whimsigothic wall art _(breakout, untagged by sellers)_ | 60 | 100/100 | 2 sources | whimsigothic |
+| whimsigothic bedroom _(untagged by sellers)_ | 60 | 100/100 | 2 sources | whimsigothic |
+| bread lover gift _(untagged by sellers)_ | 143 | 100/100 | 2 sources | sourdough gift |
+| crochet plushie pattern _(untagged by sellers)_ | 749 | 85/100 | 2 sources | crochet plushie |
+| teacher appreciation gift _(untagged by sellers)_ | 925 | 83/100 | 2 sources | teacher gift |
+| wavy mirror | 216 | 99/100 | 2 sources | whimsigothic |
+| vintage halloween decor _(untagged by sellers)_ | 2,347 | 73/100 | 2 sources | halloween decor |
+| personalised christmas gift _(untagged by sellers)_ | 15,556 | 53/100 | 2 sources | christmas gift |
+
 ---
 
-Generated 2026-08-31T19:19:06.018Z · scores are relative rankings from public search interest and Etsy listing supply, not sales data. Etsy publishes no public sales or view counts.
+Generated 2026-08-31T19:28:42.719Z · scores are relative rankings from public search interest and Etsy listing supply, not sales data. Etsy publishes no public sales or view counts.

@@ -68,7 +68,18 @@ export const DEFAULT_CONFIG = {
     maxKeywordsPerScan: 60,
     requestTimeoutMs: 20000,
     maxRetries: 3,
+    // Autocomplete probes per keyword: 1 is the bare term, 2 adds the trailing
+    // space that reaches the long tail. Raise for more breadth per keyword.
+    suggestVariantsPerKeyword: 2,
+    suggestRequestDelayMs: 300,
+    // After the main pass, this many "people also search for" phrases get an
+    // Etsy competition lookup of their own, so the long tail arrives with a
+    // listing count attached rather than as a bare suggestion.
+    relatedProbesPerScan: 20,
   },
+
+  // How many related searches to keep per keyword.
+  relatedPerKeyword: 12,
 
   // How many days of stored snapshots the report reads.
   historyDays: 90,

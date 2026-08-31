@@ -3,6 +3,8 @@
  * the file can be opened from disk, emailed, or served from GitHub Pages.
  */
 
+import { SOURCE_LABELS } from '../analyze/related.js'
+
 const CLASS_META = {
   'starting-to-trend': { label: 'Starting to trend', tone: 'early' },
   'trending-now': { label: 'Trending now', tone: 'hot' },
@@ -31,6 +33,61 @@ function meter(label, value) {
   return `<div class="meter"><span class="meter-label">${escapeHtml(label)}</span>
     <span class="meter-track"><span class="meter-fill" style="width:${Math.round(value)}%"></span></span>
     <span class="meter-value">${Math.round(value)}</span></div>`
+}
+
+/**
+ * "People also search for" chips. Phrases sellers here have not tagged are
+ * marked, because those are the ones worth claiming in a title.
+ */
+function renderRelated(related = []) {
+  if (!related.length) return ''
+  const chips = related
+    .slice(0, 8)
+    .map((row) => {
+      const classes = ['chip']
+      if (row.breakout) classes.push('chip-breakout')
+      else if (row.crossConfirmed && !row.inEtsyTags) classes.push('chip-gap')
+      const note = row.breakout ? ' ↑' : row.crossConfirmed && !row.inEtsyTags ? ' ○' : ''
+      const title = [
+        row.sources.map((source) => SOURCE_LABELS[source] ?? source).join(' + '),
+        row.growth ? `growth ${row.growth}` : null,
+        row.inEtsyTags ? 'already tagged by sellers here' : 'not yet tagged by sellers here',
+      ]
+        .filter(Boolean)
+        .join(' · ')
+      return `<span class="${classes.join(' ')}" title="${escapeHtml(title)}">${escapeHtml(
+        row.query,
+      )}${note}</span>`
+    })
+    .join('')
+  return `<div class="related"><span class="related-head">People also search for</span>
+    <div class="chips">${chips}</div></div>`
+}
+
+function renderLongTail(rows = []) {
+  if (!rows.length) return ''
+  const body = rows
+    .map(
+      (row) => `<tr>
+      <td>${escapeHtml(row.query)}${row.breakout ? ' <span class="chip chip-breakout">breakout</span>' : ''}${
+        row.untagged ? ' <span class="chip chip-gap">untagged</span>' : ''
+      }</td>
+      <td class="num">${Number.isFinite(row.listings) ? row.listings.toLocaleString('en-US') : '—'}</td>
+      <td class="num">${Number.isFinite(row.roomToRank) ? row.roomToRank : '—'}</td>
+      <td class="muted">${escapeHtml(row.sources.map((s) => SOURCE_LABELS[s] ?? s).join(', '))}</td>
+      <td class="muted">${escapeHtml(row.parent)}</td>
+    </tr>`,
+    )
+    .join('')
+  return `<section><h2>Long-tail phrases worth claiming</h2>
+    <p class="blurb">Phrases people search that came back thin on Etsy. Not niches to build a shop
+    around — specific wording for titles and tags so a new listing has something it can rank for on
+    day one.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Phrase</th><th class="num">Etsy listings</th><th class="num">Room to rank</th>
+      <th>Seen in</th><th>From</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table></div></section>`
 }
 
 function renderCard(row) {
@@ -63,6 +120,7 @@ function renderCard(row) {
         : ''
     }
     ${row.tags?.length ? `<p class="tags">${row.tags.map((t) => `<code>${escapeHtml(t)}</code>`).join('')}</p>` : ''}
+    ${renderRelated(row.related)}
     <div class="meters">
       ${meter('Demand', row.parts?.demand)}
       ${meter('Momentum', row.parts?.momentum)}
@@ -84,6 +142,9 @@ export function renderHtml(model, { notes = [] } = {}) {
   const headline = model.sections.find((s) => s.id === 'list-next')?.rows ?? []
   const seasonal = model.sections.find((s) => s.id === 'seasonal')?.rows ?? []
   const top = headline[0] ?? seasonal[0] ?? null
+  const hasRelated = model.sections.some((section) =>
+    section.rows.some((row) => row.related?.length),
+  )
 
   const sections = model.sections
     .filter((section) => section.rows.length)
@@ -122,6 +183,8 @@ h1{font-size:1.7rem;margin:0 0 6px;letter-spacing:-.02em}
 .meta{color:var(--muted);font-size:.85rem;margin-top:10px}
 .note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
 padding:10px 14px;border-radius:8px;margin:16px 0;font-size:.9rem;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:14px 0 0;
+color:var(--muted);font-size:.8rem}
 h2{font-size:1.15rem;margin:36px 0 4px;letter-spacing:-.01em}
 .blurb{color:var(--muted);margin:0 0 16px;font-size:.9rem}
 .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
@@ -144,6 +207,19 @@ border-top:3px solid var(--steady)}
 .muted{color:var(--muted)}
 .tags{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px}
 .tags code{font-size:.72rem;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.related{margin:0 0 12px}
+.related-head{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;
+letter-spacing:.06em;margin-bottom:5px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--muted)}
+.chip-breakout{border-color:var(--hot);color:var(--hot)}
+.chip-gap{border-color:var(--accent);color:var(--accent)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+thead th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .meters{display:grid;gap:5px;margin-bottom:10px}
 .meter{display:grid;grid-template-columns:120px 1fr 30px;align-items:center;gap:8px;font-size:.75rem}
 .meter-label{color:var(--muted)}
@@ -174,8 +250,16 @@ footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:v
     model.generatedAt,
   )}</p>
   ${notes.map((note) => `<p class="note">${escapeHtml(note)}</p>`).join('')}
+  ${
+    hasRelated
+      ? `<p class="legend">In the "people also search for" chips:
+        <span class="chip chip-breakout">breakout ↑</span> growing fastest ·
+        <span class="chip chip-gap">gap ○</span> people search it, sellers here have not tagged it</p>`
+      : ''
+  }
 </header>
 ${sections}
+${renderLongTail(model.longTail)}
 <footer>Scores are relative rankings built from public search-interest data and Etsy listing supply.
 Etsy publishes no public sales or view counts, so nothing here is a sales forecast.</footer>
 </div>
