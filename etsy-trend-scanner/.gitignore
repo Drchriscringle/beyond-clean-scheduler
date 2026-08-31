@@ -1,0 +1,6 @@
+node_modules/
+.env
+
+# Sample-data output. The committed sample lives in docs/sample-report.md.
+data/demo/
+reports/demo/

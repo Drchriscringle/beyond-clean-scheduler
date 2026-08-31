@@ -1,0 +1,22 @@
+{
+  "name": "etsy-trend-scanner",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Scans Etsy and external demand signals for trending and pre-trending product niches, and writes a daily 'what to list next' report.",
+  "bin": {
+    "etsy-trends": "src/cli.js"
+  },
+  "scripts": {
+    "scan": "node src/cli.js scan",
+    "report": "node src/cli.js report",
+    "daily": "node src/cli.js daily",
+    "doctor": "node src/cli.js doctor",
+    "demo": "node src/cli.js demo",
+    "lint": "oxlint",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "oxlint": "^1.75.0"
+  }
+}

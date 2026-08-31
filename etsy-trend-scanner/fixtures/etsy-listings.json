@@ -1,0 +1,9 @@
+{
+  "count": 2518,
+  "results": [
+    {"listing_id": 1, "title": "Whimsigothic wavy mirror print", "listing_type": "download", "is_digital": true, "is_personalizable": false, "original_creation_timestamp": 1788048000, "price": {"amount": 1200, "divisor": 100, "currency_code": "USD"}, "tags": ["whimsigothic", "wavy mirror", "70s decor"]},
+    {"listing_id": 2, "title": "Squiggle art print", "listing_type": "physical", "is_personalizable": true, "creation_timestamp": 1787961600, "price": {"amount": 2400, "divisor": 100, "currency_code": "USD"}, "tags": ["whimsigothic", "squiggle art"]},
+    {"listing_id": 3, "title": "Maximalist wall art", "listing_type": "physical", "is_personalizable": false, "original_creation_timestamp": 1767225600, "price": {"amount": 3800, "divisor": 100, "currency_code": "USD"}, "tags": ["maximalist", "whimsigothic"]},
+    {"listing_id": 4, "title": "Broken price row", "listing_type": "physical", "original_creation_timestamp": 1767225600, "price": {"amount": 1000, "divisor": 0}, "tags": []}
+  ]
+}
