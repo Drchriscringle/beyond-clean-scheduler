@@ -118,7 +118,11 @@ export function summariseListings({ total, listings }, { now = new Date() } = {}
   const week = 7 * 24 * 3600
   const month = 30 * 24 * 3600
 
-  const prices = []
+  // Etsy returns each listing's price in the seller's own currency, so a median
+  // taken across a mixed page is a number with no meaning. Prices are bucketed
+  // by currency and only the dominant one is reported, with the mix recorded so
+  // the caller can see how much was set aside.
+  const pricesByCurrency = new Map()
   const tagCounts = new Map()
   let newListings7d = 0
   let newListings30d = 0
@@ -127,7 +131,11 @@ export function summariseListings({ total, listings }, { now = new Date() } = {}
 
   for (const listing of listings) {
     const price = priceToNumber(listing?.price)
-    if (price !== null) prices.push(price)
+    if (price !== null) {
+      const currency = String(listing?.price?.currency_code ?? 'UNKNOWN').toUpperCase()
+      if (!pricesByCurrency.has(currency)) pricesByCurrency.set(currency, [])
+      pricesByCurrency.get(currency).push(price)
+    }
 
     const created = Number(listing?.original_creation_timestamp ?? listing?.creation_timestamp ?? 0)
     if (created) {
@@ -146,6 +154,15 @@ export function summariseListings({ total, listings }, { now = new Date() } = {}
   }
 
   const sampleSize = listings.length
+
+  const currencyMix = Object.fromEntries(
+    [...pricesByCurrency.entries()].map(([currency, values]) => [currency, values.length]),
+  )
+  const dominant = [...pricesByCurrency.entries()].sort((a, b) => b[1].length - a[1].length)[0]
+  const prices = dominant ? dominant[1] : []
+  const priceCurrency = dominant ? dominant[0] : null
+  const pricedListings = [...pricesByCurrency.values()].reduce((sum, v) => sum + v.length, 0)
+
   const topTags = [...tagCounts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 25)
@@ -160,6 +177,11 @@ export function summariseListings({ total, listings }, { now = new Date() } = {}
     medianPrice: median(prices),
     p25Price: percentile(prices, 25),
     p75Price: percentile(prices, 75),
+    priceCurrency,
+    currencyMix,
+    // Fraction of priced listings the median actually rests on. A low number
+    // means the niche is split across currencies and the band is thin.
+    priceCoverage: pricedListings ? prices.length / pricedListings : null,
     digitalShare: sampleSize ? digitalCount / sampleSize : null,
     personalisableShare: sampleSize ? personalisableCount / sampleSize : null,
     topTags,

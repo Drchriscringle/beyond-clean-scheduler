@@ -46,6 +46,43 @@ test('upcomingEvents rolls past events into next year and sorts by buyer peak', 
   }
 })
 
+test('the calendar only offers occasions that happen in your market', () => {
+  const today = new Date('2026-02-01T00:00:00Z')
+  const uk = upcomingEvents(today, { geo: 'GB' }).map((e) => e.id)
+  const us = upcomingEvents(today, { geo: 'US' }).map((e) => e.id)
+
+  // The two Mother's Days are about eight weeks apart. Handing a UK seller the
+  // US date would miss their selling window entirely.
+  assert.ok(uk.includes('mothers-day-uk') && !uk.includes('mothers-day-us'))
+  assert.ok(us.includes('mothers-day-us') && !us.includes('mothers-day-uk'))
+
+  assert.ok(!uk.includes('thanksgiving'), 'Thanksgiving is not a UK occasion')
+  assert.ok(us.includes('thanksgiving'))
+
+  assert.ok(uk.includes('back-to-school-uk') && !uk.includes('back-to-school'))
+  assert.ok(us.includes('back-to-school') && !us.includes('back-to-school-uk'))
+
+  // Occasions with no market restriction appear everywhere.
+  for (const id of ['halloween', 'q4-gifting', 'easter', 'fathers-day']) {
+    assert.ok(uk.includes(id) && us.includes(id), `${id} should be universal`)
+  }
+
+  // With no geo, nothing is filtered.
+  assert.ok(upcomingEvents(today).length >= Math.max(uk.length, us.length))
+})
+
+test('seasonalFit uses the right Mothering Sunday for the market', () => {
+  // Mothering Sunday 2027 is 7 March; US Mother's Day is 9 May. In late
+  // January only the UK window is open.
+  const today = new Date('2027-01-20T00:00:00Z')
+  const ukFit = seasonalFit({ term: 'mothers day gift', today, geo: 'GB' })
+  const usFit = seasonalFit({ term: 'mothers day gift', today, geo: 'US' })
+
+  assert.equal(ukFit.eventId, 'mothers-day-uk')
+  assert.equal(usFit.eventId, 'mothers-day-us')
+  assert.ok(ukFit.eventDate < usFit.eventDate)
+})
+
 test('year placeholders in themes resolve to the event year', () => {
   const events = upcomingEvents(new Date('2026-08-31T00:00:00Z'))
   const newYear = events.find((e) => e.id === 'new-year')

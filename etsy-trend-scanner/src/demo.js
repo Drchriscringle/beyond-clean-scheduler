@@ -256,6 +256,9 @@ function etsyRow(archetype, dayOffset, rng) {
     medianPrice: median,
     p25Price: p25,
     p75Price: p75,
+    priceCurrency: 'GBP',
+    currencyMix: { GBP: 100 },
+    priceCoverage: 1,
     digitalShare: archetype.digitalShare,
     personalisableShare: archetype.personalisableShare,
     topTags: archetype.tags.map((tag, index) => ({

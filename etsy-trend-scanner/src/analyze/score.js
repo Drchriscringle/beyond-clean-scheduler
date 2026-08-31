@@ -132,7 +132,7 @@ export function scoreKeyword({
       limit: config.relatedPerKeyword ?? 12,
     })
   const supply = supplyMomentum(history)
-  const season = seasonalFit({ term, today, profile, effortDays })
+  const season = seasonalFit({ term, today, profile, effortDays, geo: config.geo })
 
   const demand = demandPositionScore(momentum)
   const competitionGap = competitionScore(etsy.totalListings)
@@ -216,6 +216,8 @@ export function scoreKeyword({
       totalListings: etsy.totalListings ?? null,
       medianPrice: etsy.medianPrice ?? null,
       priceBand: [etsy.p25Price ?? null, etsy.p75Price ?? null],
+      priceCurrency: etsy.priceCurrency ?? null,
+      priceCoverage: etsy.priceCoverage ?? null,
       digitalShare: etsy.digitalShare ?? null,
       sampleSize: etsy.sampleSize ?? null,
       personalisableShare: etsy.personalisableShare ?? null,
@@ -343,11 +345,16 @@ export function buildEvidence({
     )
   }
   if (Number.isFinite(etsy?.medianPrice)) {
+    const currency = etsy.priceCurrency ?? 'USD'
     const band =
       Number.isFinite(etsy.p25Price) && Number.isFinite(etsy.p75Price)
-        ? ` (typical range $${etsy.p25Price.toFixed(2)}-$${etsy.p75Price.toFixed(2)})`
+        ? ` (typical range ${etsy.p25Price.toFixed(2)}-${etsy.p75Price.toFixed(2)})`
         : ''
-    lines.push(`Median asking price $${etsy.medianPrice.toFixed(2)}${band}`)
+    const mixed =
+      Number.isFinite(etsy.priceCoverage) && etsy.priceCoverage < 0.7
+        ? ` — only ${Math.round(etsy.priceCoverage * 100)}% of listings price in ${currency}, so treat as indicative`
+        : ''
+    lines.push(`Median asking price ${etsy.medianPrice.toFixed(2)} ${currency}${band}${mixed}`)
   }
   if (season?.event && season.score > 0) {
     lines.push(

@@ -114,6 +114,39 @@ test('summariseListings reduces a listing page to storable metrics', () => {
   assert.equal(summary.topTags[0].count, 3)
 })
 
+test('a median is never taken across mixed currencies', () => {
+  const listings = [
+    { price: { amount: 1000, divisor: 100, currency_code: 'GBP' }, tags: [] },
+    { price: { amount: 2000, divisor: 100, currency_code: 'GBP' }, tags: [] },
+    { price: { amount: 3000, divisor: 100, currency_code: 'GBP' }, tags: [] },
+    // A single USD listing must not drag the GBP median.
+    { price: { amount: 90000, divisor: 100, currency_code: 'USD' }, tags: [] },
+  ]
+  const summary = summariseListings({ total: 4, listings })
+
+  assert.equal(summary.priceCurrency, 'GBP', 'the dominant currency wins')
+  assert.equal(summary.medianPrice, 20, 'the USD outlier is excluded, not averaged in')
+  assert.deepEqual(summary.currencyMix, { GBP: 3, USD: 1 })
+  assert.equal(summary.priceCoverage, 0.75)
+})
+
+test('an all-one-currency page reports full price coverage', () => {
+  const listings = [
+    { price: { amount: 1000, divisor: 100, currency_code: 'GBP' }, tags: [] },
+    { price: { amount: 3000, divisor: 100, currency_code: 'GBP' }, tags: [] },
+  ]
+  const summary = summariseListings({ total: 2, listings })
+  assert.equal(summary.priceCoverage, 1)
+  assert.equal(summary.medianPrice, 20)
+})
+
+test('a page with no usable prices reports no currency rather than guessing', () => {
+  const summary = summariseListings({ total: 1, listings: [{ tags: [] }] })
+  assert.equal(summary.priceCurrency, null)
+  assert.equal(summary.medianPrice, null)
+  assert.equal(summary.priceCoverage, null)
+})
+
 test('EtsyClient refuses to call the API without a key', async () => {
   const client = new EtsyClient({})
   assert.equal(client.configured, false)

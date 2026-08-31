@@ -13,8 +13,12 @@ const CLASS_LABEL = {
   'insufficient-data': 'Not enough data',
 }
 
-function money(value) {
-  return Number.isFinite(value) ? `$${value.toFixed(2)}` : '—'
+const CURRENCY_SYMBOLS = { USD: '$', GBP: '\u00a3', EUR: '\u20ac', CAD: 'CA$', AUD: 'A$', NZD: 'NZ$' }
+
+function money(value, currency = 'USD') {
+  if (!Number.isFinite(value)) return '\u2014'
+  const symbol = CURRENCY_SYMBOLS[currency]
+  return symbol ? `${symbol}${value.toFixed(2)}` : `${value.toFixed(2)} ${currency}`
 }
 
 /** A related phrase with whatever the feeds said about it. */
@@ -61,8 +65,9 @@ function renderRow(row, index) {
       `- **Make:** ${row.term} ${row.product.form} _(${row.product.format}, ~${row.product.effortDays}d)_`,
     )
     if (price) {
-      const band = price.band ? ` — market ${money(price.band[0])}–${money(price.band[1])}` : ''
-      lines.push(`- **Price:** ${money(price.target)}${band}`)
+      const ccy = price.currency ?? 'USD'
+      const band = price.band ? ` — market ${money(price.band[0], ccy)}–${money(price.band[1], ccy)}` : ''
+      lines.push(`- **Price:** ${money(price.target, ccy)}${band}`)
     }
   }
   if (row.deadline) {

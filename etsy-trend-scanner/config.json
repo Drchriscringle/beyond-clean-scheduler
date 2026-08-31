@@ -1,0 +1,12 @@
+{
+  "geo": "GB",
+  "currency": "GBP",
+  "language": "en-GB",
+
+  "profile": {
+    "formats": ["digital-download", "print-on-demand", "handmade-physical"],
+    "leadTimeDays": 7,
+    "rankRampDays": 21,
+    "minMedianPrice": 8
+  }
+}

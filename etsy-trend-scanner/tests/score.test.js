@@ -194,7 +194,7 @@ test('evidence explains the numbers behind the score', () => {
 
   const text = result.evidence.join('\n')
   assert.match(text, /9,737 active Etsy listings/)
-  assert.match(text, /Median asking price \$29\.00/)
+  assert.match(text, /Median asking price 29\.00 USD/)
   assert.match(text, /People also search for: "sourdough starter gift" \(breakout\)/)
   assert.match(text, /Competing listings \+\d+% in \d+ days/)
 })
