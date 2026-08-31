@@ -1,0 +1,185 @@
+/**
+ * Self-contained HTML rendering of the daily report — no external assets, so
+ * the file can be opened from disk, emailed, or served from GitHub Pages.
+ */
+
+const CLASS_META = {
+  'starting-to-trend': { label: 'Starting to trend', tone: 'early' },
+  'trending-now': { label: 'Trending now', tone: 'hot' },
+  'seasonal-window': { label: 'Seasonal window', tone: 'season' },
+  'steady-evergreen': { label: 'Steady', tone: 'steady' },
+  saturated: { label: 'Saturated', tone: 'avoid' },
+  fading: { label: 'Fading', tone: 'avoid' },
+  'insufficient-data': { label: 'Not enough data', tone: 'steady' },
+}
+
+export function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function money(value) {
+  return Number.isFinite(value) ? `$${value.toFixed(2)}` : '—'
+}
+
+function meter(label, value) {
+  if (!Number.isFinite(value)) return ''
+  return `<div class="meter"><span class="meter-label">${escapeHtml(label)}</span>
+    <span class="meter-track"><span class="meter-fill" style="width:${Math.round(value)}%"></span></span>
+    <span class="meter-value">${Math.round(value)}</span></div>`
+}
+
+function renderCard(row) {
+  const meta = CLASS_META[row.classification] ?? CLASS_META['insufficient-data']
+  const price = row.price
+  return `<article class="card tone-${meta.tone}">
+    <header class="card-head">
+      <div>
+        <h3>${escapeHtml(row.term)}</h3>
+        <p class="action">${escapeHtml(row.action)}</p>
+      </div>
+      <div class="score" title="Composite opportunity score">
+        <strong>${row.opportunity ?? '—'}</strong><span>/100</span>
+      </div>
+    </header>
+    <p class="badges">
+      <span class="badge">${escapeHtml(meta.label)}</span>
+      <span class="badge subtle">confidence: ${escapeHtml(row.confidence)}</span>
+      ${row.product ? `<span class="badge subtle">${escapeHtml(row.product.format)}</span>` : ''}
+    </p>
+    <p class="rationale">${escapeHtml(row.rationale)}</p>
+    ${
+      row.product
+        ? `<dl class="facts">
+      <div><dt>Make</dt><dd>${escapeHtml(`${row.term} ${row.product.form}`)}</dd></div>
+      ${price ? `<div><dt>Price</dt><dd>${money(price.target)} <span class="muted">market ${money(price.band?.[0])}–${money(price.band?.[1])}</span></dd></div>` : ''}
+      ${row.deadline ? `<div><dt>Start by</dt><dd>${escapeHtml(row.deadline.startBy)} <span class="muted">live ${escapeHtml(row.deadline.liveBy)}</span></dd></div>` : ''}
+      ${row.title ? `<div><dt>Title</dt><dd class="mono">${escapeHtml(row.title)}</dd></div>` : ''}
+    </dl>`
+        : ''
+    }
+    ${row.tags?.length ? `<p class="tags">${row.tags.map((t) => `<code>${escapeHtml(t)}</code>`).join('')}</p>` : ''}
+    <div class="meters">
+      ${meter('Demand', row.parts?.demand)}
+      ${meter('Momentum', row.parts?.momentum)}
+      ${meter('Room to rank', row.parts?.competitionGap)}
+      ${meter('Headroom vs sellers', row.parts?.saturationRisk)}
+      ${meter('Seasonal fit', row.parts?.seasonalFit)}
+    </div>
+    ${
+      row.evidence?.length
+        ? `<details><summary>Evidence</summary><ul>${row.evidence
+            .map((line) => `<li>${escapeHtml(line)}</li>`)
+            .join('')}</ul></details>`
+        : ''
+    }
+  </article>`
+}
+
+export function renderHtml(model, { notes = [] } = {}) {
+  const headline = model.sections.find((s) => s.id === 'list-next')?.rows ?? []
+  const seasonal = model.sections.find((s) => s.id === 'seasonal')?.rows ?? []
+  const top = headline[0] ?? seasonal[0] ?? null
+
+  const sections = model.sections
+    .filter((section) => section.rows.length)
+    .map((section) => {
+      if (section.id === 'avoid') {
+        return `<section><h2>${escapeHtml(section.heading)}</h2><p class="blurb">${escapeHtml(section.blurb)}</p>
+        <ul class="avoid">${section.rows
+          .map(
+            (row) =>
+              `<li><strong>${escapeHtml(row.term)}</strong> — ${escapeHtml(row.evidence?.[0] ?? row.rationale)}</li>`,
+          )
+          .join('')}</ul></section>`
+      }
+      return `<section><h2>${escapeHtml(section.heading)}</h2><p class="blurb">${escapeHtml(section.blurb)}</p>
+      <div class="grid">${section.rows.map(renderCard).join('')}</div></section>`
+    })
+    .join('')
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etsy listing plan — ${escapeHtml(model.date)}</title>
+<style>
+:root{color-scheme:light dark;--bg:#faf8f5;--panel:#fff;--ink:#1d1a17;--muted:#6b6259;--line:#e7e0d7;
+--early:#0f7b53;--hot:#c2410c;--season:#7c3aed;--steady:#57534e;--avoid:#9f1239;--accent:#0f7b53}
+@media (prefers-color-scheme:dark){:root{--bg:#16130f;--panel:#1f1b16;--ink:#f2ede6;--muted:#a29688;
+--line:#332c24;--early:#4ade80;--hot:#fb923c;--season:#c4b5fd;--steady:#a8a29e;--avoid:#fb7185;--accent:#4ade80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:32px 20px 64px}
+header.top{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px}
+h1{font-size:1.7rem;margin:0 0 6px;letter-spacing:-.02em}
+.lede{font-size:1.05rem;margin:.4rem 0 0;max-width:70ch}
+.meta{color:var(--muted);font-size:.85rem;margin-top:10px}
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+padding:10px 14px;border-radius:8px;margin:16px 0;font-size:.9rem;color:var(--muted)}
+h2{font-size:1.15rem;margin:36px 0 4px;letter-spacing:-.01em}
+.blurb{color:var(--muted);margin:0 0 16px;font-size:.9rem}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+border-top:3px solid var(--steady)}
+.tone-early{border-top-color:var(--early)}.tone-hot{border-top-color:var(--hot)}
+.tone-season{border-top-color:var(--season)}.tone-avoid{border-top-color:var(--avoid)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.card h3{margin:0;font-size:1.05rem;letter-spacing:-.01em}
+.action{margin:2px 0 0;font-weight:600;color:var(--accent);font-size:.85rem}
+.score{text-align:right;line-height:1.1}.score strong{font-size:1.5rem}.score span{color:var(--muted);font-size:.75rem}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}
+.badge{font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--ink)}
+.badge.subtle{color:var(--muted)}
+.rationale{margin:0 0 12px;font-size:.9rem;color:var(--muted)}
+.facts{margin:0 0 12px;display:grid;gap:6px}
+.facts div{display:grid;grid-template-columns:88px 1fr;gap:10px;font-size:.86rem}
+.facts dt{color:var(--muted)}.facts dd{margin:0}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem}
+.muted{color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px}
+.tags code{font-size:.72rem;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.meters{display:grid;gap:5px;margin-bottom:10px}
+.meter{display:grid;grid-template-columns:120px 1fr 30px;align-items:center;gap:8px;font-size:.75rem}
+.meter-label{color:var(--muted)}
+.meter-track{height:5px;background:var(--line);border-radius:99px;overflow:hidden}
+.meter-fill{display:block;height:100%;background:var(--accent)}
+.meter-value{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;font-size:.8rem;color:var(--muted)}
+details ul{margin:8px 0 0;padding-left:18px;font-size:.82rem;color:var(--muted)}
+ul.avoid{margin:0;padding-left:18px;color:var(--muted);font-size:.9rem}
+ul.avoid strong{color:var(--ink)}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1>Etsy listing plan — ${escapeHtml(model.date)}</h1>
+  <p class="lede">${
+    top
+      ? `Today's call: <strong>${escapeHtml(top.term)}</strong>${
+          top.product ? ` — ${escapeHtml(top.product.form)}` : ''
+        }. ${headline.length} rising ${headline.length === 1 ? 'niche' : 'niches'} and ${seasonal.length} seasonal ${
+          seasonal.length === 1 ? 'deadline' : 'deadlines'
+        } worth acting on.`
+      : 'Nothing cleared the bar today. That is a normal result on a quiet week.'
+  }</p>
+  <p class="meta">${model.totalScanned} keywords scanned · market ${escapeHtml(model.geo)} · generated ${escapeHtml(
+    model.generatedAt,
+  )}</p>
+  ${notes.map((note) => `<p class="note">${escapeHtml(note)}</p>`).join('')}
+</header>
+${sections}
+<footer>Scores are relative rankings built from public search-interest data and Etsy listing supply.
+Etsy publishes no public sales or view counts, so nothing here is a sales forecast.</footer>
+</div>
+</body>
+</html>
+`
+}

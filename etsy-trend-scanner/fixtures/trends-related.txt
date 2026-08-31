@@ -1,0 +1,2 @@
+)]}'
+{"default":{"rankedList":[{"rankedKeyword":[{"query":"whimsigothic decor","value":100,"formattedValue":"100"},{"query":"whimsigothic bedroom","value":62,"formattedValue":"62"}]},{"rankedKeyword":[{"query":"whimsigothic wall art","value":5000,"formattedValue":"Breakout"},{"query":"whimsigothic mirror","value":900,"formattedValue":"+900%"},{"query":"","value":10,"formattedValue":"+10%"}]}]}}

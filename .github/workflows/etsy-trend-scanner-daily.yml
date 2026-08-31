@@ -1,0 +1,63 @@
+name: Etsy Trend Scanner — daily report
+
+on:
+  schedule:
+    # 06:00 UTC daily. The report is ready before the working day starts.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+# Snapshots are the tool's own history: each run commits one small JSON file,
+# and week-over-week momentum is only computable because yesterday's file is
+# already in the repo.
+permissions:
+  contents: write
+
+concurrency:
+  group: etsy-trend-scanner-daily
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: etsy-trend-scanner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      # Without the secret this still runs, on search demand and the seasonal
+      # calendar alone, and the report says so at the top.
+      - name: Scan and build the report
+        env:
+          ETSY_API_KEY: ${{ secrets.ETSY_API_KEY }}
+          ETSY_TRENDS_GEO: ${{ vars.ETSY_TRENDS_GEO || 'US' }}
+        run: npm run daily -- --quiet
+
+      - name: Commit today's snapshot and report
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data reports
+          if git diff --staged --quiet; then
+            echo "Nothing changed today."
+            exit 0
+          fi
+          git commit -m "Etsy trend report for $(date -u +%F)"
+          # Another run may have landed while this one was collecting.
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((2 ** attempt))
+          done
+          exit 1
+
+      - name: Publish the report as a run artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: etsy-listing-plan
+          path: etsy-trend-scanner/reports/latest.*
+          if-no-files-found: warn

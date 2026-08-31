@@ -1,0 +1,2 @@
+)]}',
+{"widgets":[{"request":{"comparisonItem":[{"geo":{"country":"US"},"complexKeywordsRestriction":{"keyword":[{"type":"BROAD","value":"whimsigothic"}]}}],"time":"2025-08-31 2026-08-31","resolution":"WEEK","requestOptions":{"property":"","backend":"IZG","category":0}},"token":"TOKEN_TIMESERIES","id":"TIMESERIES"},{"request":{"restriction":{"geo":{"country":"US"}},"keywordType":"QUERY","metric":["TOP","RISING"]},"token":"TOKEN_RELATED","id":"RELATED_QUERIES_0"},{"request":{},"token":"TOKEN_TOPICS","id":"RELATED_TOPICS_0"}]}

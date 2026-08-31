@@ -1,0 +1,224 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+import { DEFAULT_CONFIG } from '../src/config.js'
+import { writeDemoData } from '../src/demo.js'
+import { buildReport } from '../src/report/build.js'
+import { buildRecommendation, chooseForm, deadlineFor, suggestPrice } from '../src/report/recommend.js'
+import { renderMarkdown } from '../src/report/markdown.js'
+import { escapeHtml, renderHtml } from '../src/report/html.js'
+import { CLASSES } from '../src/analyze/score.js'
+
+const TODAY = new Date('2026-08-31T00:00:00Z')
+
+function withTempConfig(fn) {
+  const dir = mkdtempSync(join(tmpdir(), 'etsy-trends-report-'))
+  try {
+    return fn({
+      ...DEFAULT_CONFIG,
+      etsyApiKey: '',
+      dataDir: join(dir, 'data'),
+      reportDir: join(dir, 'reports'),
+    })
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+}
+
+test('chooseForm follows the keyword when it names a product', () => {
+  const profile = DEFAULT_CONFIG.profile
+  const necklace = chooseForm(
+    { term: 'personalised name necklace', detail: { digitalShare: 0.02, topTags: [] } },
+    profile,
+  )
+  assert.equal(necklace.form, 'jewellery piece')
+
+  const candle = chooseForm({ term: 'soy candle', detail: { digitalShare: 0.05, topTags: [] } }, profile)
+  assert.equal(candle.form, 'handmade candle')
+})
+
+test('chooseForm never proposes a format the shop cannot make', () => {
+  const digitalOnly = { ...DEFAULT_CONFIG.profile, formats: ['digital-download'] }
+  const form = chooseForm(
+    { term: 'personalised name necklace', detail: { digitalShare: 0.02, topTags: [] } },
+    digitalOnly,
+  )
+  assert.equal(form.format, 'digital-download')
+  assert.equal(chooseForm({ term: 'x', detail: {} }, { formats: [] }), null)
+})
+
+test('chooseForm defers to what the niche is actually selling', () => {
+  const profile = DEFAULT_CONFIG.profile
+  // No product word in the term, but the niche is overwhelmingly digital.
+  const form = chooseForm({ term: 'dark academia', detail: { digitalShare: 0.9, topTags: [] } }, profile)
+  assert.equal(form.format, 'digital-download')
+})
+
+test('suggestPrice aims high in a thin niche and low in a crowded one', () => {
+  const detail = { medianPrice: 24, priceBand: [14, 38] }
+  const thin = suggestPrice({ detail, parts: { competitionGap: 75 } }, null)
+  const crowded = suggestPrice({ detail, parts: { competitionGap: 20 } }, null)
+  assert.ok(thin.target > crowded.target)
+  assert.ok(thin.target > 24 && crowded.target < 24)
+  assert.match(String(thin.target), /\.99$/)
+})
+
+test('suggestPrice falls back to the product form when Etsy data is missing', () => {
+  const price = suggestPrice({ detail: {}, parts: {} }, { priceBand: [10, 30] })
+  assert.equal(price.source, 'form-default')
+  assert.equal(price.target, 20.99, 'midpoint of the band, charm-priced')
+  assert.equal(suggestPrice({ detail: {}, parts: {} }, null), null)
+})
+
+test('deadlineFor leaves work time before the list-by date', () => {
+  const deadline = deadlineFor(
+    {
+      classification: CLASSES.SEASONAL,
+      detail: { season: { listByDate: '2026-09-30', peakDate: '2026-11-14', event: 'Q4', missed: false } },
+    },
+    { effortDays: 3 },
+    { today: TODAY, profile: { leadTimeDays: 7 } },
+  )
+  assert.equal(deadline.liveBy, '2026-09-30')
+  assert.equal(deadline.startBy, '2026-09-20', '10 days of build and lead time')
+})
+
+test('deadlineFor gives an early trend a two-week race, and evergreens none', () => {
+  const early = deadlineFor({ classification: CLASSES.EARLY, detail: {} }, { effortDays: 2 }, { today: TODAY })
+  assert.equal(early.liveBy, '2026-09-14')
+  assert.equal(deadlineFor({ classification: CLASSES.STEADY, detail: {} }, {}, { today: TODAY }), null)
+})
+
+test('a missed seasonal window produces no deadline to chase', () => {
+  const deadline = deadlineFor(
+    {
+      classification: CLASSES.SEASONAL,
+      detail: { season: { listByDate: '2026-08-01', peakDate: '2026-09-14', missed: true } },
+    },
+    { effortDays: 2 },
+    { today: TODAY },
+  )
+  assert.equal(deadline, null)
+})
+
+test('a recommendation names a product, a price, tags and a title', () => {
+  const rec = buildRecommendation(
+    {
+      term: 'whimsigothic',
+      classification: CLASSES.EARLY,
+      opportunity: 80,
+      confidence: 'high',
+      parts: { competitionGap: 72 },
+      detail: {
+        digitalShare: 0.55,
+        personalisableShare: 0.1,
+        medianPrice: 24,
+        priceBand: [14, 38],
+        topTags: [{ tag: 'wavy mirror' }],
+        rising: { top: [{ query: 'whimsigothic mirror' }] },
+      },
+      evidence: [],
+    },
+    { config: DEFAULT_CONFIG, today: TODAY },
+  )
+
+  assert.equal(rec.action, 'List this week')
+  assert.ok(rec.product.form)
+  assert.ok(rec.price.target > 0)
+  assert.ok(rec.tags.includes('whimsigothic'))
+  assert.match(rec.title, /Whimsigothic/)
+  assert.ok(rec.deadline.startBy < rec.deadline.liveBy)
+})
+
+test('the full pipeline turns stored snapshots into a written report', () => {
+  withTempConfig((config) => {
+    const demoConfig = writeDemoData({ config, today: TODAY })
+    const result = buildReport({ config: demoConfig, today: TODAY })
+
+    assert.equal(result.model.date, '2026-08-31')
+    assert.ok(result.model.recommendations.length >= 8)
+
+    // The sample data is built to exercise every branch of the classifier.
+    const classes = new Set(result.model.recommendations.map((row) => row.classification))
+    for (const expected of [CLASSES.EARLY, CLASSES.SEASONAL, CLASSES.SATURATED]) {
+      assert.ok(classes.has(expected), `expected the sample to produce ${expected}`)
+    }
+
+    // Every section's rows are disjoint — nothing is recommended and warned against.
+    const seen = new Set()
+    for (const section of result.model.sections) {
+      for (const row of section.rows) {
+        assert.ok(!seen.has(row.term), `${row.term} appears in two sections`)
+        seen.add(row.term)
+      }
+    }
+
+    const markdown = readFileSync(result.paths.markdown, 'utf8')
+    assert.match(markdown, /^# Etsy listing plan — 2026-08-31/)
+    assert.match(markdown, /Today's call/)
+    assert.equal(readFileSync(result.paths.latestMarkdown, 'utf8'), markdown)
+
+    const html = readFileSync(result.paths.html, 'utf8')
+    assert.match(html, /<!doctype html>/)
+    assert.match(html, /prefers-color-scheme/)
+  })
+})
+
+test('reporting before any scan fails with an instruction, not a stack trace', () => {
+  withTempConfig((config) => {
+    assert.throws(() => buildReport({ config, today: TODAY }), /Run `npm run scan` first/)
+  })
+})
+
+test('the report says so plainly when nothing is worth listing', () => {
+  const empty = {
+    date: '2026-08-31',
+    generatedAt: '2026-08-31T00:00:00.000Z',
+    geo: 'US',
+    totalScanned: 0,
+    sections: [],
+    recommendations: [],
+  }
+  assert.match(renderMarkdown(empty), /Nothing is clearly worth listing today/)
+  assert.match(renderHtml(empty), /Nothing cleared the bar today/)
+})
+
+test('rendered output escapes untrusted keyword text', () => {
+  assert.equal(escapeHtml('<script>&"\''), '&lt;script&gt;&amp;&quot;&#39;')
+
+  // Keywords come from Google's rising-query feed, so they are not ours to trust.
+  const model = {
+    date: '2026-08-31',
+    generatedAt: '2026-08-31T00:00:00.000Z',
+    geo: 'US',
+    totalScanned: 1,
+    sections: [
+      {
+        id: 'list-next',
+        heading: 'List these next',
+        blurb: '',
+        rows: [
+          {
+            term: '<img src=x onerror=alert(1)>',
+            action: 'List this week',
+            classification: CLASSES.EARLY,
+            opportunity: 80,
+            confidence: 'high',
+            rationale: 'x',
+            parts: {},
+            tags: ['<b>'],
+            evidence: ['<i>'],
+          },
+        ],
+      },
+    ],
+    recommendations: [],
+  }
+
+  const html = renderHtml(model)
+  assert.ok(!html.includes('<img src=x'), 'raw markup must not reach the page')
+  assert.match(html, /&lt;img src=x/)
+})
