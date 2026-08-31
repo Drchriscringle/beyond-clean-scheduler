@@ -10,6 +10,7 @@ import { buildReport } from '../src/report/build.js'
 import {
   buildLongTail,
   buildRecommendation,
+  formatMismatch,
   ipWarningFor,
   chooseForm,
   deadlineFor,
@@ -36,7 +37,8 @@ function withTempConfig(fn) {
 }
 
 test('chooseForm follows the keyword when it names a product', () => {
-  const profile = DEFAULT_CONFIG.profile
+  // A shop that makes everything: the keyword decides.
+  const profile = { ...DEFAULT_CONFIG.profile, formats: ['digital-download', 'print-on-demand', 'handmade-physical'] }
   const necklace = chooseForm(
     { term: 'personalised name necklace', detail: { digitalShare: 0.02, topTags: [] } },
     profile,
@@ -45,6 +47,16 @@ test('chooseForm follows the keyword when it names a product', () => {
 
   const candle = chooseForm({ term: 'soy candle', detail: { digitalShare: 0.05, topTags: [] } }, profile)
   assert.equal(candle.form, 'handmade candle')
+})
+
+test('the default profile is digital-only, so every recommendation is a file', () => {
+  assert.deepEqual(DEFAULT_CONFIG.profile.formats, ['digital-download'])
+  // Even for a niche that screams physical product.
+  const form = chooseForm(
+    { term: 'personalised name necklace', detail: { digitalShare: 0.02, topTags: [] } },
+    DEFAULT_CONFIG.profile,
+  )
+  assert.equal(form.format, 'digital-download')
 })
 
 test('chooseForm never proposes a format the shop cannot make', () => {
@@ -62,6 +74,77 @@ test('chooseForm defers to what the niche is actually selling', () => {
   // No product word in the term, but the niche is overwhelmingly digital.
   const form = chooseForm({ term: 'dark academia', detail: { digitalShare: 0.9, topTags: [] } }, profile)
   assert.equal(form.format, 'digital-download')
+})
+
+test('chooseForm follows what people actually search for over the niche name', () => {
+  const digital = { ...DEFAULT_CONFIG.profile }
+  // Nothing in "sourdough gift" names a product, so without the probe this
+  // falls to the default digital form. The probe says people want tags.
+  const withoutProbe = chooseForm(
+    { term: 'sourdough gift', detail: { digitalShare: 0.5, topTags: [] } },
+    digital,
+  )
+  const withProbe = chooseForm(
+    {
+      term: 'sourdough gift',
+      detail: { digitalShare: 0.5, topTags: [] },
+      trending: { formatExamples: ['sourdough gift printable tags'] },
+    },
+    digital,
+  )
+
+  assert.notEqual(withProbe.form, withoutProbe.form)
+  assert.equal(withProbe.form, 'Canva editable template')
+})
+
+test('formatMismatch filters niches this shop cannot make', () => {
+  const digitalOnly = { formats: ['digital-download'] }
+
+  // Etsy says this niche sells objects, on a big enough sample to believe.
+  const physical = formatMismatch(
+    { detail: { digitalShare: 0.02, sampleSize: 100 } },
+    digitalOnly,
+  )
+  assert.ok(physical)
+  assert.match(physical.reason, /2% of listings here are digital/)
+  assert.equal(physical.source, 'etsy')
+
+  // Search intent says nobody wants this as a file.
+  const searchSide = formatMismatch(
+    { trending: { formatScore: 0 }, detail: {} },
+    digitalOnly,
+  )
+  assert.equal(searchSide.source, 'search')
+
+  // A genuinely digital niche passes.
+  assert.equal(formatMismatch({ detail: { digitalShare: 0.8, sampleSize: 100 } }, digitalOnly), null)
+
+  // A thin sample proves nothing either way — a brand-new trend must not be
+  // rejected for having eleven listings.
+  assert.equal(formatMismatch({ detail: { digitalShare: 0, sampleSize: 11 } }, digitalOnly), null)
+
+  // No configured formats means no filtering.
+  assert.equal(formatMismatch({ detail: { digitalShare: 0, sampleSize: 100 } }, { formats: [] }), null)
+})
+
+test('filtered niches are set aside and reported, not silently dropped', () => {
+  withTempConfig((config) => {
+    const demoConfig = writeDemoData({ config, today: TODAY })
+    const result = buildReport({ config: demoConfig, today: TODAY })
+
+    // The demo includes a jewellery niche, which a digital-only shop cannot make.
+    const filtered = result.model.filtered.map((row) => row.term)
+    assert.ok(filtered.includes('personalised name necklace'), filtered.join(', '))
+
+    // It is absent from every recommendation section...
+    const shown = result.model.sections.flatMap((section) => section.rows.map((row) => row.term))
+    assert.ok(!shown.includes('personalised name necklace'))
+
+    // ...but the reader is told why.
+    assert.match(result.markdown, /Filtered out — wrong format for this shop/)
+    assert.match(result.html, /Filtered out — wrong format for this shop/)
+    assert.match(result.markdown, /listings here are digital/)
+  })
 })
 
 test('suggestPrice aims high in a thin niche and low in a crowded one', () => {

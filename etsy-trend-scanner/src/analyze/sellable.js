@@ -12,9 +12,12 @@
  *                     the recognisable forms of unsellable news. Free, and it
  *                     removes most of the noise before anything is fetched.
  *   2. commerce probe the real test: ask autocomplete what people type after
- *                     "<term> gift", "<term> shirt", "<term> poster". If people
- *                     are shopping for a thing, those complete richly. If it is
- *                     a hurricane, they do not.
+ *                     the term plus the modifiers of the formats you actually
+ *                     sell — "<term> printable", "<term> svg" for a digital
+ *                     shop. If people are shopping for it in your format, those
+ *                     complete richly. If it is a hurricane, they do not; and if
+ *                     it only completes as ceramics, it is commercial but not
+ *                     relevant to you, which is a different rejection.
  *
  * The screen deliberately does NOT reject people, shows, films or characters.
  * Fandom drives an enormous share of Etsy demand, and cutting proper nouns
@@ -56,12 +59,82 @@ export const COMMERCE_WORDS = [
   'birthday', 'party', 'invitation', 'cake topper', 'wallpaper', 'tattoo', 'diy',
 ]
 
-/** Modifiers probed against autocomplete, best discriminators first. */
+/**
+ * Autocomplete modifiers, per sellable format, best discriminators first.
+ *
+ * These are what decide whether a trend is *relevant to you*. A trend can be
+ * thoroughly commercial and still be no use to a digital shop: people buy
+ * plenty of trending things that only exist as physical objects. Probing with
+ * the modifiers of the format you actually sell is what separates the two.
+ */
+export const FORMAT_PROBES = {
+  'digital-download': ['printable', 'svg', 'template', 'digital download', 'clipart', 'png'],
+  'print-on-demand': ['shirt', 'poster', 'sticker', 'mug'],
+  'handmade-physical': ['handmade', 'gift', 'decor', 'necklace'],
+}
+
+/**
+ * Words in a completion that place it in a format. A completion mentioning
+ * "svg" or "instant download" is someone shopping for a file; "handmade" or
+ * "ceramic" is someone shopping for an object.
+ */
+export const FORMAT_WORDS = {
+  'digital-download': [
+    'printable', 'printables', 'svg', 'png', 'pdf', 'template', 'templates', 'digital',
+    'download', 'downloads', 'clipart', 'clip art', 'cricut', 'silhouette', 'sublimation',
+    'procreate', 'canva', 'notion', 'pattern', 'patterns', 'editable', 'instant', 'bundle',
+    'font', 'vector', 'wallpaper', 'planner', 'worksheet', 'crochet', 'knitting', 'cross stitch',
+  ],
+  'print-on-demand': [
+    'shirt', 't shirt', 'tshirt', 'tee', 'hoodie', 'sweatshirt', 'poster', 'print', 'prints',
+    'sticker', 'stickers', 'mug', 'tote', 'pillow', 'canvas', 'framed',
+  ],
+  'handmade-physical': [
+    'handmade', 'ceramic', 'clay', 'wood', 'wooden', 'knitted', 'crocheted', 'embroidered',
+    'candle', 'soap', 'necklace', 'earrings', 'bracelet', 'ring', 'jewelry', 'jewellery',
+    'ornament', 'keychain', 'bouquet',
+  ],
+}
+
+/** General probe set, for callers that do not care which format they sell in. */
 export const COMMERCE_PROBES = ['gift', 'shirt', 'poster', 'decor']
 
-const COMMERCE_RE = new RegExp(
-  `\\b(${COMMERCE_WORDS.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`,
+function wordsToRegExp(words) {
+  return new RegExp(
+    `\\b(${words.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`,
+  )
+}
+
+const COMMERCE_RE = wordsToRegExp(COMMERCE_WORDS)
+
+const FORMAT_RE = Object.fromEntries(
+  Object.entries(FORMAT_WORDS).map(([format, words]) => [format, wordsToRegExp(words)]),
 )
+
+/**
+ * Probe modifiers for the formats this shop actually sells, de-duplicated.
+ *
+ * Interleaved across formats rather than concatenated, so a shop selling two
+ * formats tests both instead of spending its whole budget on the first.
+ */
+export function probesForFormats(formats = [], { max = 4 } = {}) {
+  const lists = formats.map((format) => FORMAT_PROBES[format]).filter(Boolean)
+  if (lists.length === 0) return COMMERCE_PROBES.slice(0, max)
+
+  const seen = new Set()
+  const out = []
+  const deepest = Math.max(...lists.map((list) => list.length))
+  for (let depth = 0; depth < deepest && out.length < max; depth += 1) {
+    for (const list of lists) {
+      if (out.length >= max) break
+      const probe = list[depth]
+      if (!probe || seen.has(probe)) continue
+      seen.add(probe)
+      out.push(probe)
+    }
+  }
+  return out
+}
 
 /**
  * Stage one. Free, and it removes most of a day's harvest.
@@ -128,6 +201,24 @@ export function scoreCompletions(term, completions = []) {
 }
 
 /**
+ * Split matching completions by the format they imply.
+ *
+ * A completion can land in more than one format — "trending poster print" is
+ * both a print-on-demand product and something you could sell as a printable —
+ * and that ambiguity is real, so it is preserved rather than resolved here.
+ */
+export function classifyCompletions(term, completions = []) {
+  const matched = scoreCompletions(term, completions)
+  const byFormat = Object.fromEntries(Object.keys(FORMAT_WORDS).map((format) => [format, []]))
+  for (const completion of matched) {
+    for (const [format, pattern] of Object.entries(FORMAT_RE)) {
+      if (pattern.test(completion)) byFormat[format].push(completion)
+    }
+  }
+  return { matched, byFormat }
+}
+
+/**
  * Stage two: probe autocomplete for commercial intent.
  *
  * Returns 0-100. Roughly: 0 means nobody shops for this, 60+ means there is an
@@ -137,25 +228,39 @@ export function scoreCompletions(term, completions = []) {
 export async function commercialProbe(
   suggestClient,
   term,
-  { probes = COMMERCE_PROBES, logger = () => {} } = {},
+  { formats = [], probes, maxProbes = 4, logger = () => {} } = {},
 ) {
+  const modifiers = probes ?? probesForFormats(formats, { max: maxProbes })
   const hits = []
+  const byFormat = Object.fromEntries(Object.keys(FORMAT_WORDS).map((format) => [format, 0]))
+  const examples = Object.fromEntries(Object.keys(FORMAT_WORDS).map((format) => [format, []]))
   let probed = 0
   let failures = 0
 
-  for (const modifier of probes) {
+  for (const modifier of modifiers) {
     try {
       const completions = await suggestClient.fetchVariant(`${term} ${modifier}`)
       probed += 1
-      const matched = scoreCompletions(term, completions)
-      if (matched.length) hits.push({ modifier, matched: matched.slice(0, 4) })
+      const classified = classifyCompletions(term, completions)
+      if (classified.matched.length) {
+        hits.push({ modifier, matched: classified.matched.slice(0, 4) })
+      }
+      for (const [format, rows] of Object.entries(classified.byFormat)) {
+        if (!rows.length) continue
+        byFormat[format] += 1
+        for (const row of rows.slice(0, 3)) {
+          if (examples[format].length < 4) examples[format].push(row)
+        }
+      }
     } catch (err) {
       failures += 1
       logger(`sellable: probe "${term} ${modifier}" failed — ${err.message}`)
     }
   }
 
-  if (probed === 0) return { score: null, hits: [], probed, failures }
+  if (probed === 0) {
+    return { score: null, formatScores: {}, hits: [], examples, probed, failures, modifiers }
+  }
 
   // Breadth (how many product categories complete at all) matters more than
   // depth in any one, because breadth is what separates a real merch market
@@ -164,7 +269,33 @@ export async function commercialProbe(
   const depth = Math.min(1, hits.reduce((sum, hit) => sum + hit.matched.length, 0) / (probed * 3))
   const score = Math.round(100 * (0.7 * breadth + 0.3 * depth))
 
-  return { score, hits, probed, failures }
+  const formatScores = Object.fromEntries(
+    Object.entries(byFormat).map(([format, count]) => [format, Math.round((count / probed) * 100)]),
+  )
+
+  return { score, formatScores, hits, examples, probed, failures, modifiers }
+}
+
+/**
+ * How relevant a screened trend is to the formats this shop sells.
+ *
+ * Returns the best-scoring sellable format and its score, so a digital-only
+ * shop can drop a trend that only completes as ceramics or jewellery however
+ * commercial it otherwise looks.
+ */
+export function formatRelevance(commerce, formats = []) {
+  const scores = commerce?.formatScores ?? {}
+  if (!formats.length || Object.keys(scores).length === 0) {
+    return { format: null, score: commerce?.score ?? null, relevant: true }
+  }
+  let best = null
+  for (const format of formats) {
+    const score = scores[format]
+    if (!Number.isFinite(score)) continue
+    if (!best || score > best.score) best = { format, score }
+  }
+  if (!best) return { format: null, score: null, relevant: true }
+  return { ...best, relevant: true }
 }
 
 /**
@@ -177,7 +308,13 @@ export async function commercialProbe(
 export async function screenCandidates(
   candidates,
   suggestClient,
-  { maxProbes = 25, minCommercialScore = 30, logger = () => {} } = {},
+  {
+    maxProbes = 25,
+    minCommercialScore = 30,
+    formats = [],
+    minFormatScore = 30,
+    logger = () => {},
+  } = {},
 ) {
   const shaped = candidates.map((candidate) => ({
     ...candidate,
@@ -193,27 +330,34 @@ export async function screenCandidates(
   const probeable = survivors.slice(0, maxProbes)
   const unprobed = survivors.slice(maxProbes)
 
-  const qualified = []
+  const probed = []
   for (const [index, row] of probeable.entries()) {
     logger(`[screen ${index + 1}/${probeable.length}] ${row.term}`)
     const commerce = suggestClient
-      ? await commercialProbe(suggestClient, row.term, { logger })
-      : { score: null, hits: [], probed: 0, failures: 0 }
+      ? await commercialProbe(suggestClient, row.term, { formats, logger })
+      : { score: null, formatScores: {}, hits: [], probed: 0, failures: 0 }
 
-    qualified.push({
-      ...row,
-      commerce,
-      // With no autocomplete available the shape screen is all we have, so a
-      // candidate is carried forward rather than silently dropped.
-      sellable: commerce.score === null ? true : commerce.score >= minCommercialScore,
-    })
+    const relevance = formatRelevance(commerce, formats)
+    // With no autocomplete available the shape screen is all we have, so a
+    // candidate is carried forward rather than silently dropped.
+    const sellable = commerce.score === null ? true : commerce.score >= minCommercialScore
+    // Relevance is a separate question from sellability: plenty of trends are
+    // thoroughly commercial and still no use to a shop that only sells files.
+    const relevant =
+      commerce.score === null || !formats.length
+        ? true
+        : Number.isFinite(relevance.score) && relevance.score >= minFormatScore
+
+    probed.push({ ...row, commerce, relevance, sellable, relevant })
   }
 
   return {
-    qualified: qualified
-      .filter((row) => row.sellable)
-      .sort((a, b) => (b.commerce.score ?? 0) - (a.commerce.score ?? 0)),
-    unsellable: qualified.filter((row) => !row.sellable),
+    qualified: probed
+      .filter((row) => row.sellable && row.relevant)
+      .sort((a, b) => (b.relevance.score ?? b.commerce.score ?? 0) - (a.relevance.score ?? a.commerce.score ?? 0)),
+    unsellable: probed.filter((row) => !row.sellable),
+    // Sellable, but not in a format this shop can make.
+    wrongFormat: probed.filter((row) => row.sellable && !row.relevant),
     rejected,
     unprobed,
   }

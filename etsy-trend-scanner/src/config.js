@@ -40,8 +40,11 @@ export const DEFAULT_CONFIG = {
   // How the seller actually works. The report only recommends product forms
   // this shop can realistically produce, and weights them by preference.
   profile: {
-    // Formats you can make, best first. Remove anything you will not do.
-    formats: ['digital-download', 'print-on-demand', 'handmade-physical'],
+    // Formats you can make, best first. Digital-only by default: files have no
+    // stock, no shipping and no lead time, which is what lets you act on a
+    // trend inside its window. Add 'print-on-demand' or 'handmade-physical'
+    // here if you sell those too — everything downstream follows this list.
+    formats: ['digital-download'],
     // Days between deciding to list and the listing being live and shippable.
     leadTimeDays: 7,
     // Listings need time to accumulate rank before a seasonal peak.
@@ -96,6 +99,14 @@ export const DEFAULT_CONFIG = {
     maxQualified: 15,
     // Commercial-intent score a trend must clear to count as sellable at all.
     minCommercialScore: 30,
+    // Formats the discovery probe tests for. Defaults to the seller profile
+    // above, so a digital shop is asked "<term> printable" and "<term> svg"
+    // rather than "<term> mug".
+    formats: null,
+    // A trend must score at least this in one of those formats to be relevant.
+    // Sellable-but-wrong-format is a separate rejection from unsellable, and
+    // both are reported.
+    minFormatScore: 30,
   },
 
   // The seed niches are now an optional watchlist, not the universe. Turn this

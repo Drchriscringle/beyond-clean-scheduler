@@ -15,8 +15,11 @@ import {
   wikipediaSpikes,
 } from '../src/sources/trending.js'
 import {
+  classifyCompletions,
   commercialProbe,
+  formatRelevance,
   intellectualPropertyRisk,
+  probesForFormats,
   screenByShape,
   screenCandidates,
   scoreCompletions,
@@ -287,6 +290,116 @@ test('screenCandidates spends its probe budget on the biggest trends first', asy
   )
   assert.equal(result.rejected.length, 1)
   assert.equal(result.unprobed.length, 1)
+})
+
+/* ---------------------------------------------------------------- *
+ * Format relevance — homing in on digital
+ * ---------------------------------------------------------------- */
+
+test('probesForFormats asks about the formats the shop actually sells', () => {
+  assert.deepEqual(probesForFormats(['digital-download'], { max: 3 }), ['printable', 'svg', 'template'])
+
+  // Two formats interleave, so neither is starved by the probe budget.
+  const both = probesForFormats(['digital-download', 'print-on-demand'], { max: 4 })
+  assert.deepEqual(both, ['printable', 'shirt', 'svg', 'poster'])
+
+  // Unknown or empty falls back to the general set rather than probing nothing.
+  assert.equal(probesForFormats([], { max: 2 }).length, 2)
+  assert.equal(probesForFormats(['nonsense'], { max: 2 }).length, 2)
+})
+
+test('classifyCompletions splits buying intent by the format it implies', () => {
+  const { byFormat } = classifyCompletions('hollowcrown', [
+    'hollowcrown printable wall art',
+    'hollowcrown svg bundle',
+    'hollowcrown ceramic mug',
+    'hollowcrown handmade necklace',
+    'hollowcrown release date', // no buying intent at all
+  ])
+
+  assert.equal(byFormat['digital-download'].length, 2)
+  assert.ok(byFormat['handmade-physical'].some((row) => row.includes('necklace')))
+  assert.ok(!byFormat['digital-download'].some((row) => row.includes('release date')))
+})
+
+test('commercialProbe reports intent per format, not just overall', async () => {
+  // Completes richly as physical goods, not at all as files.
+  const physicalOnly = {
+    async fetchVariant(query) {
+      const term = query.split(' ')[0]
+      return [`${term} handmade ceramic`, `${term} necklace gift`]
+    },
+  }
+
+  const result = await commercialProbe(physicalOnly, 'artisan', {
+    formats: ['digital-download', 'handmade-physical'],
+  })
+
+  assert.ok(result.score > 0, 'it is commercial')
+  assert.equal(result.formatScores['digital-download'], 0, 'but not as a digital product')
+  assert.ok(result.formatScores['handmade-physical'] > 0)
+})
+
+test('formatRelevance picks the best format the shop can actually make', () => {
+  const commerce = {
+    score: 80,
+    formatScores: { 'digital-download': 20, 'print-on-demand': 75, 'handmade-physical': 90 },
+  }
+  assert.equal(formatRelevance(commerce, ['digital-download']).score, 20)
+  assert.equal(formatRelevance(commerce, ['print-on-demand', 'digital-download']).format, 'print-on-demand')
+  // Nothing to filter on: pass through rather than inventing a verdict.
+  assert.equal(formatRelevance(commerce, []).score, 80)
+  assert.equal(formatRelevance({ score: null }, ['digital-download']).score, null)
+})
+
+test('a digital shop filters out trends that only sell as physical objects', async () => {
+  const suggest = {
+    async fetchVariant(query) {
+      // "porcelain" completes only as physical; "cottagecore" completes as files.
+      if (query.startsWith('porcelain')) {
+        return ['porcelain handmade vase', 'porcelain ceramic bowl gift']
+      }
+      return ['cottagecore printable wall art', 'cottagecore svg bundle', 'cottagecore png set']
+    },
+  }
+
+  const result = await screenCandidates(
+    [
+      { term: 'cottagecore', traffic: 5000 },
+      { term: 'porcelain', traffic: 6000 },
+    ],
+    suggest,
+    { formats: ['digital-download'], minFormatScore: 30 },
+  )
+
+  assert.deepEqual(
+    result.qualified.map((row) => row.term),
+    ['cottagecore'],
+  )
+  assert.deepEqual(
+    result.wrongFormat.map((row) => row.term),
+    ['porcelain'],
+    'commercial, but not as a file — a different rejection from unsellable',
+  )
+  assert.equal(result.unsellable.length, 0, 'porcelain is not unsellable, just irrelevant')
+  assert.equal(result.qualified[0].relevance.format, 'digital-download')
+})
+
+test('the same trend survives when the shop sells that format', async () => {
+  const suggest = {
+    async fetchVariant() {
+      return ['porcelain handmade vase', 'porcelain ceramic bowl gift']
+    },
+  }
+  const result = await screenCandidates([{ term: 'porcelain', traffic: 6000 }], suggest, {
+    formats: ['handmade-physical'],
+    minFormatScore: 30,
+  })
+  assert.deepEqual(
+    result.qualified.map((row) => row.term),
+    ['porcelain'],
+  )
+  assert.equal(result.wrongFormat.length, 0)
 })
 
 test('screenCandidates carries candidates forward when autocomplete is unavailable', async () => {

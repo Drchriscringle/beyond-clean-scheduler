@@ -139,7 +139,7 @@ export const PRODUCT_FORMS = [
     format: 'digital-download',
     effortDays: 1,
     priceBand: [5, 15],
-    affinity: /\b(planner|budget|meal|habit|tracker|organis|organiz|checklist)\w*/,
+    affinity: /\b(planner|budget|meal|habit|tracker|organis|organiz|checklist|recipe|journal)\w*/,
   },
   {
     form: 'digital clipart bundle',
@@ -160,7 +160,7 @@ export const PRODUCT_FORMS = [
     format: 'digital-download',
     effortDays: 2,
     priceBand: [10, 30],
-    affinity: /\b(template|invitation|invite|save the date|seating|menu|signage)\b/,
+    affinity: /\b(template|invitation|invite|save the date|seating|menu|signage|tag|tags|label|labels|card)\b/,
   },
   {
     form: 'PDF pattern',

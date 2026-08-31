@@ -217,6 +217,7 @@ export function scoreKeyword({
       medianPrice: etsy.medianPrice ?? null,
       priceBand: [etsy.p25Price ?? null, etsy.p75Price ?? null],
       digitalShare: etsy.digitalShare ?? null,
+      sampleSize: etsy.sampleSize ?? null,
       personalisableShare: etsy.personalisableShare ?? null,
       topTags: etsy.topTags ?? [],
       related: relatedRows,

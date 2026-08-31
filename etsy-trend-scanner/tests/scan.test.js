@@ -331,7 +331,7 @@ test('a day where nothing sellable trends says so instead of going quiet', async
 
     assert.equal(Object.keys(snapshot.keywords).length, 0)
     assert.equal(snapshot.discovery.qualified, 0)
-    assert.match(snapshot.notes.join(' '), /Nothing trending today survived the sellability screen/)
+    assert.match(snapshot.notes.join(' '), /Nothing trending today cleared the screen/)
   })
 })
 

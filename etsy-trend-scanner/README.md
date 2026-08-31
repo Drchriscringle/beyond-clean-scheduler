@@ -2,9 +2,10 @@
 
 A daily "what should I list on Etsy next" report.
 
-**The niche is an output, not an input.** Each morning it harvests what is
-actually trending from unseeded feeds — no keyword list is supplied — screens
-out the majority that cannot be sold, and only then measures **demand**,
+**Digital products by default, and the niche is an output, not an input.** Each
+morning it harvests what is actually trending from unseeded feeds — no keyword
+list is supplied — screens out the majority that cannot be sold *as files*, and
+only then measures **demand**,
 **related searches**, **supply** (how many sellers are already there and how
 fast that is growing) and **timing** (how long is left to rank for the next
 occasion). Then it tells you what to make, what to charge, what to tag it, and
@@ -13,6 +14,12 @@ by when.
 That ordering is the point. A scanner seeded with a keyword list can only ever
 find trends adjacent to the list, so it structurally cannot see the thing nobody
 thought to watch for.
+
+Everything is filtered to what a digital shop can actually make — printables,
+SVGs, templates, clipart, patterns. Files have no stock, no shipping and no
+lead time, which is what lets you act on a trend inside its window at all. If
+you also sell physical goods, add them to `profile.formats` and the whole
+pipeline follows.
 
 The distinction the whole tool is built around:
 
@@ -110,16 +117,31 @@ of them is a product. A discovery scanner without a screen is a news reader.
    against the recognisable forms of unsellable news. The headlines carry most
    of the signal: the bare term "Cardinals" is a bird, a ball club or a
    conclave, and only the headline says which.
-2. **Commerce probe** — the real test. Asks autocomplete what people type after
-   `"<term> gift"`, `"<term> shirt"`, `"<term> poster"`, `"<term> decor"`. If
-   people are shopping for a thing, those complete richly with buying words. If
-   it is a hurricane, they do not. Breadth across product categories counts for
-   more than depth in any one, because breadth is what separates a real
-   merchandise market from a single coincidental phrase.
+2. **Commerce probe** — the real test, and it asks about *your* format. A
+   digital shop probes `"<term> printable"`, `"<term> svg"`, `"<term> template"`,
+   `"<term> digital download"`. If people are shopping for it as a file, those
+   complete richly. If it is a hurricane, nothing completes; and if it only
+   completes as ceramics and jewellery, it is commercial but not relevant to
+   you — which is recorded as a different rejection, not thrown in with the
+   news. Breadth across product categories counts for more than depth in any
+   one, because breadth is what separates a real market from a single
+   coincidental phrase.
 
 The probe budget goes to the highest-traffic survivors first. Every report opens
-with the funnel — harvested, not a product, no buying intent, worth scanning —
-so a quiet day explains itself rather than just showing an empty page.
+with the funnel — harvested, not a product, no buying intent, wrong format,
+worth scanning — so a quiet day explains itself rather than just showing an
+empty page.
+
+### And a second format check, from Etsy itself
+
+Search intent is one reading; what is actually selling is another. A niche whose
+live Etsy listings are 98% physical is telling you buyers there want an object,
+not a file, however the autocomplete looked. Those are set aside into a
+**Filtered out — wrong format** section with the reason, never dropped silently.
+
+That check needs a decent sample before it means anything: a brand-new trend
+with eleven listings says nothing about format either way, and rejecting it on
+that basis would throw away the freshest finds. Below 25 listings it abstains.
 
 The seed list still exists as an **optional watchlist**, off by default. Turn on
 `watchlist.enabled` to keep a fixed set of terms in every scan alongside
@@ -186,6 +208,10 @@ Five components, each scored 0-100, combined with the weights in `config.js`
 - **seasonalFit** — how close today is to the last date you could list and still
   rank for the next relevant occasion.
 
+The product form is chosen from the completions the discovery probe found, not
+from the niche name: if people search "sourdough gift printable tags", the
+recommendation is a template, not the default wall-art print.
+
 A component that is missing is dropped and the remaining weights renormalised,
 so an absent signal lowers the stated confidence instead of silently scoring
 zero. A niche with no upcoming occasion has no `seasonalFit` at all — that is
@@ -239,6 +265,11 @@ Worth being straight about, because plenty of tools in this space are not:
 - **Nothing here scrapes etsy.com.** Everything comes from the documented Open
   API v3 with an application key, which is both more reliable and within Etsy's
   terms.
+- **Format screening is two heuristics, not a guarantee.** The search-intent
+  probe can miss a niche that people buy as files without using file words, and
+  the Etsy digital-share check is a sample of 100 listings, not a census.
+  `node src/cli.js trending --all` shows every rejection with its reason.
+
 - **Most of what trends cannot be sold, and the screen is a heuristic.** It will
   occasionally reject something sellable (a craft term that shares a word with a
   news story) and occasionally pass something that is not. `node src/cli.js
@@ -276,6 +307,6 @@ tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 125 tests, all offline
+npm test     # 135 tests, all offline
 npm run lint
 ```

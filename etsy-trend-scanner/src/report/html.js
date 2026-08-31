@@ -126,9 +126,30 @@ function renderDiscovery(discovery) {
       <div><strong>${discovery.harvested}</strong><span>terms trending</span></div>
       <div><strong>${discovery.rejectedByShape}</strong><span>not a product</span></div>
       <div><strong>${discovery.rejectedAsUnsellable}</strong><span>no buying intent</span></div>
+      ${
+        discovery.rejectedWrongFormat
+          ? `<div><strong>${discovery.rejectedWrongFormat}</strong><span>wrong format</span></div>`
+          : ''
+      }
       <div><strong>${discovery.qualified}</strong><span>worth scanning</span></div>
     </div>
     ${reasons ? `<p class="blurb">Thrown out as: ${reasons}</p>` : ''}</section>`
+}
+
+/** What was set aside as the wrong format, so the filtering is never silent. */
+function renderFiltered(filtered = [], formats = []) {
+  if (!filtered.length) return ''
+  return `<section><h2>Filtered out — wrong format for this shop</h2>
+    <p class="blurb">Trending and commercial, but not sellable as ${escapeHtml(
+      formats.join(' or '),
+    )}. Change <code>profile.formats</code> in the config if you do make these.</p>
+    <ul class="avoid">${filtered
+      .slice(0, 10)
+      .map(
+        (row) =>
+          `<li><strong>${escapeHtml(row.term)}</strong> — ${escapeHtml(row.formatMismatch.reason)}</li>`,
+      )
+      .join('')}</ul></section>`
 }
 
 function renderCard(row) {
@@ -298,9 +319,9 @@ footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:v
         } worth acting on.`
       : 'Nothing cleared the bar today. That is a normal result on a quiet week.'
   }</p>
-  <p class="meta">${model.totalScanned} keywords scanned · market ${escapeHtml(model.geo)} · generated ${escapeHtml(
-    model.generatedAt,
-  )}</p>
+  <p class="meta">${model.totalScanned} trends scanned · market ${escapeHtml(model.geo)}${
+    model.formats?.length ? ` · ${escapeHtml(model.formats.join(', '))} only` : ''
+  } · generated ${escapeHtml(model.generatedAt)}</p>
   ${notes.map((note) => `<p class="note">${escapeHtml(note)}</p>`).join('')}
   ${
     hasRelated
@@ -312,6 +333,7 @@ footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:v
 </header>
 ${renderDiscovery(model.discovery)}
 ${sections}
+${renderFiltered(model.filtered, model.formats)}
 ${renderLongTail(model.longTail)}
 <footer>Scores are relative rankings built from public search-interest data and Etsy listing supply.
 Etsy publishes no public sales or view counts, so nothing here is a sales forecast.</footer>

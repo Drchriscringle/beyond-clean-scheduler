@@ -97,9 +97,15 @@ export async function buildScanUniverse({
     const harvest = await trending.collect(today)
     const candidates = harvest.candidates.slice(0, settings.maxCandidates ?? 60)
 
+    // The probe asks about the formats this shop actually sells, so a digital
+    // shop is never handed a trend that only exists as a physical object.
+    const formats = settings.formats ?? config.profile?.formats ?? []
+
     const screened = await screenCandidates(candidates, suggestClient, {
       maxProbes: settings.maxCommercialProbes ?? 25,
       minCommercialScore: settings.minCommercialScore ?? 30,
+      minFormatScore: settings.minFormatScore ?? 30,
+      formats,
       logger,
     })
 
@@ -119,6 +125,9 @@ export async function buildScanUniverse({
           headlines: (row.headlines ?? []).slice(0, 3),
           commerceScore: row.commerce?.score ?? null,
           commerceHits: (row.commerce?.hits ?? []).map((hit) => hit.modifier),
+          format: row.relevance?.format ?? null,
+          formatScore: row.relevance?.score ?? null,
+          formatExamples: row.commerce?.examples?.[row.relevance?.format] ?? [],
           ipRisk: row.ip?.risk ?? 'low',
           ipReason: row.ip?.reason ?? null,
         },
@@ -131,6 +140,9 @@ export async function buildScanUniverse({
       qualified: qualified.length,
       rejectedByShape: screened.rejected.length,
       rejectedAsUnsellable: screened.unsellable.length,
+      rejectedWrongFormat: screened.wrongFormat.length,
+      wrongFormatExamples: screened.wrongFormat.slice(0, 5).map((row) => row.term),
+      formats,
       notProbed: screened.unprobed.length,
       // Kept so the report can say *why* a day was quiet, rather than just
       // showing an empty page.
@@ -328,9 +340,19 @@ export async function runScan({
     notes.push(`Trend discovery: ${error}`)
   }
   if (discovery && discovery.qualified === 0) {
+    const wrongFormat = discovery.rejectedWrongFormat
+      ? ` ${discovery.rejectedWrongFormat} were sellable but not as ${(discovery.formats ?? []).join(' or ')}.`
+      : ''
     notes.push(
-      `Nothing trending today survived the sellability screen — ${discovery.harvested} terms harvested, ` +
-        'all of them news, sport, weather or otherwise not a product. That is a normal result on a heavy news day.',
+      `Nothing trending today cleared the screen — ${discovery.harvested} terms harvested, ` +
+        `most of them news, sport, weather or otherwise not a product.${wrongFormat} ` +
+        'That is a normal result on a heavy news day.',
+    )
+  } else if (discovery?.rejectedWrongFormat > 0) {
+    notes.push(
+      `${discovery.rejectedWrongFormat} trending terms were commercial but not sellable as ` +
+        `${(discovery.formats ?? []).join(' or ')}, so they were filtered out` +
+        `${discovery.wrongFormatExamples?.length ? ` (${discovery.wrongFormatExamples.join(', ')})` : ''}.`,
     )
   }
 
