@@ -20,6 +20,7 @@ import {
   supplyMomentum,
 } from './momentum.js'
 import { describeRelated, mergeRelated } from './related.js'
+import { isFlickering, persistenceVerdict } from './persistence.js'
 import { normalisedWeights } from '../config.js'
 import { seasonalFit } from '../seasonal.js'
 
@@ -67,14 +68,18 @@ export function demandPositionScore(momentum) {
  * unseeded trending feed is treated as direct evidence of momentum, and the
  * higher of the two readings wins.
  */
-export function trendingMomentum(trending) {
+export function trendingMomentum(trending, persistence = null) {
   if (!trending) return null
   // Being on the list at all is the signal; the traffic band refines it.
   const traffic = trending.traffic
   const bump = Number.isFinite(traffic) ? clamp(Math.log10(Math.max(traffic, 1000)) * 6 - 18, 0, 25) : 0
   // Search and encyclopedia traffic are independent; agreement means more.
   const confirm = (trending.sources?.length ?? 1) > 1 ? 10 : 0
-  return Math.round(clamp(70 + bump + confirm))
+  // Persistence adds; it never subtracts. A first-day trend is the most
+  // valuable thing this tool can find and must not be scored down for being
+  // new — it is marked unproven in the evidence instead.
+  const staying = persistence?.sustained ? 8 : persistence?.proven ? 4 : 0
+  return Math.round(clamp(70 + bump + confirm + staying))
 }
 
 /** Median price mapped to 0..100 — higher-ticket niches carry fee overhead better. */
@@ -111,6 +116,7 @@ export function scoreKeyword({
   suggest = {},
   related,
   trending = null,
+  persistence = null,
   history = [],
   config = {},
   today = new Date(),
@@ -148,7 +154,7 @@ export function scoreKeyword({
     momentum.score === null
       ? rising.score || null
       : Math.round(clamp(momentum.score * 0.75 + rising.score * 0.25))
-  const trendingScore = trendingMomentum(trending)
+  const trendingScore = trendingMomentum(trending, persistence)
   const momentumScore =
     trendingScore === null ? seriesScore : Math.max(seriesScore ?? 0, trendingScore)
 
@@ -180,12 +186,17 @@ export function scoreKeyword({
 
   const opportunity = weightUsed > 0 ? Math.round(weighted / weightUsed) : null
 
-  const confidence =
+  let confidence =
     weightUsed >= 0.8 && momentum.confidence === 'high'
       ? 'high'
       : weightUsed >= 0.5
         ? 'medium'
         : 'low'
+  // A term whose whole case rests on one day's trending feed cannot be high
+  // confidence, however rich the rest of the data is.
+  if (trending && persistence && !persistence.proven && confidence === 'high') {
+    confidence = 'medium'
+  }
 
   return {
     term,
@@ -194,6 +205,7 @@ export function scoreKeyword({
     confidence,
     classification: classify({ parts, momentum, rising, season, supply, etsy }),
     trending,
+    persistence,
     parts,
     missing,
     evidence: buildEvidence({
@@ -205,6 +217,7 @@ export function scoreKeyword({
       parts,
       related: relatedRows,
       trending,
+      persistence,
     }),
     related: relatedRows,
     detail: {
@@ -224,6 +237,7 @@ export function scoreKeyword({
       topTags: etsy.topTags ?? [],
       related: relatedRows,
       trending,
+      persistence,
       historyDays: history.length,
     },
   }
@@ -276,6 +290,7 @@ export function buildEvidence({
   parts,
   related = [],
   trending = null,
+  persistence = null,
 }) {
   const lines = []
 
@@ -290,6 +305,13 @@ export function buildEvidence({
     lines.push(`Trending today${volume}${feeds ? ` — picked up by ${feeds}` : ''}`)
     if (trending.headlines?.length) {
       lines.push(`What is driving it: "${trending.headlines[0]}"`)
+    }
+    const verdict = persistenceVerdict(persistence)
+    if (verdict) lines.push(verdict.note)
+    if (isFlickering(persistence)) {
+      lines.push(
+        'It has come and gone rather than built steadily — usually an episodic trend (a weekly release, a recurring event) rather than one growing',
+      )
     }
     if (Number.isFinite(trending.commerceScore)) {
       const forms = (trending.commerceHits ?? []).join(', ')

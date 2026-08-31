@@ -95,7 +95,7 @@ function renderLongTail(rows = []) {
 }
 
 /** Why this term is in the report at all — the provenance of a discovered trend. */
-function renderTrendingWhy(trending) {
+function renderTrendingWhy(trending, verdict, persistence) {
   if (!trending) return ''
   const feeds = (trending.sources ?? [])
     .map((source) => (source === 'wikipedia' ? 'Wikipedia spike' : 'Google trending'))
@@ -104,9 +104,14 @@ function renderTrendingWhy(trending) {
     ? `${trending.traffic.toLocaleString('en-US')}+ searches today`
     : 'trending today'
   const headline = trending.headlines?.[0]
+  const age = verdict
+    ? ` <span class="age age-${escapeHtml(verdict.label)}" title="${escapeHtml(verdict.note)}">${escapeHtml(
+        verdict.label,
+      )}${persistence?.appearances > 1 ? ` · ${persistence.appearances} scans` : ' · day one'}</span>`
+    : ''
   return `<p class="why"><strong>Why this is here:</strong> ${escapeHtml(volume)}${
     feeds ? ` <span class="muted">(${escapeHtml(feeds)})</span>` : ''
-  }${headline ? `<br><span class="muted">“${escapeHtml(headline)}”</span>` : ''}</p>`
+  }${age}${headline ? `<br><span class="muted">“${escapeHtml(headline)}”</span>` : ''}</p>`
 }
 
 function renderIpWarning(warning) {
@@ -175,7 +180,7 @@ function renderCard(row) {
       ${row.product ? `<span class="badge subtle">${escapeHtml(row.product.format)}</span>` : ''}
     </p>
     <p class="rationale">${escapeHtml(row.rationale)}</p>
-    ${renderTrendingWhy(row.trending)}
+    ${renderTrendingWhy(row.trending, row.persistenceVerdict, row.persistence)}
     ${renderIpWarning(row.ipWarning)}
     ${
       row.product
@@ -283,6 +288,10 @@ border-top:3px solid var(--steady)}
 .tags{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px}
 .tags code{font-size:.72rem;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
 .why{margin:0 0 10px;padding:8px 11px;background:var(--bg);border-radius:8px;font-size:.83rem}
+.age{display:inline-block;font-size:.7rem;border:1px solid var(--line);border-radius:999px;
+padding:1px 7px;margin-left:2px;color:var(--muted);white-space:nowrap}
+.age-sustained{border-color:var(--early);color:var(--early)}
+.age-unproven{border-color:var(--hot);color:var(--hot)}
 .warn{margin:0 0 10px;padding:8px 11px;border-radius:8px;font-size:.83rem;
 background:var(--bg);border:1px solid var(--avoid);color:var(--ink)}
 .warn strong{color:var(--avoid)}

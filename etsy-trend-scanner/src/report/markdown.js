@@ -48,7 +48,12 @@ function renderRow(row, index) {
     const volume = Number.isFinite(row.trending.traffic)
       ? `${row.trending.traffic.toLocaleString('en-US')}+ searches today`
       : 'trending today'
-    lines.push(`> **Why this is here:** ${volume}${feeds ? ` (${feeds})` : ''}.` +
+    const age = row.persistenceVerdict
+      ? ` _(${row.persistenceVerdict.label}${
+          row.persistence?.appearances > 1 ? `, ${row.persistence.appearances} scans` : ', day one'
+        })_`
+      : ''
+    lines.push(`> **Why this is here:** ${volume}${feeds ? ` (${feeds})` : ''}${age}.` +
       (row.trending.headlines?.[0] ? ` "${row.trending.headlines[0]}"` : ''))
     lines.push('')
   }

@@ -15,7 +15,7 @@ _Rising demand, competition still catchable, and makeable in a format this shop 
 
 Climbing fast and still thin on competition — this is the window where a new listing can rank.
 
-> **Why this is here:** 20,000+ searches today (Google trending). "The whimsigothic revival is everywhere this autumn"
+> **Why this is here:** 20,000+ searches today (Google trending) _(sustained, 31 scans)_. "The whimsigothic revival is everywhere this autumn"
 
 - **Make:** whimsigothic printable wall art set _(digital-download, ~1d)_
 - **Price:** £31.99 — market £14.00–£38.00
@@ -29,6 +29,7 @@ Climbing fast and still thin on competition — this is the window where a new l
 
 - Trending today on 20,000+ searches — picked up by Google trending searches
 - What is driving it: "The whimsigothic revival is everywhere this autumn"
+- Trending 31 scans running since 2026-08-01 — this one has legs
 - Commercial intent 82/100 — people are searching for printable, svg, template around this
 - Search interest +242% over the last 4 weeks vs the prior 12
 - Sitting at 86% of its own 12-month search peak
@@ -42,11 +43,11 @@ Climbing fast and still thin on competition — this is the window where a new l
 
 ### 2. hollowcrown
 
-**List this week** · Starting to trend · opportunity 76/100 · confidence high
+**List this week** · Starting to trend · opportunity 76/100 · confidence medium
 
 Climbing fast and still thin on competition — this is the window where a new listing can rank.
 
-> **Why this is here:** 200,000+ searches today (Wikipedia spike + Google trending). "Hollowcrown becomes the most-streamed show of the month"
+> **Why this is here:** 200,000+ searches today (Wikipedia spike + Google trending) _(unproven, day one)_. "Hollowcrown becomes the most-streamed show of the month"
 
 > [!WARNING]
 > **Trademark risk (high).** Likely someone else's trademark or copyright — it reads as a name, title or brand. Selling merchandise of a protected work without a licence gets listings removed and shops suspended. Sell the style, the aesthetic or the generic subject around it, not the named thing itself.
@@ -63,6 +64,7 @@ Climbing fast and still thin on competition — this is the window where a new l
 
 - Trending today on 200,000+ searches — picked up by Wikipedia pageview spike and Google trending searches
 - What is driving it: "Hollowcrown becomes the most-streamed show of the month"
+- First seen trending today — could be a real trend starting or a one-day news blip, and there is no way to tell yet
 - Commercial intent 91/100 — people are searching for printable, svg, template, png around this
 - Search interest +926% over the last 4 weeks vs the prior 12
 - Sitting at 53% of its own 12-month search peak
@@ -76,11 +78,11 @@ Climbing fast and still thin on competition — this is the window where a new l
 
 ### 3. sourdough gift
 
-**List now, differentiate hard** · Trending now · opportunity 73/100 · confidence high
+**List now, differentiate hard** · Trending now · opportunity 76/100 · confidence high
 
 Demand is at its peak but so is competition — only worth it with a distinct angle.
 
-> **Why this is here:** 50,000+ searches today (Google trending + Wikipedia spike). "Why everyone is baking sourdough again"
+> **Why this is here:** 50,000+ searches today (Google trending + Wikipedia spike) _(sustained, 31 scans)_. "Why everyone is baking sourdough again"
 
 - **Make:** sourdough gift ceramic mug _(print-on-demand, ~2d)_
 - **Price:** £23.99 — market £18.00–£45.00
@@ -93,6 +95,7 @@ Demand is at its peak but so is competition — only worth it with a distinct an
 
 - Trending today on 50,000+ searches — picked up by Google trending searches and Wikipedia pageview spike
 - What is driving it: "Why everyone is baking sourdough again"
+- Trending 31 scans running since 2026-08-01 — this one has legs
 - Commercial intent 74/100 — people are searching for printable, template around this
 - Search interest +42% over the last 4 weeks vs the prior 12
 - Sitting at 90% of its own 12-month search peak
@@ -215,4 +218,4 @@ _Phrases people search that came back thin on Etsy. Not niches to build a shop a
 
 ---
 
-Generated 2026-08-31T20:37:16.127Z · scores are relative rankings from public search interest and Etsy listing supply, not sales data. Etsy publishes no public sales or view counts.
+Generated 2026-08-31T20:42:32.558Z · scores are relative rankings from public search interest and Etsy listing supply, not sales data. Etsy publishes no public sales or view counts.
