@@ -11,7 +11,7 @@ import { suggestTags, suggestTitle } from '../analyze/tags.js'
 import { CLASSES, competitionScore } from '../analyze/score.js'
 import { persistenceVerdict } from '../analyze/persistence.js'
 import { annotateBacklog, backlogLabel } from '../analyze/backlog.js'
-import { addDays, toISODate } from '../seasonal.js'
+import { addDays, daysBetween, toISODate } from '../seasonal.js'
 
 const ACTION_BY_CLASS = {
   [CLASSES.EARLY]: {
@@ -384,11 +384,21 @@ export function buildReportModel(
     return { ...section, rows }
   })
 
+  // A standing item whose work must start today is news even though the term
+  // is not. Without this, "only tell me when something is new" would let a
+  // seasonal deadline pass in silence — the one failure the whole list-by
+  // model exists to prevent.
+  const urgent = sections
+    .flatMap((section) => section.rows)
+    .filter((row) => row.deadline && daysBetween(date, row.deadline.startBy) <= 1)
+
   return {
     date,
     generatedAt: new Date().toISOString(),
     newCount: backlog.newCount,
     standingCount: backlog.standingCount,
+    urgentCount: urgent.length,
+    urgentTerms: urgent.map((row) => row.term),
     geo: config.geo ?? 'US',
     totalScanned: scoredRows.length,
     formats: config.profile?.formats ?? [],

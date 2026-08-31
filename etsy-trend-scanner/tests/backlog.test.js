@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -8,7 +8,7 @@ import { annotateBacklog, backlogAge, backlogLabel } from '../src/analyze/backlo
 import { SnapshotStore } from '../src/store.js'
 import { DEFAULT_CONFIG } from '../src/config.js'
 import { writeDemoData } from '../src/demo.js'
-import { buildReport } from '../src/report/build.js'
+import { buildReport, summarise } from '../src/report/build.js'
 import { listPhrase } from '../src/report/markdown.js'
 
 const LOG = {
@@ -119,6 +119,74 @@ test('a second report on a later day reports the carry-over, not a fresh list', 
     // it stop being the best thing to list.
     const shown = second.model.sections.flatMap((s) => s.rows.map((r) => r.term))
     assert.ok(shown.includes('whimsigothic'))
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a quiet day is not worth a notification; a new trend is', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'etsy-trends-notify-'))
+  try {
+    const config = {
+      ...DEFAULT_CONFIG,
+      etsyApiKey: '',
+      dataDir: join(dir, 'data'),
+      reportDir: join(dir, 'reports'),
+    }
+    const demo = writeDemoData({ config, today: new Date('2026-08-31T00:00:00Z') })
+
+    const first = buildReport({ config: demo, today: new Date('2026-08-31T00:00:00Z') })
+    assert.equal(summarise(first.model).worthNotifying, true, 'new trends are worth a ping')
+
+    const second = buildReport({ config: demo, today: new Date('2026-09-01T00:00:00Z') })
+    const summary = summarise(second.model)
+    assert.equal(summary.newCount, 0)
+    assert.equal(summary.worthNotifying, false, 'the same list again is not')
+
+    // The summary is written beside the report for a scheduler to read.
+    const onDisk = JSON.parse(readFileSync(second.paths.summary, 'utf8'))
+    assert.equal(onDisk.worthNotifying, false)
+    assert.equal(onDisk.date, '2026-09-01')
+    assert.ok(onDisk.topPick.term)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a deadline falling due is news even when nothing is new', () => {
+  // The failure the list-by model exists to prevent: a standing item whose
+  // work must start today passing in silence because the term is not new.
+  const model = {
+    date: '2026-09-01',
+    newCount: 0,
+    standingCount: 4,
+    urgentCount: 1,
+    urgentTerms: ['christmas gift'],
+    sections: [{ rows: [{ term: 'christmas gift', action: 'List before the deadline' }] }],
+  }
+  const summary = summarise(model)
+  assert.equal(summary.worthNotifying, true)
+  assert.deepEqual(summary.urgentTerms, ['christmas gift'])
+})
+
+test('urgency counts only deadlines that are actually imminent', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'etsy-trends-urgent-'))
+  try {
+    const config = {
+      ...DEFAULT_CONFIG,
+      etsyApiKey: '',
+      dataDir: join(dir, 'data'),
+      reportDir: join(dir, 'reports'),
+    }
+    const demo = writeDemoData({ config, today: new Date('2026-08-31T00:00:00Z') })
+    const { model } = buildReport({ config: demo, today: new Date('2026-08-31T00:00:00Z') })
+
+    // Every urgent term must genuinely have a start date of today or tomorrow.
+    for (const term of model.urgentTerms) {
+      const row = model.sections.flatMap((s) => s.rows).find((r) => r.term === term)
+      assert.ok(row.deadline, `${term} was called urgent without a deadline`)
+      assert.ok(row.deadline.startBy <= '2026-09-01', `${term} is not actually imminent`)
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
