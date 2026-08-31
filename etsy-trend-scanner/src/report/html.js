@@ -111,7 +111,11 @@ function renderTrendingWhy(trending, verdict, persistence) {
     : ''
   return `<p class="why"><strong>Why this is here:</strong> ${escapeHtml(volume)}${
     feeds ? ` <span class="muted">(${escapeHtml(feeds)})</span>` : ''
-  }${age}${headline ? `<br><span class="muted">“${escapeHtml(headline)}”</span>` : ''}</p>`
+  }${age}${headline ? `<br><span class="muted">“${escapeHtml(headline)}”</span>` : ''}${
+    trending.aliases?.length
+      ? `<br><span class="muted">Also trending as: ${escapeHtml(trending.aliases.slice(0, 3).join(', '))}</span>`
+      : ''
+  }</p>`
 }
 
 function renderIpWarning(warning) {
@@ -133,6 +137,11 @@ function renderDiscovery(discovery) {
     returned, and what survived the screen for things that can actually be sold.</p>
     <div class="stats">
       <div><strong>${discovery.harvested}</strong><span>terms trending</span></div>
+      ${
+        discovery.mergedAsDuplicates
+          ? `<div><strong>${discovery.mergedAsDuplicates}</strong><span>same trend, renamed</span></div>`
+          : ''
+      }
       <div><strong>${discovery.rejectedByShape}</strong><span>not a product</span></div>
       <div><strong>${discovery.rejectedAsUnsellable}</strong><span>no buying intent</span></div>
       ${

@@ -53,8 +53,11 @@ function renderRow(row, index) {
           row.persistence?.appearances > 1 ? `, ${row.persistence.appearances} scans` : ', day one'
         })_`
       : ''
+    const aliases = row.trending.aliases?.length
+      ? ` Also trending as: ${row.trending.aliases.slice(0, 3).join(', ')}.`
+      : ''
     lines.push(`> **Why this is here:** ${volume}${feeds ? ` (${feeds})` : ''}${age}.` +
-      (row.trending.headlines?.[0] ? ` "${row.trending.headlines[0]}"` : ''))
+      (row.trending.headlines?.[0] ? ` "${row.trending.headlines[0]}"` : '') + aliases)
     lines.push('')
   }
 

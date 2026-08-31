@@ -27,6 +27,7 @@ import { activeSeasonalThemes, toISODate } from './seasonal.js'
 import { buildKeywordUniverse, isUsableTerm, normaliseTerm } from './keywords.js'
 import { longTailCandidates, mergeRelated } from './analyze/related.js'
 import { screenCandidates } from './analyze/sellable.js'
+import { clusterCandidates } from './analyze/cluster.js'
 import { SnapshotStore } from './store.js'
 
 /**
@@ -95,7 +96,12 @@ export async function buildScanUniverse({
 
     logger('discovering what is trending...')
     const harvest = await trending.collect(today)
-    const candidates = harvest.candidates.slice(0, settings.maxCandidates ?? 60)
+
+    // One trend often arrives under several names, and the two feeds disagree
+    // about naming by construction. Collapsing them before screening keeps the
+    // probe budget from being spent restating the same trend.
+    const clustered = clusterCandidates(harvest.candidates)
+    const candidates = clustered.slice(0, settings.maxCandidates ?? 60)
 
     // The probe asks about the formats this shop actually sells, so a digital
     // shop is never handed a trend that only exists as a physical object.
@@ -130,12 +136,15 @@ export async function buildScanUniverse({
           formatExamples: row.commerce?.examples?.[row.relevance?.format] ?? [],
           ipRisk: row.ip?.risk ?? 'low',
           ipReason: row.ip?.reason ?? null,
+          aliases: row.aliases ?? [],
         },
       })
     }
 
     discovery = {
       harvested: harvest.candidates.length,
+      clustered: clustered.length,
+      mergedAsDuplicates: harvest.candidates.length - clustered.length,
       screened: candidates.length,
       qualified: qualified.length,
       rejectedByShape: screened.rejected.length,

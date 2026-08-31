@@ -218,4 +218,4 @@ _Phrases people search that came back thin on Etsy. Not niches to build a shop a
 
 ---
 
-Generated 2026-08-31T20:42:32.558Z · scores are relative rankings from public search interest and Etsy listing supply, not sales data. Etsy publishes no public sales or view counts.
+Generated 2026-08-31T20:49:39.460Z · scores are relative rankings from public search interest and Etsy listing supply, not sales data. Etsy publishes no public sales or view counts.
