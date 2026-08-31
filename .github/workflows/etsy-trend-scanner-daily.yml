@@ -1,9 +1,14 @@
 name: Etsy Trend Scanner — daily report
 
 on:
-  schedule:
-    # 06:00 UTC daily. The report is ready before the working day starts.
-    - cron: '0 6 * * *'
+  # The daily schedule is switched off: this project is not in use. It ran once
+  # manually, and the first live harvest showed the sellability screen passing
+  # terms that trend culturally but are not Etsy niches, which is not worth a
+  # daily commit and notification to fix speculatively.
+  #
+  # Nothing else is removed, so restoring it is uncommenting these two lines.
+  # schedule:
+  #   - cron: '0 6 * * *'
   workflow_dispatch:
 
 # Snapshots are the tool's own history: each run commits one small JSON file,
