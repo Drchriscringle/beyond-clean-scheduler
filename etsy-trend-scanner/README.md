@@ -120,6 +120,25 @@ An article absent from last week's top list entirely is treated as its own
 category rather than as a very large rank climb, because expressing it as a
 climb would make the score depend on how long the baseline list happened to be.
 
+### First, collapse the same trend under different names
+
+The two feeds disagree about naming by construction — Wikipedia gives you
+article titles, Google gives you search phrases — so one trend routinely
+arrives as "Wicked", "Wicked movie" and "wicked film soundtrack". Exact-match
+de-duplication catches none of that, and each survivor costs four autocomplete
+probes, an Etsy lookup and a row in the report.
+
+Near-duplicates are clustered before anything is spent on them. The **searched**
+phrase leads the cluster, not the highest number: pageviews and searches are
+different units, and the wording buyers type is what belongs in a listing title.
+The rest are kept as aliases and shown in the report.
+
+Merging is greedy against cluster leaders rather than transitive, because
+"gift" is close to both "christmas gift" and "teacher gift" while those two are
+not close to each other — a chained merge would collapse unrelated niches into
+one. A single shared weak word ("gift", "decor", "art") is never enough on its
+own.
+
 ### Then the screen, which is the hard part
 
 On any given day most of what trends is unsellable. Sports fixtures, breaking
@@ -343,12 +362,13 @@ src/
   scan.js           collection orchestration
   demo.js           deterministic sample data
   sources/          trending.js, etsy.js, googleTrends.js, suggest.js, http.js
-  analyze/          momentum.js, score.js, sellable.js, persistence.js, related.js, tags.js
+  analyze/          momentum.js, score.js, sellable.js, cluster.js, persistence.js,
+                    related.js, tags.js
   report/           build.js, recommend.js, markdown.js, html.js
 tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 149 tests, all offline
+npm test     # 159 tests, all offline
 npm run lint
 ```
