@@ -68,6 +68,11 @@ export function easterSunday(year) {
 }
 
 /**
+ * `markets` lists the country codes an occasion applies to; absent means it
+ * applies everywhere. This matters more than it looks: the two Mother's Days
+ * are about eight weeks apart, so a UK seller told to list for the US date
+ * would miss their actual selling window entirely.
+ *
  * `shortName` is the label that goes into listing titles and tags — the full
  * `name` is for the report's own prose and is far too long for either.
  *
@@ -98,6 +103,7 @@ export const EVENTS = [
     id: 'mothers-day-us',
     shortName: 'mothers day',
     name: "Mother's Day (US/CA/AU)",
+    markets: ['US', 'CA', 'AU', 'NZ'],
     date: (y) => nthWeekdayOf(y, 4, 0, 2),
     peakLeadDays: 14,
     rankDays: 45,
@@ -107,6 +113,7 @@ export const EVENTS = [
     id: 'mothers-day-uk',
     shortName: 'mothers day',
     name: "Mother's Day (UK, Mothering Sunday)",
+    markets: ['GB', 'IE'],
     date: (y) => addDays(easterSunday(y), -21),
     peakLeadDays: 12,
     rankDays: 35,
@@ -116,6 +123,7 @@ export const EVENTS = [
     id: 'graduation',
     shortName: 'graduation',
     name: 'Graduation season',
+    markets: ['US', 'CA'],
     date: (y) => new Date(Date.UTC(y, 4, 25)),
     peakLeadDays: 21,
     rankDays: 40,
@@ -142,8 +150,20 @@ export const EVENTS = [
   {
     id: 'back-to-school',
     shortName: 'back to school',
-    name: 'Back to school',
+    name: 'Back to school (US)',
+    markets: ['US', 'CA'],
     date: (y) => new Date(Date.UTC(y, 7, 20)),
+    peakLeadDays: 21,
+    rankDays: 40,
+    themes: ['teacher gift', 'back to school', 'classroom decor', 'student planner'],
+  },
+  {
+    // UK and Irish terms go back a fortnight later than the US.
+    id: 'back-to-school-uk',
+    shortName: 'back to school',
+    name: 'Back to school (UK/IE)',
+    markets: ['GB', 'IE'],
+    date: (y) => new Date(Date.UTC(y, 8, 3)),
     peakLeadDays: 21,
     rankDays: 40,
     themes: ['teacher gift', 'back to school', 'classroom decor', 'student planner'],
@@ -161,6 +181,7 @@ export const EVENTS = [
     id: 'thanksgiving',
     shortName: 'thanksgiving',
     name: 'Thanksgiving',
+    markets: ['US', 'CA'],
     date: (y) => nthWeekdayOf(y, 10, 4, 4),
     peakLeadDays: 14,
     rankDays: 40,
@@ -197,12 +218,14 @@ export const EVENTS = [
  * The next occurrence of every event relative to `today`, with the derived
  * listing deadlines. Events already past this year roll to next year.
  */
-export function upcomingEvents(today = new Date(), { horizonDays = 365 } = {}) {
+export function upcomingEvents(today = new Date(), { horizonDays = 365, geo } = {}) {
   const now = new Date(startOfDay(today))
   const year = now.getUTCFullYear()
   const rows = []
 
   for (const event of EVENTS) {
+    // An occasion that does not happen in your market is not a deadline.
+    if (geo && event.markets && !event.markets.includes(geo)) continue
     for (const candidateYear of [year, year + 1]) {
       const date = event.date(candidateYear)
       const peakDate = addDays(date, -event.peakLeadDays)
@@ -282,7 +305,8 @@ export function seasonalFit({
   today = new Date(),
   profile = {},
   effortDays = 2,
-  events = upcomingEvents(today),
+  geo,
+  events = upcomingEvents(today, { geo }),
 } = {}) {
   const buildDays = (profile.leadTimeDays ?? 7) + effortDays
   let best = null
@@ -323,9 +347,9 @@ export function seasonalFit({
 }
 
 /** Every seasonal theme currently worth watching, for keyword expansion. */
-export function activeSeasonalThemes(today = new Date(), { withinDays = 150 } = {}) {
+export function activeSeasonalThemes(today = new Date(), { withinDays = 150, geo } = {}) {
   const out = []
-  for (const event of upcomingEvents(today)) {
+  for (const event of upcomingEvents(today, { geo })) {
     if (event.daysToPeak > withinDays) continue
     for (const theme of event.themes) out.push({ term: theme, category: 'seasonal', event: event.id })
   }

@@ -155,7 +155,7 @@ export async function buildScanUniverse({
   if (watchlist.enabled) {
     const seen = new Set(universe.map((row) => row.term))
     const extra = buildKeywordUniverse({
-      discovered: activeSeasonalThemes(today),
+      discovered: activeSeasonalThemes(today, { geo: config.geo }),
       max: watchlist.maxKeywords ?? 12,
     })
     for (const row of extra) {

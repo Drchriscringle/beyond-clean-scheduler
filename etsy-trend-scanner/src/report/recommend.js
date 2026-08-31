@@ -100,7 +100,7 @@ export function chooseForm(scored, profile) {
  * to the form's typical band when Etsy price data is missing.
  */
 export function suggestPrice(scored, form) {
-  const { medianPrice, priceBand } = scored.detail ?? {}
+  const { medianPrice, priceBand, priceCurrency } = scored.detail ?? {}
   const [p25, p75] = priceBand ?? []
   if (Number.isFinite(medianPrice)) {
     const thin = (scored.parts?.competitionGap ?? 0) >= 60
@@ -111,12 +111,20 @@ export function suggestPrice(scored, form) {
       target: round99(target),
       marketMedian: medianPrice,
       band: [low, high],
+      currency: priceCurrency ?? null,
       source: 'etsy',
     }
   }
   if (form?.priceBand) {
     const [low, high] = form.priceBand
-    return { target: round99((low + high) / 2), marketMedian: null, band: [low, high], source: 'form-default' }
+    return {
+      target: round99((low + high) / 2),
+      marketMedian: null,
+      band: [low, high],
+      // The form defaults are quoted in USD; anything else needs live Etsy data.
+      currency: 'USD',
+      source: 'form-default',
+    }
   }
   return null
 }

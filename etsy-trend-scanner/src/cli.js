@@ -185,7 +185,7 @@ async function main() {
     case 'keywords': {
       const store = new SnapshotStore(config.dataDir)
       const universe = buildKeywordUniverse({
-        discovered: [...store.readDiscovered(), ...activeSeasonalThemes(today)],
+        discovered: [...store.readDiscovered(), ...activeSeasonalThemes(today, { geo: config.geo })],
         max: config.limits.maxKeywordsPerScan,
       })
       for (const row of universe) {
@@ -212,7 +212,7 @@ async function main() {
     }
 
     case 'calendar': {
-      for (const event of upcomingEvents(today)) {
+      for (const event of upcomingEvents(today, { geo: config.geo })) {
         process.stdout.write(
           `${event.date.toISOString().slice(0, 10)}  ${event.name.padEnd(38)} ` +
             `buyer peak in ${String(event.daysToPeak).padStart(4)}d, needs ~${event.rankDays}d of listing age\n`,
@@ -405,7 +405,7 @@ async function doctor(config, today) {
       : `trend discovery   FAILED — ${harvest.errors.join('; ')}`,
   )
 
-  const events = upcomingEvents(today).slice(0, 3)
+  const events = upcomingEvents(today, { geo: config.geo }).slice(0, 3)
   out('')
   out('next deadlines')
   for (const event of events) {

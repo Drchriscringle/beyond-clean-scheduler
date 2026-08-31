@@ -54,6 +54,19 @@ npm run doctor        # checks credentials, connectivity and stored history
 npm run daily         # scan + report
 ```
 
+Shop settings live in `config.json` beside the code — market, currency and the
+formats you can make. It currently reads:
+
+```json
+{ "geo": "GB", "currency": "GBP", "language": "en-GB",
+  "profile": { "formats": ["digital-download", "print-on-demand", "handmade-physical"] } }
+```
+
+`geo` does more than pick a language. It scopes the trending feeds and search
+interest, and it selects which occasions the calendar uses at all: a `GB` shop
+gets Mothering Sunday and no Thanksgiving, a `US` shop the reverse. The two
+Mother's Days are about eight weeks apart, so this is not cosmetic.
+
 Getting an Etsy API key: register an app at
 <https://www.etsy.com/developers/register>. You want the **keystring** from the
 app's page. The free tier is ample — a full daily scan of 60 keywords plus 20
@@ -242,6 +255,12 @@ Worth being straight about, because plenty of tools in this space are not:
   "trending on Etsy" feed. Nothing in the report is a revenue forecast. What it
   measures is *interest* and *competition*, which is what you can actually
   observe.
+- **Prices are per-listing currency, and are not converted.** Etsy returns each
+  listing's price in the seller's own currency, so the median is taken over the
+  dominant currency on the page and the rest are excluded rather than averaged
+  in. Where coverage is thin the report says so and the band should be read as
+  indicative. There is no FX conversion anywhere in this tool.
+
 - **Google Trends numbers are normalised per query** — 0-100 against that term's
   own 12-month peak — so they are not comparable between keywords. The tool
   never treats them as volume; cross-keyword comparison is carried by the Etsy
@@ -307,6 +326,6 @@ tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 135 tests, all offline
+npm test     # 140 tests, all offline
 npm run lint
 ```

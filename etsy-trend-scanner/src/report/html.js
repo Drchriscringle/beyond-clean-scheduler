@@ -24,8 +24,12 @@ export function escapeHtml(value) {
     .replace(/'/g, '&#39;')
 }
 
-function money(value) {
-  return Number.isFinite(value) ? `$${value.toFixed(2)}` : '—'
+const CURRENCY_SYMBOLS = { USD: '$', GBP: '\u00a3', EUR: '\u20ac', CAD: 'CA$', AUD: 'A$', NZD: 'NZ$' }
+
+function money(value, currency = 'USD') {
+  if (!Number.isFinite(value)) return '\u2014'
+  const symbol = CURRENCY_SYMBOLS[currency]
+  return symbol ? `${symbol}${value.toFixed(2)}` : `${value.toFixed(2)} ${currency}`
 }
 
 function meter(label, value) {
@@ -177,7 +181,14 @@ function renderCard(row) {
       row.product
         ? `<dl class="facts">
       <div><dt>Make</dt><dd>${escapeHtml(`${row.term} ${row.product.form}`)}</dd></div>
-      ${price ? `<div><dt>Price</dt><dd>${money(price.target)} <span class="muted">market ${money(price.band?.[0])}–${money(price.band?.[1])}</span></dd></div>` : ''}
+      ${
+        price
+          ? `<div><dt>Price</dt><dd>${money(price.target, price.currency)} <span class="muted">market ${money(
+              price.band?.[0],
+              price.currency,
+            )}–${money(price.band?.[1], price.currency)}</span></dd></div>`
+          : ''
+      }
       ${row.deadline ? `<div><dt>Start by</dt><dd>${escapeHtml(row.deadline.startBy)} <span class="muted">live ${escapeHtml(row.deadline.liveBy)}</span></dd></div>` : ''}
       ${row.title ? `<div><dt>Title</dt><dd class="mono">${escapeHtml(row.title)}</dd></div>` : ''}
     </dl>`
