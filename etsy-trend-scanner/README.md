@@ -88,6 +88,7 @@ concrete.
 | `npm run doctor` | Check keys, connectivity, and how much history you have |
 | `npm run demo` | Build a report from bundled sample data |
 | `node src/cli.js trending` | Today's raw harvest and what the screen kept — add `--all` to see everything it threw out |
+| `npm run prune` | Thin old snapshots, drop stale report pages (`-- --dry-run` to preview) |
 | `node src/cli.js related "soy candle"` | What people also search for around one term, across every feed |
 | `node src/cli.js keywords` | Print the keyword universe that would be scanned |
 | `node src/cli.js calendar` | Print upcoming seasonal listing deadlines |
@@ -98,11 +99,45 @@ Useful flags: `--only "term one,term two"`, `--limit 20`, `--geo GB`,
 
 ### Daily on a schedule
 
-`.github/workflows/etsy-trend-scanner-daily.yml` runs `daily` at 06:00 UTC and
-commits the new snapshot and report. Add `ETSY_API_KEY` under the repository's
-Actions secrets to enable it; without the secret the job still runs on demand
-data alone. Locally, `0 6 * * * cd /path/to/etsy-trend-scanner && npm run daily`
-in cron does the same job.
+`.github/workflows/etsy-trend-scanner-daily.yml` runs `daily` at 06:00 UTC. Add
+`ETSY_API_KEY` under the repository's Actions secrets to enable it; without the
+secret the job still runs on demand data alone. Locally, `0 6 * * * cd
+/path/to/etsy-trend-scanner && npm run daily` in cron does the same collection.
+
+Each run:
+
+1. scans and builds the report
+2. prunes old snapshots and stale report pages
+3. commits the day's data
+4. **posts the plan as a GitHub issue** — this is what actually puts it in
+   front of you, since GitHub notifies by email and on the mobile app and
+   renders the markdown. Today's plan is opened and yesterday's closed, so the
+   notification arrives daily while the issue list stays at one item and closed
+   issues become the readable archive. Set a repository variable
+   `ETSY_TRENDS_ISSUE` to `off` to disable it.
+5. uploads the report as a run artifact as well
+
+GitHub Pages is not used: `retro-premier-manager` already occupies it as this
+repository's site.
+
+### Retention
+
+The scanner commits a snapshot and two report files daily — that is what makes
+week-over-week momentum computable, and roughly 40 MB a year if nothing prunes
+it. `npm run prune` runs as part of the daily job and:
+
+- **thins** snapshots older than 35 days to the fields anything actually reads
+  back — listing counts, tags, and whether the term was trending. The 52-point
+  interest curve, related searches, autocomplete completions and long-tail
+  probe results are used on the day they are collected and never again, and
+  dropping them saves about 76% of a snapshot.
+- **deletes** snapshots past 400 days and dated report HTML past 30 days.
+  Report markdown is kept indefinitely: it is small, diffs readably, and is the
+  archive worth having.
+
+The newest snapshot is never touched whatever its date says, and `npm run prune
+-- --dry-run` reports what would change without writing. Tunable under
+`retention` in `config.json`.
 
 ---
 
@@ -361,6 +396,7 @@ src/
   store.js          daily snapshot persistence
   scan.js           collection orchestration
   demo.js           deterministic sample data
+  prune.js          snapshot thinning and retention
   sources/          trending.js, etsy.js, googleTrends.js, suggest.js, http.js
   analyze/          momentum.js, score.js, sellable.js, cluster.js, persistence.js,
                     related.js, tags.js
@@ -369,6 +405,6 @@ tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 159 tests, all offline
+npm test     # 170 tests, all offline
 npm run lint
 ```

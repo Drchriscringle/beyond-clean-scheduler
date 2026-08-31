@@ -11,6 +11,11 @@ on:
 # already in the repo.
 permissions:
   contents: write
+  # The day's plan is posted as an issue, which is what actually puts it in
+  # front of someone: GitHub notifies by email and on the mobile app, and
+  # renders the markdown. GitHub Pages is not available here — the retro
+  # manager already occupies it as this repository's site.
+  issues: write
 
 concurrency:
   group: etsy-trend-scanner-daily
@@ -38,6 +43,11 @@ jobs:
           ETSY_TRENDS_GEO: ${{ vars.ETSY_TRENDS_GEO || 'US' }}
         run: npm run daily -- --quiet
 
+      # Runs before the commit so the day's tidying lands in the same commit as
+      # the day's data, rather than as a second churn of the repository.
+      - name: Prune old snapshots and stale report pages
+        run: npm run prune
+
       - name: Commit today's snapshot and report
         run: |
           git config user.name  "github-actions[bot]"
@@ -54,6 +64,42 @@ jobs:
             sleep $((2 ** attempt))
           done
           exit 1
+
+      # One open issue at a time: today's plan is opened and yesterday's closed,
+      # so the notification arrives daily while the issue list stays at one
+      # item. Closed issues are the readable archive.
+      - name: Post today's plan as an issue
+        if: vars.ETSY_TRENDS_ISSUE != 'off'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          DATE=$(date -u +%F)
+          LABEL=etsy-plan
+
+          # gh refuses to attach a label that does not exist yet.
+          gh label create "$LABEL" \
+            --description "Daily Etsy listing plan" \
+            --color 0E8A6C \
+            --force
+
+          # An issue body is capped at 65536 characters; the report is far
+          # smaller, but truncate rather than fail the run if that ever changes.
+          head -c 60000 reports/latest.md > /tmp/plan.md
+
+          NEW_URL=$(gh issue create \
+            --title "Etsy listing plan — $DATE" \
+            --body-file /tmp/plan.md \
+            --label "$LABEL")
+          NEW_NUM="${NEW_URL##*/}"
+          echo "Opened $NEW_URL"
+
+          # Close every older open plan, leaving exactly one.
+          gh issue list --label "$LABEL" --state open --json number \
+            --jq '.[].number' | while read -r n; do
+              [ "$n" = "$NEW_NUM" ] && continue
+              gh issue close "$n" --comment "Superseded by the plan for $DATE."
+            done
 
       - name: Publish the report as a run artifact
         uses: actions/upload-artifact@v4

@@ -13,6 +13,7 @@
     "daily": "node src/cli.js daily",
     "doctor": "node src/cli.js doctor",
     "demo": "node src/cli.js demo",
+    "prune": "node src/cli.js prune",
     "lint": "oxlint",
     "test": "node --test"
   },

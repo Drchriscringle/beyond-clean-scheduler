@@ -121,6 +121,15 @@ export const DEFAULT_CONFIG = {
   // How many days of stored snapshots the report reads.
   historyDays: 90,
 
+  // Retention. The scanner commits a snapshot and two reports daily, which is
+  // what makes momentum computable — and roughly 40 MB a year if nothing ever
+  // prunes it. Thinning drops only the fields nothing reads back.
+  retention: {
+    fullDetailDays: 35,
+    maxDays: 400,
+    reportHtmlDays: 30,
+  },
+
   // How many recommendations the daily report lists.
   reportSize: 12,
 }
