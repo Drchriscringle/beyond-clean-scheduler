@@ -109,12 +109,23 @@ Each run:
 1. scans and builds the report
 2. prunes old snapshots and stale report pages
 3. commits the day's data
-4. **posts the plan as a GitHub issue** — this is what actually puts it in
-   front of you, since GitHub notifies by email and on the mobile app and
-   renders the markdown. Today's plan is opened and yesterday's closed, so the
-   notification arrives daily while the issue list stays at one item and closed
-   issues become the readable archive. Set a repository variable
-   `ETSY_TRENDS_ISSUE` to `off` to disable it.
+4. **posts the plan as a GitHub issue, but only when the day earns it** —
+   GitHub notifies by email and on the mobile app and renders the markdown.
+   Today's plan is opened and yesterday's closed, so the issue list stays at
+   one item and closed issues become the readable archive.
+
+   Collection is daily because the trending feeds are daily-perishable: a spike
+   on Tuesday is gone by Sunday, trend persistence needs consecutive
+   observations, and supply momentum wants points across the 28-day window. But
+   most days bring nothing new, and a notification that arrives every morning
+   regardless stops being read — so the issue is posted only when there is
+   something new **or a deadline falls due**. That second condition matters:
+   without it, "only tell me when something is new" would let a seasonal
+   list-by date pass in silence, which is the one failure the whole model
+   exists to prevent.
+
+   Repository variable `ETSY_TRENDS_ISSUE`: unset or `new` for that behaviour,
+   `always` to post daily regardless, `off` to never post.
 5. uploads the report as a run artifact as well
 
 If a run fails, it opens (or reopens and comments on) a single issue saying so
@@ -158,6 +169,10 @@ it. `npm run prune` runs as part of the daily job and:
   interest curve, related searches, autocomplete completions and long-tail
   probe results are used on the day they are collected and never again, and
   dropping them saves about 76% of a snapshot.
+Each report also writes `reports/latest.json` — a short machine-readable header
+(counts, the top pick, and whether the day is worth a notification) so a
+scheduler or integration can decide without parsing the markdown back out.
+
 - **deletes** snapshots past 400 days and dated report HTML past 30 days.
   Report markdown is kept indefinitely: it is small, diffs readably, and is the
   archive worth having.
@@ -432,6 +447,6 @@ tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 180 tests, all offline
+npm test     # 183 tests, all offline
 npm run lint
 ```

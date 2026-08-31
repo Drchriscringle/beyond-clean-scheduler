@@ -65,11 +65,34 @@ jobs:
           done
           exit 1
 
+      # Whether today is worth interrupting anyone for. Collection runs daily
+      # because the trending feeds are daily-perishable — a spike on Tuesday is
+      # gone by Sunday — but most days bring nothing new, and a notification
+      # that arrives every morning regardless stops being read.
+      - name: Decide whether today is worth a notification
+        id: news
+        run: |
+          set -euo pipefail
+          WORTH=$(node -p "require('./reports/latest.json').worthNotifying")
+          SUMMARY=$(node -p "
+            const s = require('./reports/latest.json');
+            \`\${s.newCount} new, \${s.standingCount} standing, \${s.urgentCount} urgent\`")
+          echo "worth=$WORTH" >> "$GITHUB_OUTPUT"
+          echo "$SUMMARY" >> "$GITHUB_STEP_SUMMARY"
+          echo "$SUMMARY"
+
       # One open issue at a time: today's plan is opened and yesterday's closed,
-      # so the notification arrives daily while the issue list stays at one
-      # item. Closed issues are the readable archive.
+      # so the issue list stays at one item and closed issues are the readable
+      # archive.
+      #
+      # ETSY_TRENDS_ISSUE repository variable:
+      #   unset / "new"  post only when something is new or a deadline is due
+      #   "always"       post every day
+      #   "off"          never post
       - name: Post today's plan as an issue
-        if: vars.ETSY_TRENDS_ISSUE != 'off'
+        if: |
+          vars.ETSY_TRENDS_ISSUE != 'off' &&
+          (steps.news.outputs.worth == 'true' || vars.ETSY_TRENDS_ISSUE == 'always')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -100,6 +100,26 @@ export function buildNotes(latest, store) {
   return notes
 }
 
+/** The day in a form something else can act on. */
+export function summarise(model) {
+  const top = model.sections.find((section) => section.rows.length)?.rows?.[0] ?? null
+  return {
+    date: model.date,
+    generatedAt: model.generatedAt,
+    geo: model.geo,
+    formats: model.formats,
+    totalScanned: model.totalScanned,
+    newCount: model.newCount ?? 0,
+    standingCount: model.standingCount ?? 0,
+    urgentCount: model.urgentCount ?? 0,
+    urgentTerms: model.urgentTerms ?? [],
+    // The single question a notification gate needs answered.
+    worthNotifying: (model.newCount ?? 0) > 0 || (model.urgentCount ?? 0) > 0,
+    topPick: top ? { term: top.term, action: top.action, product: top.product?.form ?? null } : null,
+    filteredCount: model.filtered?.length ?? 0,
+  }
+}
+
 export function buildReport({ config, today = new Date(), write = true } = {}) {
   const store = new SnapshotStore(config.dataDir)
   const { latest, scored } = scoreSnapshot(store, { config, today })
@@ -133,10 +153,15 @@ export function buildReport({ config, today = new Date(), write = true } = {}) {
     paths.html = join(config.reportDir, `${date}.html`)
     paths.latestMarkdown = join(config.reportDir, 'latest.md')
     paths.latestHtml = join(config.reportDir, 'latest.html')
+    paths.summary = join(config.reportDir, 'latest.json')
     writeFileSync(paths.markdown, markdown)
     writeFileSync(paths.html, html)
     writeFileSync(paths.latestMarkdown, markdown)
     writeFileSync(paths.latestHtml, html)
+    // A machine-readable header for the day, so a scheduler or integration can
+    // decide whether the report is worth anyone's attention without parsing
+    // the markdown back out.
+    writeFileSync(paths.summary, `${JSON.stringify(summarise(model), null, 2)}\n`)
   }
 
   return { model, markdown, html, notes, paths, scored }
