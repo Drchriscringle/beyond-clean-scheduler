@@ -186,6 +186,13 @@ function renderCard(row) {
     <p class="badges">
       <span class="badge">${escapeHtml(meta.label)}</span>
       <span class="badge subtle">confidence: ${escapeHtml(row.confidence)}</span>
+      ${
+        row.backlogLabel
+          ? `<span class="badge ${row.backlog?.isNew ? 'badge-new' : 'subtle'}">${escapeHtml(
+              row.backlogLabel,
+            )}</span>`
+          : ''
+      }
       ${row.product ? `<span class="badge subtle">${escapeHtml(row.product.format)}</span>` : ''}
     </p>
     <p class="rationale">${escapeHtml(row.rationale)}</p>
@@ -288,6 +295,7 @@ border-top:3px solid var(--steady)}
 .badges{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}
 .badge{font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--ink)}
 .badge.subtle{color:var(--muted)}
+.badge-new{border-color:var(--accent);color:var(--accent);font-weight:600}
 .rationale{margin:0 0 12px;font-size:.9rem;color:var(--muted)}
 .facts{margin:0 0 12px;display:grid;gap:6px}
 .facts div{display:grid;grid-template-columns:88px 1fr;gap:10px;font-size:.86rem}
@@ -341,7 +349,15 @@ footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);color:v
   <h1>Etsy listing plan — ${escapeHtml(model.date)}</h1>
   <p class="lede">${
     top
-      ? `Today's call: <strong>${escapeHtml(top.term)}</strong>${
+      ? `${
+          Number.isFinite(model.newCount)
+            ? model.newCount === 0
+              ? `<strong>Nothing new today</strong> — ${model.standingCount} still standing. `
+              : `<strong>${model.newCount} new since yesterday</strong>${
+                  model.standingCount ? `, ${model.standingCount} still standing` : ''
+                }. `
+            : ''
+        }Today's call: <strong>${escapeHtml(top.term)}</strong>${
           top.product ? ` — ${escapeHtml(top.product.form)}` : ''
         }. ${headline.length} rising ${headline.length === 1 ? 'niche' : 'niches'} and ${seasonal.length} seasonal ${
           seasonal.length === 1 ? 'deadline' : 'deadlines'

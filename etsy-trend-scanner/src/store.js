@@ -21,6 +21,7 @@ export class SnapshotStore {
     this.dataDir = dataDir
     this.snapshotDir = join(dataDir, 'snapshots')
     this.discoveredPath = join(dataDir, 'discovered-keywords.json')
+    this.reportLogPath = join(dataDir, 'report-log.json')
   }
 
   save(snapshot) {
@@ -73,6 +74,40 @@ export class SnapshotStore {
       out.push({ date: snapshot.date, ...row })
     }
     return out
+  }
+
+  /**
+   * A ledger of what each report actually recommended.
+   *
+   * Persistence answers "how long has this been trending". This answers a
+   * different and, for a daily habit, more important question: "have you
+   * already told me this?" A report that repeats yesterday's three items
+   * verbatim stops being read by the end of the week, so the report needs to
+   * know what is new to *you*, not just what is new to the world.
+   */
+  readReportLog() {
+    if (!existsSync(this.reportLogPath)) return {}
+    try {
+      const parsed = JSON.parse(readFileSync(this.reportLogPath, 'utf8'))
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+    } catch {
+      return {}
+    }
+  }
+
+  recordReport(date, terms, { keepDays = 120 } = {}) {
+    const log = this.readReportLog()
+    log[date] = [...new Set(terms)].sort()
+
+    // Bounded like everything else that accumulates daily.
+    const trimmed = Object.fromEntries(
+      Object.entries(log)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .slice(-keepDays),
+    )
+    ensureDir(this.dataDir)
+    writeFileSync(this.reportLogPath, `${JSON.stringify(trimmed, null, 2)}\n`)
+    return trimmed
   }
 
   readDiscovered() {
