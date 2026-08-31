@@ -68,12 +68,18 @@ export function chooseForm(scored, profile) {
     .slice(0, 10)
     .map((row) => row.tag)
     .join(' ')
+  // The completions the discovery probe found are literally what people type
+  // when shopping for this — the best available evidence of which product form
+  // they actually want, and better than guessing from the niche name alone.
+  const trending = scored.trending ?? scored.detail?.trending
+  const probeText = (trending?.formatExamples ?? []).join(' ').toLowerCase()
 
   function rank(form) {
     // Start from the seller's own preference order.
     let penalty = forms.indexOf(form)
     // A keyword that names the product outranks everything else.
     if (form.affinity?.test(term)) penalty -= 30
+    else if (probeText && form.affinity?.test(probeText)) penalty -= 20
     else if (form.affinity?.test(tagText)) penalty -= 12
     // What the niche's existing listings actually are.
     if (preferDigital && form.format !== 'digital-download') penalty += 10
@@ -143,6 +149,85 @@ export function deadlineFor(scored, form, { today = new Date(), profile = {} } =
   return null
 }
 
+/**
+ * Trend discovery surfaces films, shows, characters, bands and people, because
+ * that is a large share of what actually trends — and a large share of what
+ * sells on Etsy. It is also the fastest way to a takedown notice, a suspended
+ * shop, or worse.
+ *
+ * The tool will not decide this for you, because the line is genuinely
+ * situational: a generic craft term is yours to sell, a protected title is not,
+ * and there is real space in between (parody, commentary, public-domain works,
+ * and pieces merely inspired by a style). What it will not do is hand you a
+ * name-shaped trend without saying which side of that line it is likely on.
+ */
+export function ipWarningFor(scored) {
+  const risk = scored.trending?.ipRisk ?? scored.detail?.trending?.ipRisk
+  if (!risk || risk === 'low') return null
+  const reason = scored.trending?.ipReason ?? scored.detail?.trending?.ipReason
+  return {
+    risk,
+    reason,
+    text:
+      risk === 'high'
+        ? 'Likely someone else\'s trademark or copyright — it reads as a name, title or brand. ' +
+          'Selling merchandise of a protected work without a licence gets listings removed and shops suspended. ' +
+          'Sell the style, the aesthetic or the generic subject around it, not the named thing itself.'
+        : 'Contains capitalised names, so check for a trademark before listing. ' +
+          'If it names a real product, work or person, sell the surrounding theme rather than the name.',
+  }
+}
+
+/**
+ * Is this niche actually sellable in a format this shop makes?
+ *
+ * Two independent readings, and either can disqualify:
+ *
+ *   the discovery probe   what people type when they shop for this — a term
+ *                         that only completes as ceramics is not a digital
+ *                         opportunity however commercial it looks.
+ *   Etsy's own listings   what is actually selling there. A niche whose live
+ *                         listings are overwhelmingly physical is telling you
+ *                         buyers there want an object, not a file.
+ *
+ * The Etsy reading needs a decent sample before it means anything: a brand-new
+ * trend with eleven listings says nothing about format either way, and
+ * rejecting it on that basis would throw away the freshest finds.
+ */
+export function formatMismatch(scored, profile = {}) {
+  const formats = profile.formats ?? []
+  if (formats.length === 0) return null
+
+  const wantsDigital = formats.includes('digital-download')
+  const wantsPhysical = formats.some((format) => format !== 'digital-download')
+
+  const trending = scored.trending ?? scored.detail?.trending
+  if (trending && Number.isFinite(trending.formatScore) && trending.formatScore === 0) {
+    return {
+      reason: `people shopping for this are not looking for ${formats.join(' or ')}`,
+      source: 'search',
+    }
+  }
+
+  const share = scored.detail?.digitalShare
+  const sample = scored.detail?.sampleSize ?? 0
+  if (!Number.isFinite(share) || sample < 25) return null
+
+  if (wantsDigital && !wantsPhysical && share < 0.15) {
+    return {
+      reason: `only ${Math.round(share * 100)}% of listings here are digital — this niche sells objects`,
+      source: 'etsy',
+    }
+  }
+  if (wantsPhysical && !wantsDigital && share > 0.9) {
+    return {
+      reason: `${Math.round(share * 100)}% of listings here are digital files`,
+      source: 'etsy',
+    }
+  }
+  return null
+}
+
 export function buildRecommendation(scored, { config = {}, today = new Date() } = {}) {
   const profile = config.profile ?? {}
   const form = chooseForm(scored, profile)
@@ -189,6 +274,9 @@ export function buildRecommendation(scored, { config = {}, today = new Date() } 
     deadline: deadlineFor(scored, form, { today, profile }),
     tags,
     related,
+    trending: scored.trending ?? scored.detail?.trending ?? null,
+    ipWarning: ipWarningFor(scored),
+    formatMismatch: formatMismatch(scored, profile),
   }
 }
 
@@ -225,7 +313,9 @@ export const SECTIONS = [
   {
     id: 'list-next',
     heading: 'List these next',
-    blurb: 'Rising demand, competition still catchable. Ordered by how soon the window closes.',
+    blurb:
+      'Rising demand, competition still catchable, and makeable in a format this shop sells. ' +
+      'Ordered by how soon the window closes.',
     match: (row) => [CLASSES.EARLY, CLASSES.HOT].includes(row.classification),
   },
   {
@@ -252,9 +342,17 @@ export const SECTIONS = [
  * Group scored keywords into report sections, capping each so the daily read
  * stays short enough to actually act on.
  */
-export function buildReportModel(scoredRows, { config = {}, today = new Date(), longTail = [] } = {}) {
+export function buildReportModel(
+  scoredRows,
+  { config = {}, today = new Date(), longTail = [], discovery = null } = {},
+) {
   const size = config.reportSize ?? 12
-  const recommendations = scoredRows.map((row) => buildRecommendation(row, { config, today }))
+  const all = scoredRows.map((row) => buildRecommendation(row, { config, today }))
+
+  // Anything that cannot be made in a format this shop sells is set aside
+  // rather than ranked, and reported separately so the filtering is visible.
+  const recommendations = all.filter((row) => !row.formatMismatch)
+  const filtered = all.filter((row) => row.formatMismatch)
 
   const used = new Set()
   const sections = SECTIONS.map((section) => {
@@ -271,8 +369,11 @@ export function buildReportModel(scoredRows, { config = {}, today = new Date(), 
     generatedAt: new Date().toISOString(),
     geo: config.geo ?? 'US',
     totalScanned: scoredRows.length,
+    formats: config.profile?.formats ?? [],
+    discovery,
     sections,
     recommendations,
+    filtered,
     longTail: buildLongTail(longTail),
   }
 }

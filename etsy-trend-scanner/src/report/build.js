@@ -46,6 +46,7 @@ export function scoreSnapshot(store, { config, today = new Date() } = {}) {
       // `related`; passing undefined makes the scorer rebuild it from the raw
       // feeds, so old history keeps working.
       related: row.related,
+      trending: row.trending ?? null,
       history,
       config,
       today,
@@ -100,7 +101,12 @@ export function buildReport({ config, today = new Date(), write = true } = {}) {
     throw new Error('No snapshots found. Run `npm run scan` first.')
   }
 
-  const model = buildReportModel(scored, { config, today, longTail: latest.longTail ?? [] })
+  const model = buildReportModel(scored, {
+    config,
+    today,
+    longTail: latest.longTail ?? [],
+    discovery: latest.discovery ?? null,
+  })
   const notes = buildNotes(latest, store)
   const markdown = renderMarkdown(model, { notes })
   const html = renderHtml(model, { notes })

@@ -1,11 +1,14 @@
 /**
- * Scan orchestration: collect today's numbers for the keyword universe and
- * write one snapshot file.
+ * Scan orchestration: collect today's numbers and write one snapshot file.
  *
- * Two passes:
+ * Three passes:
  *
- *   1. the keyword universe — demand, related searches, autocomplete and Etsy
- *      supply for every term we watch.
+ *   0. discovery — harvest what is trending from unseeded feeds, then screen it
+ *      for things that can actually be sold. This is what decides the niches;
+ *      nothing is supplied in advance. A seeded scan can only find trends next
+ *      to a list someone wrote, so it cannot see what nobody thought to watch.
+ *   1. qualification — demand, related searches, autocomplete and Etsy supply
+ *      for each surviving trend (plus the optional fixed watchlist).
  *   2. the long tail — the strongest "people also search for" phrases thrown up
  *      by pass 1, given an Etsy competition lookup of their own so they arrive
  *      in the report with a listing count rather than as bare suggestions.
@@ -19,9 +22,11 @@
 import { EtsyClient, collectEtsyMetrics } from './sources/etsy.js'
 import { TrendsClient } from './sources/googleTrends.js'
 import { SuggestClient } from './sources/suggest.js'
+import { TrendingClient } from './sources/trending.js'
 import { activeSeasonalThemes, toISODate } from './seasonal.js'
 import { buildKeywordUniverse, isUsableTerm, normaliseTerm } from './keywords.js'
 import { longTailCandidates, mergeRelated } from './analyze/related.js'
+import { screenCandidates } from './analyze/sellable.js'
 import { SnapshotStore } from './store.js'
 
 /**
@@ -53,6 +58,126 @@ export function harvestDiscoveries(term, { trends, related = [] } = {}, { minVal
   return [...out.values()]
 }
 
+/**
+ * Pass zero: decide what to scan by looking at what is trending, not by
+ * consulting a list.
+ *
+ * The harvest is unseeded, so most of it is unsellable — news, sport, weather.
+ * `screenCandidates` removes those, cheaply first and then with an autocomplete
+ * commerce probe, and what survives becomes the day's universe.
+ *
+ * The fixed watchlist is off by default and merged in afterwards when enabled,
+ * so turning it on adds terms rather than displacing discovered ones.
+ */
+export async function buildScanUniverse({
+  config,
+  today = new Date(),
+  trendingClient,
+  suggestClient,
+  logger = () => {},
+  useDiscovery = true,
+  limit,
+} = {}) {
+  const settings = config.discovery ?? {}
+  const watchlist = config.watchlist ?? {}
+  const universe = []
+  let discovery = null
+
+  if (useDiscovery && settings.enabled !== false) {
+    const trending =
+      trendingClient ??
+      new TrendingClient({
+        geo: config.geo,
+        language: config.language,
+        limits: config.limits,
+        logger,
+      })
+
+    logger('discovering what is trending...')
+    const harvest = await trending.collect(today)
+    const candidates = harvest.candidates.slice(0, settings.maxCandidates ?? 60)
+
+    // The probe asks about the formats this shop actually sells, so a digital
+    // shop is never handed a trend that only exists as a physical object.
+    const formats = settings.formats ?? config.profile?.formats ?? []
+
+    const screened = await screenCandidates(candidates, suggestClient, {
+      maxProbes: settings.maxCommercialProbes ?? 25,
+      minCommercialScore: settings.minCommercialScore ?? 30,
+      minFormatScore: settings.minFormatScore ?? 30,
+      formats,
+      logger,
+    })
+
+    const qualified = screened.qualified
+      .filter((row) => isUsableTerm(row.term, { minSingleWordLength: 3 }))
+      .slice(0, limit ?? settings.maxQualified ?? 15)
+
+    for (const row of qualified) {
+      universe.push({
+        term: normaliseTerm(row.term),
+        category: 'trending',
+        origin: 'trending',
+        trending: {
+          sources: row.sources ?? [row.source],
+          traffic: row.traffic ?? null,
+          views: row.views ?? null,
+          headlines: (row.headlines ?? []).slice(0, 3),
+          commerceScore: row.commerce?.score ?? null,
+          commerceHits: (row.commerce?.hits ?? []).map((hit) => hit.modifier),
+          format: row.relevance?.format ?? null,
+          formatScore: row.relevance?.score ?? null,
+          formatExamples: row.commerce?.examples?.[row.relevance?.format] ?? [],
+          ipRisk: row.ip?.risk ?? 'low',
+          ipReason: row.ip?.reason ?? null,
+        },
+      })
+    }
+
+    discovery = {
+      harvested: harvest.candidates.length,
+      screened: candidates.length,
+      qualified: qualified.length,
+      rejectedByShape: screened.rejected.length,
+      rejectedAsUnsellable: screened.unsellable.length,
+      rejectedWrongFormat: screened.wrongFormat.length,
+      wrongFormatExamples: screened.wrongFormat.slice(0, 5).map((row) => row.term),
+      formats,
+      notProbed: screened.unprobed.length,
+      // Kept so the report can say *why* a day was quiet, rather than just
+      // showing an empty page.
+      rejectionReasons: countBy(screened.rejected.map((row) => row.shape.reason)),
+      errors: harvest.errors,
+      sources: harvest.errors.length === 0 ? ['google-trending', 'wikipedia'] : [],
+    }
+  }
+
+  if (watchlist.enabled) {
+    const seen = new Set(universe.map((row) => row.term))
+    const extra = buildKeywordUniverse({
+      discovered: activeSeasonalThemes(today),
+      max: watchlist.maxKeywords ?? 12,
+    })
+    for (const row of extra) {
+      if (seen.has(row.term)) continue
+      universe.push({ ...row, origin: 'watchlist' })
+      seen.add(row.term)
+    }
+  }
+
+  // Every route to an empty universe leaves the caller something to say.
+  return { universe, discovery }
+}
+
+function countBy(values) {
+  const out = {}
+  for (const value of values) {
+    if (!value) continue
+    out[value] = (out[value] ?? 0) + 1
+  }
+  return out
+}
+
 async function collectKeyword({ entry, etsy, trends, suggest, today, relatedLimit }) {
   const [etsyResult, trendsResult, suggestResult] = await Promise.all([
     etsy ? collectEtsyMetrics(etsy, entry.term, { now: today }) : Promise.resolve(null),
@@ -79,9 +204,11 @@ export async function runScan({
   etsyClient,
   trendsClient,
   suggestClient,
+  trendingClient,
   useEtsy = true,
   useTrends = true,
   useSuggest = true,
+  useDiscovery = true,
   limit,
   only = [],
 } = {}) {
@@ -111,12 +238,23 @@ export async function runScan({
       }))
     : null
 
-  const universe = only.length
-    ? only.map((term) => ({ term: normaliseTerm(term), category: 'manual', origin: 'manual' }))
-    : buildKeywordUniverse({
-        discovered: [...store.readDiscovered(), ...activeSeasonalThemes(today)],
-        max: limit ?? config.limits.maxKeywordsPerScan,
-      })
+  let discovery = null
+  let universe
+  if (only.length) {
+    universe = only.map((term) => ({ term: normaliseTerm(term), category: 'manual', origin: 'manual' }))
+  } else {
+    const built = await buildScanUniverse({
+      config,
+      today,
+      trendingClient,
+      suggestClient: suggest,
+      logger,
+      useDiscovery,
+      limit,
+    })
+    universe = built.universe
+    discovery = built.discovery
+  }
 
   const keywords = {}
   const relatedByTerm = {}
@@ -150,10 +288,17 @@ export async function runScan({
 
     relatedByTerm[entry.term] = related
     discoveries.push(...harvestDiscoveries(entry.term, { trends: trendsResult, related }))
+    // Recording a trending term is how the report can later say "third day
+    // running". It does not feed back into tomorrow's universe — if it is still
+    // trending then, discovery will find it again on its own merits.
+    if (entry.origin === 'trending') {
+      discoveries.push({ term: entry.term, category: 'trending', parent: null })
+    }
 
     keywords[entry.term] = {
       category: entry.category,
       origin: entry.origin,
+      trending: entry.trending,
       etsy: etsyResult ?? undefined,
       trends: trendsResult?.ok
         ? { series: trendsResult.series, rising: trendsResult.rising, top: trendsResult.top }
@@ -191,6 +336,25 @@ export async function runScan({
   if (etsy && etsyFailures > 0) {
     notes.push(`${etsyFailures} of ${universe.length} keywords failed on the Etsy API.`)
   }
+  for (const error of discovery?.errors ?? []) {
+    notes.push(`Trend discovery: ${error}`)
+  }
+  if (discovery && discovery.qualified === 0) {
+    const wrongFormat = discovery.rejectedWrongFormat
+      ? ` ${discovery.rejectedWrongFormat} were sellable but not as ${(discovery.formats ?? []).join(' or ')}.`
+      : ''
+    notes.push(
+      `Nothing trending today cleared the screen — ${discovery.harvested} terms harvested, ` +
+        `most of them news, sport, weather or otherwise not a product.${wrongFormat} ` +
+        'That is a normal result on a heavy news day.',
+    )
+  } else if (discovery?.rejectedWrongFormat > 0) {
+    notes.push(
+      `${discovery.rejectedWrongFormat} trending terms were commercial but not sellable as ` +
+        `${(discovery.formats ?? []).join(' or ')}, so they were filtered out` +
+        `${discovery.wrongFormatExamples?.length ? ` (${discovery.wrongFormatExamples.join(', ')})` : ''}.`,
+    )
+  }
 
   const snapshot = {
     date,
@@ -200,8 +364,10 @@ export async function runScan({
       etsy: Boolean(etsy),
       googleTrends: Boolean(trends),
       autocomplete: Boolean(suggest),
+      discovery: Boolean(discovery),
     },
     notes,
+    discovery,
     keywords,
     longTail,
   }

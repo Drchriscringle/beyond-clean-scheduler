@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:ht="https://trends.google.com/trends/trendingsearches/daily" version="2.0">
+<channel>
+<title>Daily Search Trends</title>
+<item>
+<title>whimsigothic</title>
+<ht:approx_traffic>20,000+</ht:approx_traffic>
+<description>Interior design revival</description>
+<link>https://trends.google.com/trends/explore?q=whimsigothic</link>
+<pubDate>Mon, 31 Aug 2026 06:00:00 -0700</pubDate>
+<ht:picture>https://example.com/a.jpg</ht:picture>
+<ht:picture_source>Design Weekly</ht:picture_source>
+<ht:news_item>
+<ht:news_item_title>The whimsigothic revival is everywhere</ht:news_item_title>
+<ht:news_item_snippet>Wavy mirrors are back</ht:news_item_snippet>
+<ht:news_item_url>https://example.com/1</ht:news_item_url>
+<ht:news_item_source>Design Weekly</ht:news_item_source>
+</ht:news_item>
+<ht:news_item>
+<ht:news_item_title>How to get the look</ht:news_item_title>
+<ht:news_item_url>https://example.com/2</ht:news_item_url>
+</ht:news_item>
+</item>
+<item>
+<title>Chiefs vs Bills</title>
+<ht:approx_traffic>500,000+</ht:approx_traffic>
+<pubDate>Mon, 31 Aug 2026 06:00:00 -0700</pubDate>
+<ht:news_item>
+<ht:news_item_title>Chiefs vs Bills: final score and highlights</ht:news_item_title>
+</ht:news_item>
+</item>
+<item>
+<title>Caf&#233; &amp; croissants</title>
+<ht:approx_traffic>1,000+</ht:approx_traffic>
+</item>
+</channel>
+</rss>

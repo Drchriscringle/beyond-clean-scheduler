@@ -10,7 +10,15 @@
  * absolute counts.
  */
 
-import { clamp, entryRateScore, risingBoost, seriesMomentum, squash, supplyMomentum } from './momentum.js'
+import {
+  clamp,
+  dampSaturation,
+  entryRateScore,
+  risingBoost,
+  seriesMomentum,
+  squash,
+  supplyMomentum,
+} from './momentum.js'
 import { describeRelated, mergeRelated } from './related.js'
 import { normalisedWeights } from '../config.js'
 import { seasonalFit } from '../seasonal.js'
@@ -50,6 +58,25 @@ export function demandPositionScore(momentum) {
   return Math.round(clamp((momentum.level / momentum.peak) * 100))
 }
 
+/**
+ * Momentum credit for a term that is trending *today*.
+ *
+ * A brand-new trend has almost no 12-month interest curve to fit — the term
+ * barely existed a month ago — so `seriesMomentum` reads it as thin or absent.
+ * That is precisely backwards for what we are hunting, so appearing on an
+ * unseeded trending feed is treated as direct evidence of momentum, and the
+ * higher of the two readings wins.
+ */
+export function trendingMomentum(trending) {
+  if (!trending) return null
+  // Being on the list at all is the signal; the traffic band refines it.
+  const traffic = trending.traffic
+  const bump = Number.isFinite(traffic) ? clamp(Math.log10(Math.max(traffic, 1000)) * 6 - 18, 0, 25) : 0
+  // Search and encyclopedia traffic are independent; agreement means more.
+  const confirm = (trending.sources?.length ?? 1) > 1 ? 10 : 0
+  return Math.round(clamp(70 + bump + confirm))
+}
+
 /** Median price mapped to 0..100 — higher-ticket niches carry fee overhead better. */
 export function priceScore(medianPrice, { minMedianPrice = 8 } = {}) {
   if (!Number.isFinite(medianPrice)) return null
@@ -83,6 +110,7 @@ export function scoreKeyword({
   trends = {},
   suggest = {},
   related,
+  trending = null,
   history = [],
   config = {},
   today = new Date(),
@@ -108,15 +136,21 @@ export function scoreKeyword({
 
   const demand = demandPositionScore(momentum)
   const competitionGap = competitionScore(etsy.totalListings)
-  const saturation = pick(supply.score, entryRateScore(etsy.sellerEntryRate))
+  const saturation = dampSaturation(
+    pick(supply.score, entryRateScore(etsy.sellerEntryRate)),
+    etsy.totalListings,
+  )
   const price = priceScore(etsy.medianPrice, profile)
 
   // Rising queries are a demand signal in their own right, so they can carry
   // momentum on their own when the interest curve is too sparse to fit.
-  const momentumScore =
+  const seriesScore =
     momentum.score === null
       ? rising.score || null
       : Math.round(clamp(momentum.score * 0.75 + rising.score * 0.25))
+  const trendingScore = trendingMomentum(trending)
+  const momentumScore =
+    trendingScore === null ? seriesScore : Math.max(seriesScore ?? 0, trendingScore)
 
   const parts = {
     demand,
@@ -159,9 +193,19 @@ export function scoreKeyword({
     opportunity,
     confidence,
     classification: classify({ parts, momentum, rising, season, supply, etsy }),
+    trending,
     parts,
     missing,
-    evidence: buildEvidence({ momentum, rising, supply, season, etsy, parts, related: relatedRows }),
+    evidence: buildEvidence({
+      momentum,
+      rising,
+      supply,
+      season,
+      etsy,
+      parts,
+      related: relatedRows,
+      trending,
+    }),
     related: relatedRows,
     detail: {
       momentum,
@@ -173,9 +217,11 @@ export function scoreKeyword({
       medianPrice: etsy.medianPrice ?? null,
       priceBand: [etsy.p25Price ?? null, etsy.p75Price ?? null],
       digitalShare: etsy.digitalShare ?? null,
+      sampleSize: etsy.sampleSize ?? null,
       personalisableShare: etsy.personalisableShare ?? null,
       topTags: etsy.topTags ?? [],
       related: relatedRows,
+      trending,
       historyDays: history.length,
     },
   }
@@ -219,8 +265,38 @@ function formatPct(value) {
   return `${pct >= 0 ? '+' : ''}${pct}%`
 }
 
-export function buildEvidence({ momentum, rising, supply, season, etsy, parts, related = [] }) {
+export function buildEvidence({
+  momentum,
+  rising,
+  supply,
+  season,
+  etsy,
+  parts,
+  related = [],
+  trending = null,
+}) {
   const lines = []
+
+  // Why this term is in the report at all comes first.
+  if (trending) {
+    const feeds = (trending.sources ?? [])
+      .map((source) => (source === 'google-trending' ? 'Google trending searches' : 'Wikipedia pageview spike'))
+      .join(' and ')
+    const volume = Number.isFinite(trending.traffic)
+      ? ` on ${trending.traffic.toLocaleString('en-US')}+ searches`
+      : ''
+    lines.push(`Trending today${volume}${feeds ? ` — picked up by ${feeds}` : ''}`)
+    if (trending.headlines?.length) {
+      lines.push(`What is driving it: "${trending.headlines[0]}"`)
+    }
+    if (Number.isFinite(trending.commerceScore)) {
+      const forms = (trending.commerceHits ?? []).join(', ')
+      lines.push(
+        `Commercial intent ${trending.commerceScore}/100` +
+          (forms ? ` — people are searching for ${forms} around this` : ''),
+      )
+    }
+  }
 
   if (Number.isFinite(momentum?.growth)) {
     lines.push(

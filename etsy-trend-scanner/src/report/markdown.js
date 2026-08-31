@@ -37,6 +37,24 @@ function renderRow(row, index) {
   lines.push(row.rationale)
   lines.push('')
 
+  if (row.trending) {
+    const feeds = (row.trending.sources ?? [])
+      .map((source) => (source === 'wikipedia' ? 'Wikipedia spike' : 'Google trending'))
+      .join(' + ')
+    const volume = Number.isFinite(row.trending.traffic)
+      ? `${row.trending.traffic.toLocaleString('en-US')}+ searches today`
+      : 'trending today'
+    lines.push(`> **Why this is here:** ${volume}${feeds ? ` (${feeds})` : ''}.` +
+      (row.trending.headlines?.[0] ? ` "${row.trending.headlines[0]}"` : ''))
+    lines.push('')
+  }
+
+  if (row.ipWarning) {
+    lines.push(`> [!WARNING]`)
+    lines.push(`> **Trademark risk (${row.ipWarning.risk}).** ${row.ipWarning.text}`)
+    lines.push('')
+  }
+
   if (row.product) {
     const price = row.price
     lines.push(
@@ -89,13 +107,15 @@ export function renderMarkdown(model, { notes = [] } = {}) {
 
   const headline = model.sections.find((s) => s.id === 'list-next')?.rows ?? []
   const seasonal = model.sections.find((s) => s.id === 'seasonal')?.rows ?? []
+  const formats = (model.formats ?? []).join(' and ')
   if (headline.length || seasonal.length) {
     const top = headline[0] ?? seasonal[0]
     out.push(
       `**Today's call:** ${top.term}${top.product ? ` — ${top.product.form}` : ''}. ` +
         `${headline.length} rising ${headline.length === 1 ? 'niche' : 'niches'} and ` +
         `${seasonal.length} seasonal ${seasonal.length === 1 ? 'deadline' : 'deadlines'} worth acting on, ` +
-        `from ${model.totalScanned} keywords scanned (${model.geo}).`,
+        `from ${model.totalScanned} trends scanned (${model.geo}` +
+        `${formats ? `, ${formats} only` : ''}).`,
     )
   } else {
     out.push(
@@ -125,6 +145,20 @@ export function renderMarkdown(model, { notes = [] } = {}) {
     } else {
       section.rows.forEach((row, i) => out.push(renderRow(row, i + 1)))
     }
+  }
+
+  if (model.filtered?.length) {
+    out.push('## Filtered out — wrong format for this shop')
+    out.push('')
+    out.push(
+      `_Trending and commercial, but not sellable as ${(model.formats ?? []).join(' or ')}. ` +
+        'Change `profile.formats` in the config if you do make these._',
+    )
+    out.push('')
+    for (const row of model.filtered.slice(0, 10)) {
+      out.push(`- **${row.term}** — ${row.formatMismatch.reason}`)
+    }
+    out.push('')
   }
 
   if (model.longTail?.length) {

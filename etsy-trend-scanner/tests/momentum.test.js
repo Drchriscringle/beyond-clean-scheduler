@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  dampSaturation,
   entryRateScore,
   linearSlope,
   pctChange,
@@ -97,6 +98,23 @@ test('supplyMomentum flags sellers piling in and stays calm on normal churn', ()
   assert.ok(churn.score < 55, `background churn should be near neutral, got ${churn.score}`)
   assert.equal(rush.days, 28)
   assert.equal(history([1, 2]).length, 2)
+})
+
+test('dampSaturation ignores percentage growth from a tiny base', () => {
+  // Same 74% growth, wildly different meaning.
+  assert.ok(dampSaturation(100, 580) < 55, 'a 580-listing niche cannot be crowded')
+  assert.equal(dampSaturation(100, 125_000), 100, 'a 125k-listing niche is taken at face value')
+
+  // Neutral readings stay neutral at any size.
+  assert.equal(dampSaturation(50, 300), 50)
+  assert.equal(dampSaturation(50, 500_000), 50)
+
+  // Monotonic in niche size.
+  assert.ok(dampSaturation(90, 1_000) < dampSaturation(90, 20_000))
+
+  // Missing inputs pass straight through.
+  assert.equal(dampSaturation(null, 1000), null)
+  assert.equal(dampSaturation(80, undefined), 80)
 })
 
 test('entryRateScore turns share-of-new-listings into a crowding score', () => {

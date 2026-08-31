@@ -2,11 +2,24 @@
 
 A daily "what should I list on Etsy next" report.
 
-It watches a universe of Etsy niches, measures **demand** (search interest and
-its rate of change), **related searches** (what people also type around a term),
-**supply** (how many sellers are already there and how fast that number is
-growing) and **timing** (how long is left to rank for the next occasion), then
-tells you what to make, what to charge, what to tag it, and by when.
+**Digital products by default, and the niche is an output, not an input.** Each
+morning it harvests what is actually trending from unseeded feeds — no keyword
+list is supplied — screens out the majority that cannot be sold *as files*, and
+only then measures **demand**,
+**related searches**, **supply** (how many sellers are already there and how
+fast that is growing) and **timing** (how long is left to rank for the next
+occasion). Then it tells you what to make, what to charge, what to tag it, and
+by when.
+
+That ordering is the point. A scanner seeded with a keyword list can only ever
+find trends adjacent to the list, so it structurally cannot see the thing nobody
+thought to watch for.
+
+Everything is filtered to what a digital shop can actually make — printables,
+SVGs, templates, clipart, patterns. Files have no stock, no shipping and no
+lead time, which is what lets you act on a trend inside its window at all. If
+you also sell physical goods, add them to `profile.formats` and the whole
+pipeline follows.
 
 The distinction the whole tool is built around:
 
@@ -61,12 +74,14 @@ concrete.
 | `npm run daily` | Both. This is what you schedule. |
 | `npm run doctor` | Check keys, connectivity, and how much history you have |
 | `npm run demo` | Build a report from bundled sample data |
+| `node src/cli.js trending` | Today's raw harvest and what the screen kept — add `--all` to see everything it threw out |
 | `node src/cli.js related "soy candle"` | What people also search for around one term, across every feed |
 | `node src/cli.js keywords` | Print the keyword universe that would be scanned |
 | `node src/cli.js calendar` | Print upcoming seasonal listing deadlines |
 
 Useful flags: `--only "term one,term two"`, `--limit 20`, `--geo GB`,
-`--no-trends`, `--no-suggest`, `--date 2026-09-15`, `--json`, `--quiet`.
+`--no-trends`, `--no-suggest`, `--no-discovery`, `--date 2026-09-15`, `--json`,
+`--quiet`.
 
 ### Daily on a schedule
 
@@ -77,6 +92,61 @@ data alone. Locally, `0 6 * * * cd /path/to/etsy-trend-scanner && npm run daily`
 in cron does the same job.
 
 ---
+
+## How niches get found
+
+Two unseeded feeds, chosen because neither takes a keyword and they fail
+independently:
+
+| feed | what it catches |
+|---|---|
+| Google trending searches | what people are searching *today*, with traffic bands — a trend the moment it becomes a search |
+| Wikipedia pageview spikes | what people are suddenly *reading about* — slower and far less noisy, and it names the cultural moment behind a trend |
+
+An article absent from last week's top list entirely is treated as its own
+category rather than as a very large rank climb, because expressing it as a
+climb would make the score depend on how long the baseline list happened to be.
+
+### Then the screen, which is the hard part
+
+On any given day most of what trends is unsellable. Sports fixtures, breaking
+news, weather, obituaries and stock moves dominate every trending feed, and none
+of them is a product. A discovery scanner without a screen is a news reader.
+
+1. **Shape screen** — free. Pattern-matches the term *and its news headlines*
+   against the recognisable forms of unsellable news. The headlines carry most
+   of the signal: the bare term "Cardinals" is a bird, a ball club or a
+   conclave, and only the headline says which.
+2. **Commerce probe** — the real test, and it asks about *your* format. A
+   digital shop probes `"<term> printable"`, `"<term> svg"`, `"<term> template"`,
+   `"<term> digital download"`. If people are shopping for it as a file, those
+   complete richly. If it is a hurricane, nothing completes; and if it only
+   completes as ceramics and jewellery, it is commercial but not relevant to
+   you — which is recorded as a different rejection, not thrown in with the
+   news. Breadth across product categories counts for more than depth in any
+   one, because breadth is what separates a real market from a single
+   coincidental phrase.
+
+The probe budget goes to the highest-traffic survivors first. Every report opens
+with the funnel — harvested, not a product, no buying intent, wrong format,
+worth scanning — so a quiet day explains itself rather than just showing an
+empty page.
+
+### And a second format check, from Etsy itself
+
+Search intent is one reading; what is actually selling is another. A niche whose
+live Etsy listings are 98% physical is telling you buyers there want an object,
+not a file, however the autocomplete looked. Those are set aside into a
+**Filtered out — wrong format** section with the reason, never dropped silently.
+
+That check needs a decent sample before it means anything: a brand-new trend
+with eleven listings says nothing about format either way, and rejecting it on
+that basis would throw away the freshest finds. Below 25 listings it abstains.
+
+The seed list still exists as an **optional watchlist**, off by default. Turn on
+`watchlist.enabled` to keep a fixed set of terms in every scan alongside
+whatever discovery turns up; they are added, never substituted for discovered
+ones.
 
 ## What people are also searching for
 
@@ -124,15 +194,23 @@ Five components, each scored 0-100, combined with the weights in `config.js`
 
 - **demand** — where the term sits inside its own 12-month search range.
 - **momentum** — recent 4 weeks against the prior 12, blended with Google's
-  rising-query feed. Breakout queries count heavily; they are the earliest
-  usable signal there is.
+  rising-query feed. A term appearing on an unseeded trending feed today
+  overrides this when it reads higher: a trend that did not exist a month ago
+  has no 12-month curve to fit, which would otherwise score the newest finds as
+  flat.
 - **competitionGap** — active Etsy listings, log-scaled. ~2,500 listings scores
   around 72, ~200,000 around 25.
 - **saturationRisk** — how fast the listing count is growing, centred on the
   marketplace's own background churn so a niche only reads as crowding when it
-  outpaces Etsy as a whole.
+  outpaces Etsy as a whole. Damped by absolute niche size: a niche going from
+  330 to 580 listings has "grown 74%" and is still empty, and without that
+  damping every freshly discovered trend would be thrown out as crowded.
 - **seasonalFit** — how close today is to the last date you could list and still
   rank for the next relevant occasion.
+
+The product form is chosen from the completions the discovery probe found, not
+from the niche name: if people search "sourdough gift printable tags", the
+recommendation is a template, not the default wall-art print.
 
 A component that is missing is dropped and the remaining weights renormalised,
 so an absent signal lowers the stated confidence instead of silently scoring
@@ -187,6 +265,25 @@ Worth being straight about, because plenty of tools in this space are not:
 - **Nothing here scrapes etsy.com.** Everything comes from the documented Open
   API v3 with an application key, which is both more reliable and within Etsy's
   terms.
+- **Format screening is two heuristics, not a guarantee.** The search-intent
+  probe can miss a niche that people buy as files without using file words, and
+  the Etsy digital-share check is a sample of 100 listings, not a census.
+  `node src/cli.js trending --all` shows every rejection with its reason.
+
+- **Most of what trends cannot be sold, and the screen is a heuristic.** It will
+  occasionally reject something sellable (a craft term that shares a word with a
+  news story) and occasionally pass something that is not. `node src/cli.js
+  trending --all` shows every rejection with its reason, which is the fastest
+  way to tune it. Rejection patterns live in `src/analyze/sellable.js`.
+
+- **Trending does not mean yours to sell.** Discovery surfaces films, shows,
+  characters, bands and people, because that is a large share of both what
+  trends and what sells on Etsy. It is also the fastest route to a takedown, a
+  suspended shop, or worse. Every name-shaped trend carries a trademark warning
+  in the report, and the tool deliberately does not decide for you: a generic
+  craft term is yours, a protected title is not, and there is real space in
+  between. Treat a high-risk flag as "sell the style, not the named thing".
+
 - **The seasonal model is opinionated.** It assumes a listing needs 35-55 days of
   age to rank into a crowded peak, so it will tell you Halloween is closed in
   late August. That is a deliberate bias toward listing early; adjust
@@ -198,18 +295,18 @@ Worth being straight about, because plenty of tools in this space are not:
 src/
   cli.js            command line entry point
   config.js         defaults, .env and config.json resolution
-  keywords.js       seed niches, product forms, universe assembly
+  keywords.js       product forms, optional watchlist, universe assembly
   seasonal.js       occasion calendar and list-by date maths
   store.js          daily snapshot persistence
   scan.js           collection orchestration
   demo.js           deterministic sample data
-  sources/          etsy.js, googleTrends.js, suggest.js, http.js
-  analyze/          momentum.js, score.js, related.js, tags.js
+  sources/          trending.js, etsy.js, googleTrends.js, suggest.js, http.js
+  analyze/          momentum.js, score.js, sellable.js, related.js, tags.js
   report/           build.js, recommend.js, markdown.js, html.js
 tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 96 tests, all offline
+npm test     # 135 tests, all offline
 npm run lint
 ```

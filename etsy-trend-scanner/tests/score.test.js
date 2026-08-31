@@ -1,7 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { CLASSES, competitionScore, priceScore, scoreKeyword } from '../src/analyze/score.js'
+import {
+  CLASSES,
+  competitionScore,
+  priceScore,
+  scoreKeyword,
+  trendingMomentum,
+} from '../src/analyze/score.js'
 import { DEFAULT_CONFIG } from '../src/config.js'
 
 const TODAY = new Date('2026-08-31T00:00:00Z')
@@ -80,6 +86,53 @@ test('a huge niche filling up fast is classed as saturated', () => {
 
   assert.equal(result.classification, CLASSES.SATURATED)
   assert.ok(result.opportunity < 40)
+})
+
+test('trendingMomentum credits a term for being on an unseeded trending feed', () => {
+  assert.equal(trendingMomentum(null), null)
+  const modest = trendingMomentum({ traffic: 2000, sources: ['google-trending'] })
+  const huge = trendingMomentum({ traffic: 500_000, sources: ['google-trending'] })
+  const confirmed = trendingMomentum({ traffic: 500_000, sources: ['google-trending', 'wikipedia'] })
+
+  assert.ok(modest >= 70, 'being on the list at all is the signal')
+  assert.ok(huge > modest)
+  assert.ok(confirmed > huge, 'two independent feeds agreeing is worth more')
+  assert.ok(confirmed <= 100)
+})
+
+test('a brand-new trend is caught even though its interest curve barely exists', () => {
+  // The shape of a term that did not exist a month ago: no usable series, a
+  // near-empty listing base, and listings growing fast off that base. Before
+  // trending momentum and saturation damping, this scored as "steady".
+  const result = scoreKeyword({
+    term: 'hollowcrown',
+    etsy: { totalListings: 580, medianPrice: 22, p25Price: 12, p75Price: 34, digitalShare: 0.6 },
+    trends: { series: [] },
+    trending: {
+      sources: ['google-trending', 'wikipedia'],
+      traffic: 200_000,
+      headlines: ['Hollowcrown becomes the most-streamed show of the month'],
+      commerceScore: 91,
+      commerceHits: ['gift', 'shirt', 'poster'],
+      ipRisk: 'high',
+    },
+    history: [
+      { date: '2026-08-03', etsy: { totalListings: 333 } },
+      { date: '2026-08-31', etsy: { totalListings: 580 } },
+    ],
+    config,
+    today: TODAY,
+  })
+
+  assert.equal(result.classification, CLASSES.EARLY)
+  assert.ok(result.parts.momentum >= 90, 'trending today is momentum')
+  assert.ok(
+    result.parts.saturationRisk > 35,
+    `+74% listing growth from 333 is not crowding, got risk ${100 - result.parts.saturationRisk}`,
+  )
+  assert.match(result.evidence.join('\n'), /Trending today on 200,000\+ searches/)
+  assert.match(result.evidence.join('\n'), /What is driving it/)
+  assert.match(result.evidence.join('\n'), /Commercial intent 91\/100/)
 })
 
 test('scoring survives a total absence of Etsy data', () => {

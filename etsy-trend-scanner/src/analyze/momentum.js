@@ -146,6 +146,29 @@ export function supplyMomentum(historyRows, { windowDays = 28 } = {}) {
 }
 
 /**
+ * Damp a saturation reading by how big the niche actually is.
+ *
+ * Saturation is measured as growth in competing listings, which is a ratio —
+ * and a ratio from a tiny base says almost nothing. A niche going from 330 to
+ * 580 listings has "grown 74%" and is still empty; one going from 90,000 to
+ * 116,000 has grown by the same ratio and is a genuine gold rush.
+ *
+ * This matters most for exactly the terms this tool exists to find: a trend
+ * discovered the week it appears always starts from a near-empty listing base
+ * and always grows fast in percentage terms. Without this, the best finds would
+ * be thrown out as crowded.
+ *
+ * Below ~500 listings the reading is pulled to neutral; by ~10,000 it is taken
+ * at face value.
+ */
+export function dampSaturation(score, totalListings) {
+  if (!Number.isFinite(score)) return score
+  if (!Number.isFinite(totalListings) || totalListings <= 0) return score
+  const scale = clamp((Math.log10(totalListings) - 2.7) / 1.3, 0, 1)
+  return Math.round(50 + (score - 50) * scale)
+}
+
+/**
  * Fallback saturation estimate when there is no snapshot history yet: the
  * share of the newest 100 listings created in the past week. Roughly 2% is
  * normal churn; 15%+ means a gold rush is already under way.

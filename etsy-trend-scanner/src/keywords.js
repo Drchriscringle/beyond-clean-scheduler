@@ -139,7 +139,7 @@ export const PRODUCT_FORMS = [
     format: 'digital-download',
     effortDays: 1,
     priceBand: [5, 15],
-    affinity: /\b(planner|budget|meal|habit|tracker|organis|organiz|checklist)\w*/,
+    affinity: /\b(planner|budget|meal|habit|tracker|organis|organiz|checklist|recipe|journal)\w*/,
   },
   {
     form: 'digital clipart bundle',
@@ -160,7 +160,7 @@ export const PRODUCT_FORMS = [
     format: 'digital-download',
     effortDays: 2,
     priceBand: [10, 30],
-    affinity: /\b(template|invitation|invite|save the date|seating|menu|signage)\b/,
+    affinity: /\b(template|invitation|invite|save the date|seating|menu|signage|tag|tags|label|labels|card)\b/,
   },
   {
     form: 'PDF pattern',
@@ -273,13 +273,18 @@ const STOPWORD_TERMS = new Set([
   'diy',
 ])
 
-export function isUsableTerm(term) {
+/**
+ * `minSingleWordLength` exists because the two callers want different things.
+ * In a related-search feed a short single word is noise ("mug", "art"). In the
+ * trending feed it is often the whole point — a film, a band or a character
+ * whose name happens to be short — so discovery passes a lower bound.
+ */
+export function isUsableTerm(term, { minSingleWordLength = 6 } = {}) {
   const t = normaliseTerm(term)
   if (!t) return false
   if (t.length < 3 || t.length > 60) return false
   if (STOPWORD_TERMS.has(t)) return false
-  // Single very common words carry no listing signal on their own.
-  if (!t.includes(' ') && t.length < 6) return false
+  if (!t.includes(' ') && t.length < minSingleWordLength) return false
   return true
 }
 
