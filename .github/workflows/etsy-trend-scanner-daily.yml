@@ -37,10 +37,28 @@ jobs:
 
       # Without the secret this still runs, on search demand and the seasonal
       # calendar alone, and the report says so at the top.
+      # Runs first and never fails the job: it turns every run's log into a
+      # health check on the four external sources. That is what makes the
+      # browser-only setup path work — click "Run workflow", read this step,
+      # and you know which source is at fault without installing anything.
+      - name: Check the sources
+        continue-on-error: true
+        env:
+          ETSY_API_KEY: ${{ secrets.ETSY_API_KEY }}
+          ETSY_TRENDS_GEO: ${{ vars.ETSY_TRENDS_GEO || 'GB' }}
+        run: |
+          npm run doctor 2>&1 | tee /tmp/doctor.txt
+          {
+            echo '## Source check'
+            echo '```'
+            cat /tmp/doctor.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Scan and build the report
         env:
           ETSY_API_KEY: ${{ secrets.ETSY_API_KEY }}
-          ETSY_TRENDS_GEO: ${{ vars.ETSY_TRENDS_GEO || 'US' }}
+          ETSY_TRENDS_GEO: ${{ vars.ETSY_TRENDS_GEO || 'GB' }}
         run: npm run daily -- --quiet
 
       # Runs before the commit so the day's tidying lands in the same commit as
