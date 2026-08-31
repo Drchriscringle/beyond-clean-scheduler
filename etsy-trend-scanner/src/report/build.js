@@ -8,6 +8,7 @@ import { join } from 'node:path'
 
 import { SnapshotStore, ensureDir } from '../store.js'
 import { scoreKeyword } from '../analyze/score.js'
+import { trendPersistence } from '../analyze/persistence.js'
 import { emergingTags } from '../analyze/tags.js'
 import { buildReportModel } from './recommend.js'
 import { renderMarkdown } from './markdown.js'
@@ -26,7 +27,11 @@ export function scoreSnapshot(store, { config, today = new Date() } = {}) {
   if (!latest) return { latest: null, scored: [] }
 
   const historyByTerm = new Map()
+  // Every date the scanner ran, so persistence can tell "the trend stopped"
+  // from "we did not look that day".
+  const scanDates = []
   for (const snapshot of store.history(config.historyDays ?? 90)) {
+    scanDates.push(snapshot.date)
     for (const [term, row] of Object.entries(snapshot.keywords ?? {})) {
       if (!historyByTerm.has(term)) historyByTerm.set(term, [])
       historyByTerm.get(term).push({ date: snapshot.date, ...row })
@@ -47,6 +52,7 @@ export function scoreSnapshot(store, { config, today = new Date() } = {}) {
       // feeds, so old history keeps working.
       related: row.related,
       trending: row.trending ?? null,
+      persistence: trendPersistence(history, { scanDates }),
       history,
       config,
       today,

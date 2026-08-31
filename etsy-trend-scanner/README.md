@@ -235,6 +235,29 @@ of: starting to trend, seasonal window, trending now, steady, saturated, fading,
 or insufficient data. Recommendations are (niche x product form) pairs filtered
 to formats your shop actually makes — set that in `config.profile.formats`.
 
+### How long has it been trending?
+
+The biggest weakness of same-day discovery is that most of what spikes on any
+given day is noise — a news blip, a one-off mention, a feed artefact. A term
+still trending on day four is a different proposition from the same term on day
+one, and every report now says which it is:
+
+| label | meaning |
+|---|---|
+| **unproven** | first seen trending today. Could be a real trend starting or a one-day blip, and there is no way to tell yet |
+| **confirmed** | seen on two or more separate scans — not an artefact of one feed on one day |
+| **sustained** | present in most scans since it appeared. This one has legs |
+
+Persistence only ever *adds* to the score, never subtracts. Being early is the
+entire thesis of this tool, so a first-day trend is still recommended — it is
+recommended with "unproven" attached and capped below high confidence, rather
+than hidden. A trend that comes and goes rather than building is flagged
+separately as episodic (a weekly release, a recurring event), which is a
+different thing from one growing.
+
+Measured as a share of the scans that actually ran, not calendar days: if the
+scheduled job fails on a Tuesday that is our outage, not the trend going quiet.
+
 ### Why it needs a few days
 
 "Starting to trend" on the supply side means *competing listings grew slower
@@ -320,12 +343,12 @@ src/
   scan.js           collection orchestration
   demo.js           deterministic sample data
   sources/          trending.js, etsy.js, googleTrends.js, suggest.js, http.js
-  analyze/          momentum.js, score.js, sellable.js, related.js, tags.js
+  analyze/          momentum.js, score.js, sellable.js, persistence.js, related.js, tags.js
   report/           build.js, recommend.js, markdown.js, html.js
 tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 140 tests, all offline
+npm test     # 149 tests, all offline
 npm run lint
 ```

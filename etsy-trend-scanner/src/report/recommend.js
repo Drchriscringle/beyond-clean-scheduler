@@ -9,6 +9,7 @@
 import { formsForProfile } from '../keywords.js'
 import { suggestTags, suggestTitle } from '../analyze/tags.js'
 import { CLASSES, competitionScore } from '../analyze/score.js'
+import { persistenceVerdict } from '../analyze/persistence.js'
 import { addDays, toISODate } from '../seasonal.js'
 
 const ACTION_BY_CLASS = {
@@ -283,6 +284,8 @@ export function buildRecommendation(scored, { config = {}, today = new Date() } 
     tags,
     related,
     trending: scored.trending ?? scored.detail?.trending ?? null,
+    persistence: scored.persistence ?? null,
+    persistenceVerdict: persistenceVerdict(scored.persistence),
     ipWarning: ipWarningFor(scored),
     formatMismatch: formatMismatch(scored, profile),
   }

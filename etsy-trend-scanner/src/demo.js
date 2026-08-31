@@ -210,6 +210,8 @@ const ARCHETYPES = [
       ipRisk: 'high',
       ipReason: 'named entity from an encyclopedia article',
     },
+    // Appeared for the first time in today's harvest.
+    newToday: true,
   },
   {
     term: 'teacher gift',
@@ -287,10 +289,15 @@ export function writeDemoData({ config, today = new Date(), days = 31 } = {}) {
     const date = addDays(today, -dayOffset)
     const keywords = {}
     for (const archetype of ARCHETYPES) {
+      // A trend that only appeared today exercises the "unproven" path; one
+      // present in every snapshot exercises "sustained".
+      const trendingToday =
+        archetype.trending && (!archetype.newToday || dayOffset === 0) ? archetype.trending : null
+
       keywords[archetype.term] = {
         category: archetype.category,
-        origin: archetype.trending ? 'trending' : 'watchlist',
-        trending: archetype.trending ?? null,
+        origin: trendingToday ? 'trending' : 'watchlist',
+        trending: trendingToday,
         etsy: etsyRow(archetype, dayOffset, rng),
         // Only the newest snapshot needs the full curve; older days keep the
         // file small, mirroring how a real scan trims aged detail.
