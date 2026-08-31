@@ -10,6 +10,7 @@
  *   keywords  show the current keyword universe
  *   related   show what people also search for around one term
  *   trending  show today's raw trend harvest and what the screen kept
+ *   prune     thin old snapshots and drop stale report HTML
  *   calendar  show upcoming seasonal listing deadlines
  */
 
@@ -26,6 +27,7 @@ import { SOURCE_LABELS, mergeRelated } from './analyze/related.js'
 import { activeSeasonalThemes, upcomingEvents } from './seasonal.js'
 import { buildKeywordUniverse } from './keywords.js'
 import { writeDemoData } from './demo.js'
+import { prune } from './prune.js'
 
 const USAGE = `etsy-trends — find what to list on Etsy next
 
@@ -41,6 +43,7 @@ Commands:
   calendar    Print upcoming seasonal listing deadlines
   related     Show what people also search for around a term
   trending    Show today's raw trend harvest and what the screen kept
+  prune       Thin old snapshots and drop stale report HTML
 
 Options:
   --limit <n>        Cap keywords scanned this run
@@ -50,6 +53,7 @@ Options:
   --no-suggest       Skip search autocomplete
   --no-discovery     Skip trend discovery and scan the watchlist only
   --all              trending: show rejected terms too, with the reason
+  --dry-run          prune: report what would change without writing
   --geo <code>       Override market country (default US)
   --date <ISO>       Treat this date as "today" (for backfills and tests)
   --json             Print the report model as JSON instead of text
@@ -208,6 +212,18 @@ async function main() {
 
     case 'trending': {
       await showTrending(config, today, logger, args.flags.all === true)
+      break
+    }
+
+    case 'prune': {
+      const dryRun = args.flags['dry-run'] === true
+      const result = prune({ config, today, dryRun })
+      const kb = (result.bytesSaved / 1024).toFixed(1)
+      process.stdout.write(
+        `${dryRun ? 'Would thin' : 'Thinned'} ${result.snapshots.thinned.length} snapshots, ` +
+          `${dryRun ? 'delete' : 'deleted'} ${result.snapshots.deleted.length} expired and ` +
+          `${result.reports.deleted.length} stale report pages — ${kb} KB\n`,
+      )
       break
     }
 
