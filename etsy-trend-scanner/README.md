@@ -47,6 +47,14 @@ A committed sample of that output lives in [`docs/sample-report.md`](docs/sample
 
 ## Real setup
 
+**Without installing anything.** Add your Etsy keystring as a repository secret
+named `ETSY_API_KEY` (Settings → Secrets and variables → Actions), then run the
+daily workflow by hand from the Actions tab. Its first step checks all four
+sources and prints the result into the run summary, so you can see what works
+without a terminal.
+
+**On your own machine**, for faster iteration:
+
 ```bash
 cp .env.example .env
 # put your Etsy keystring in .env, then:
