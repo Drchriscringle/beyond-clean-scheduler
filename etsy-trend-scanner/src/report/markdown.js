@@ -15,6 +15,12 @@ const CLASS_LABEL = {
 
 const CURRENCY_SYMBOLS = { USD: '$', GBP: '\u00a3', EUR: '\u20ac', CAD: 'CA$', AUD: 'A$', NZD: 'NZ$' }
 
+/** "a", "a and b", "a, b and c" — the join a reader expects. */
+export function listPhrase(items = []) {
+  if (items.length <= 1) return items[0] ?? ''
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+}
+
 function money(value, currency = 'USD') {
   if (!Number.isFinite(value)) return '\u2014'
   const symbol = CURRENCY_SYMBOLS[currency]
@@ -35,7 +41,8 @@ function renderRow(row, index) {
   lines.push('')
   lines.push(
     `**${row.action}** · ${CLASS_LABEL[row.classification] ?? row.classification} · ` +
-      `opportunity ${score} · confidence ${row.confidence}`,
+      `opportunity ${score} · confidence ${row.confidence}` +
+      (row.backlogLabel ? ` · ${row.backlogLabel}` : ''),
   )
   lines.push('')
   lines.push(row.rationale)
@@ -120,15 +127,23 @@ export function renderMarkdown(model, { notes = [] } = {}) {
 
   const headline = model.sections.find((s) => s.id === 'list-next')?.rows ?? []
   const seasonal = model.sections.find((s) => s.id === 'seasonal')?.rows ?? []
-  const formats = (model.formats ?? []).join(' and ')
+  const formats = listPhrase(model.formats ?? [])
   if (headline.length || seasonal.length) {
     const top = headline[0] ?? seasonal[0]
+    // Lead with what is new. A daily report that opens the same way every
+    // morning is one nobody opens by the end of the week.
+    const freshness = Number.isFinite(model.newCount)
+      ? model.newCount === 0
+        ? `**Nothing new today** — ${model.standingCount} still standing from previous days. `
+        : `**${model.newCount} new since yesterday**` +
+          (model.standingCount ? `, ${model.standingCount} still standing. ` : '. ')
+      : ''
     out.push(
-      `**Today's call:** ${top.term}${top.product ? ` — ${top.product.form}` : ''}. ` +
+      `${freshness}**Today's call:** ${top.term}${top.product ? ` — ${top.product.form}` : ''}. ` +
         `${headline.length} rising ${headline.length === 1 ? 'niche' : 'niches'} and ` +
         `${seasonal.length} seasonal ${seasonal.length === 1 ? 'deadline' : 'deadlines'} worth acting on, ` +
         `from ${model.totalScanned} trends scanned (${model.geo}` +
-        `${formats ? `, ${formats} only` : ''}).`,
+        `${formats ? `, ${formats}` : ''}).`,
     )
   } else {
     out.push(

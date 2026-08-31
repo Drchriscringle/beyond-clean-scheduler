@@ -10,6 +10,7 @@ import { formsForProfile } from '../keywords.js'
 import { suggestTags, suggestTitle } from '../analyze/tags.js'
 import { CLASSES, competitionScore } from '../analyze/score.js'
 import { persistenceVerdict } from '../analyze/persistence.js'
+import { annotateBacklog, backlogLabel } from '../analyze/backlog.js'
 import { addDays, toISODate } from '../seasonal.js'
 
 const ACTION_BY_CLASS = {
@@ -355,15 +356,23 @@ export const SECTIONS = [
  */
 export function buildReportModel(
   scoredRows,
-  { config = {}, today = new Date(), longTail = [], discovery = null } = {},
+  { config = {}, today = new Date(), longTail = [], discovery = null, reportLog = {} } = {},
 ) {
   const size = config.reportSize ?? 12
+  const date = toISODate(today)
   const all = scoredRows.map((row) => buildRecommendation(row, { config, today }))
 
   // Anything that cannot be made in a format this shop sells is set aside
   // rather than ranked, and reported separately so the filtering is visible.
-  const recommendations = all.filter((row) => !row.formatMismatch)
+  const kept = all.filter((row) => !row.formatMismatch)
   const filtered = all.filter((row) => row.formatMismatch)
+
+  // What is new to the reader, as distinct from what is new to the world.
+  const backlog = annotateBacklog(kept, reportLog, date)
+  const recommendations = backlog.rows.map((row) => ({
+    ...row,
+    backlogLabel: backlogLabel(row.backlog),
+  }))
 
   const used = new Set()
   const sections = SECTIONS.map((section) => {
@@ -376,8 +385,10 @@ export function buildReportModel(
   })
 
   return {
-    date: toISODate(today),
+    date,
     generatedAt: new Date().toISOString(),
+    newCount: backlog.newCount,
+    standingCount: backlog.standingCount,
     geo: config.geo ?? 'US',
     totalScanned: scoredRows.length,
     formats: config.profile?.formats ?? [],

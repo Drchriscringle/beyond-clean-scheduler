@@ -112,6 +112,7 @@ export function buildReport({ config, today = new Date(), write = true } = {}) {
     today,
     longTail: latest.longTail ?? [],
     discovery: latest.discovery ?? null,
+    reportLog: store.readReportLog(),
   })
   const notes = buildNotes(latest, store)
   const markdown = renderMarkdown(model, { notes })
@@ -119,6 +120,13 @@ export function buildReport({ config, today = new Date(), write = true } = {}) {
 
   const paths = {}
   if (write) {
+    // Record what today's report recommended, so tomorrow's can tell the
+    // reader what is actually new. Only on a real write — a dry run or a
+    // rebuild must not rewrite history.
+    store.recordReport(
+      model.date,
+      model.sections.flatMap((section) => section.rows.map((row) => row.term)),
+    )
     ensureDir(config.reportDir)
     const date = toISODate(today)
     paths.markdown = join(config.reportDir, `${date}.md`)

@@ -117,8 +117,35 @@ Each run:
    `ETSY_TRENDS_ISSUE` to `off` to disable it.
 5. uploads the report as a run artifact as well
 
+If a run fails, it opens (or reopens and comments on) a single issue saying so
+with a link to the log. An unattended daily job that fails silently is worse
+than no job — the reports simply stop and nothing says why. One issue is reused
+rather than one per failure, so a week-long outage is a single conversation.
+
 GitHub Pages is not used: `retro-premier-manager` already occupies it as this
 repository's site.
+
+### New to you, not just new to the world
+
+Trend persistence says how long something has been trending. A separate ledger
+says whether you have already been told about it — because a niche that keeps
+qualifying gets recommended every morning with the same product, price and
+tags, and a report that repeats itself verbatim stops being opened by the end
+of the first week.
+
+Every report leads with what changed:
+
+> **3 new since yesterday**, 6 still standing. **Today's call:** …
+>
+> **Nothing new today** — 7 still standing.
+
+and each card is marked *new today*, *also on yesterday's list*, or *on your
+list 4 days*.
+
+This is deliberately not a suppression mechanism. If you have not acted on
+something yet, hiding it is the wrong move — it is still the best thing to
+list. It is labelled as standing, and the new items are counted separately so
+the day has a headline worth opening.
 
 ### Retention
 
@@ -399,12 +426,12 @@ src/
   prune.js          snapshot thinning and retention
   sources/          trending.js, etsy.js, googleTrends.js, suggest.js, http.js
   analyze/          momentum.js, score.js, sellable.js, cluster.js, persistence.js,
-                    related.js, tags.js
+                    backlog.js, related.js, tags.js
   report/           build.js, recommend.js, markdown.js, html.js
 tests/              node --test, no network required
 ```
 
 ```bash
-npm test     # 170 tests, all offline
+npm test     # 180 tests, all offline
 npm run lint
 ```

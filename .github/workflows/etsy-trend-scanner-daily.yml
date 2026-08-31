@@ -101,6 +101,40 @@ jobs:
               gh issue close "$n" --comment "Superseded by the plan for $DATE."
             done
 
+      # An unattended daily job that fails silently is worse than no job: the
+      # reports simply stop and nothing says why. One issue is reused and
+      # reopened rather than a new one per failure, so a week-long outage is a
+      # single conversation instead of seven notifications.
+      - name: Report a failed run
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          TITLE="Etsy trend scanner: daily run is failing"
+          BODY="The scheduled run failed on $(date -u +%F).
+
+          Most likely causes, in rough order:
+
+          - Google Trends rate-limiting (HTTP 429) — usually clears on its own
+          - an upstream response shape changed, breaking a parser
+          - \`ETSY_API_KEY\` missing or rejected
+
+          Run log: $RUN_URL
+
+          \`npm run doctor\` locally will say which source is at fault."
+
+          EXISTING=$(gh issue list --search "$TITLE in:title" --state all \
+            --json number,state --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING" ]; then
+            gh issue reopen "$EXISTING" 2>/dev/null || true
+            gh issue comment "$EXISTING" --body "Failed again on $(date -u +%F). Run log: $RUN_URL"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
       - name: Publish the report as a run artifact
         uses: actions/upload-artifact@v4
         with:
