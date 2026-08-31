@@ -1,0 +1,2451 @@
+{
+  "date": "2026-08-31",
+  "generatedAt": "2026-08-31T21:40:35.703Z",
+  "geo": "GB",
+  "sources": {
+    "etsy": false,
+    "googleTrends": true,
+    "autocomplete": true,
+    "discovery": true
+  },
+  "notes": [
+    "ETSY_API_KEY is not set, so competition and price data are missing. Scores fall back to search demand and the seasonal calendar only."
+  ],
+  "discovery": {
+    "harvested": 50,
+    "clustered": 49,
+    "mergedAsDuplicates": 1,
+    "screened": 49,
+    "qualified": 3,
+    "rejectedByShape": 5,
+    "rejectedAsUnsellable": 22,
+    "rejectedWrongFormat": 0,
+    "wrongFormatExamples": [],
+    "formats": [
+      "digital-download",
+      "print-on-demand",
+      "handmade-physical"
+    ],
+    "notProbed": 19,
+    "rejectionReasons": {
+      "score": 2,
+      "fixture": 2,
+      "league": 1
+    },
+    "errors": [],
+    "sources": [
+      "google-trending",
+      "wikipedia"
+    ]
+  },
+  "keywords": {
+    "lake ontario": {
+      "category": "trending",
+      "origin": "trending",
+      "trending": {
+        "sources": [
+          "wikipedia"
+        ],
+        "traffic": null,
+        "views": 131461,
+        "headlines": [],
+        "commerceScore": 68,
+        "commerceHits": [
+          "printable",
+          "shirt",
+          "svg"
+        ],
+        "format": "print-on-demand",
+        "formatScore": 50,
+        "formatExamples": [
+          "lake ontario print",
+          "lake ontario shirt",
+          "lake ontario shirt made in canada",
+          "lake ontario shirt amazon"
+        ],
+        "ipRisk": "high",
+        "ipReason": "named entity from an encyclopedia article",
+        "aliases": []
+      },
+      "trends": {
+        "series": [
+          {
+            "date": "2025-08-31",
+            "value": 1
+          },
+          {
+            "date": "2025-09-07",
+            "value": 1
+          },
+          {
+            "date": "2025-09-14",
+            "value": 0
+          },
+          {
+            "date": "2025-09-21",
+            "value": 1
+          },
+          {
+            "date": "2025-09-28",
+            "value": 0
+          },
+          {
+            "date": "2025-10-05",
+            "value": 1
+          },
+          {
+            "date": "2025-10-12",
+            "value": 0
+          },
+          {
+            "date": "2025-10-19",
+            "value": 0
+          },
+          {
+            "date": "2025-10-26",
+            "value": 1
+          },
+          {
+            "date": "2025-11-02",
+            "value": 1
+          },
+          {
+            "date": "2025-11-09",
+            "value": 1
+          },
+          {
+            "date": "2025-11-16",
+            "value": 1
+          },
+          {
+            "date": "2025-11-23",
+            "value": 1
+          },
+          {
+            "date": "2025-11-30",
+            "value": 2
+          },
+          {
+            "date": "2025-12-07",
+            "value": 2
+          },
+          {
+            "date": "2025-12-14",
+            "value": 1
+          },
+          {
+            "date": "2025-12-21",
+            "value": 1
+          },
+          {
+            "date": "2025-12-28",
+            "value": 2
+          },
+          {
+            "date": "2026-01-04",
+            "value": 1
+          },
+          {
+            "date": "2026-01-11",
+            "value": 1
+          },
+          {
+            "date": "2026-01-18",
+            "value": 1
+          },
+          {
+            "date": "2026-01-25",
+            "value": 3
+          },
+          {
+            "date": "2026-02-01",
+            "value": 3
+          },
+          {
+            "date": "2026-02-08",
+            "value": 3
+          },
+          {
+            "date": "2026-02-15",
+            "value": 2
+          },
+          {
+            "date": "2026-02-22",
+            "value": 2
+          },
+          {
+            "date": "2026-03-01",
+            "value": 1
+          },
+          {
+            "date": "2026-03-08",
+            "value": 1
+          },
+          {
+            "date": "2026-03-15",
+            "value": 1
+          },
+          {
+            "date": "2026-03-22",
+            "value": 1
+          },
+          {
+            "date": "2026-03-29",
+            "value": 2
+          },
+          {
+            "date": "2026-04-05",
+            "value": 1
+          },
+          {
+            "date": "2026-04-12",
+            "value": 1
+          },
+          {
+            "date": "2026-04-19",
+            "value": 1
+          },
+          {
+            "date": "2026-04-26",
+            "value": 1
+          },
+          {
+            "date": "2026-05-03",
+            "value": 2
+          },
+          {
+            "date": "2026-05-10",
+            "value": 1
+          },
+          {
+            "date": "2026-05-17",
+            "value": 1
+          },
+          {
+            "date": "2026-05-24",
+            "value": 1
+          },
+          {
+            "date": "2026-05-31",
+            "value": 1
+          },
+          {
+            "date": "2026-06-07",
+            "value": 1
+          },
+          {
+            "date": "2026-06-14",
+            "value": 1
+          },
+          {
+            "date": "2026-06-21",
+            "value": 2
+          },
+          {
+            "date": "2026-06-28",
+            "value": 3
+          },
+          {
+            "date": "2026-07-05",
+            "value": 2
+          },
+          {
+            "date": "2026-07-12",
+            "value": 2
+          },
+          {
+            "date": "2026-07-19",
+            "value": 2
+          },
+          {
+            "date": "2026-07-26",
+            "value": 1
+          },
+          {
+            "date": "2026-08-02",
+            "value": 2
+          },
+          {
+            "date": "2026-08-09",
+            "value": 2
+          },
+          {
+            "date": "2026-08-16",
+            "value": 1
+          },
+          {
+            "date": "2026-08-23",
+            "value": 75
+          }
+        ],
+        "rising": [
+          {
+            "query": "trump lake ontario",
+            "value": 1237650,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "lake ontario donald trump",
+            "value": 318650,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "rename lake ontario",
+            "value": 244350,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "trump lake ontario lake america",
+            "value": 242900,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "trump rename lake ontario",
+            "value": 199250,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "lake ontario to lake america",
+            "value": 175150,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "lake ontario renamed",
+            "value": 158000,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "renaming lake ontario",
+            "value": 138850,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "lake ontario name change",
+            "value": 112400,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "trump and lake ontario",
+            "value": 99850,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "gulf of mexico",
+            "value": 93400,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "trump renaming lake ontario",
+            "value": 90750,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "who owns lake ontario",
+            "value": 59300,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "has trump renamed lake ontario",
+            "value": 47600,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "which country is lake ontario in",
+            "value": 39050,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "what is a data lake",
+            "value": 38550,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "trump renames lake ontario",
+            "value": 37150,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "gulf of america",
+            "value": 35550,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "lake ontario sign",
+            "value": 30150,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "hydronym",
+            "value": 29550,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "king of norway",
+            "value": 27300,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "mark carney lake ontario",
+            "value": 27200,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "dolly parton",
+            "value": 26250,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "cyber attacks airports",
+            "value": 24350,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "how deep is lake ontario",
+            "value": 22650,
+            "breakout": true,
+            "formatted": "Breakout"
+          }
+        ],
+        "top": [
+          {
+            "query": "lake of ontario",
+            "value": 100,
+            "breakout": false,
+            "formatted": "100"
+          },
+          {
+            "query": "trump lake ontario",
+            "value": 63,
+            "breakout": false,
+            "formatted": "63"
+          },
+          {
+            "query": "trump",
+            "value": 63,
+            "breakout": false,
+            "formatted": "63"
+          },
+          {
+            "query": "canada lake ontario",
+            "value": 62,
+            "breakout": false,
+            "formatted": "62"
+          },
+          {
+            "query": "canada",
+            "value": 62,
+            "breakout": false,
+            "formatted": "62"
+          },
+          {
+            "query": "lake ontario lake america",
+            "value": 32,
+            "breakout": false,
+            "formatted": "32"
+          },
+          {
+            "query": "lake america ontario",
+            "value": 31,
+            "breakout": false,
+            "formatted": "31"
+          },
+          {
+            "query": "lake america",
+            "value": 30,
+            "breakout": false,
+            "formatted": "30"
+          },
+          {
+            "query": "lake ontario news",
+            "value": 23,
+            "breakout": false,
+            "formatted": "23"
+          },
+          {
+            "query": "where is lake ontario",
+            "value": 23,
+            "breakout": false,
+            "formatted": "23"
+          },
+          {
+            "query": "toronto",
+            "value": 22,
+            "breakout": false,
+            "formatted": "22"
+          },
+          {
+            "query": "lake ontario name",
+            "value": 21,
+            "breakout": false,
+            "formatted": "21"
+          },
+          {
+            "query": "is lake ontario in canada",
+            "value": 19,
+            "breakout": false,
+            "formatted": "19"
+          },
+          {
+            "query": "map lake ontario",
+            "value": 17,
+            "breakout": false,
+            "formatted": "17"
+          },
+          {
+            "query": "lake ontario donald trump",
+            "value": 16,
+            "breakout": false,
+            "formatted": "16"
+          },
+          {
+            "query": "rename lake ontario",
+            "value": 12,
+            "breakout": false,
+            "formatted": "12"
+          },
+          {
+            "query": "trump lake ontario lake america",
+            "value": 12,
+            "breakout": false,
+            "formatted": "12"
+          },
+          {
+            "query": "trump rename lake ontario",
+            "value": 10,
+            "breakout": false,
+            "formatted": "10"
+          },
+          {
+            "query": "lake ontario to lake america",
+            "value": 9,
+            "breakout": false,
+            "formatted": "9"
+          },
+          {
+            "query": "lake ontario size",
+            "value": 8,
+            "breakout": false,
+            "formatted": "8"
+          },
+          {
+            "query": "lake ontario renamed",
+            "value": 8,
+            "breakout": false,
+            "formatted": "8"
+          },
+          {
+            "query": "renaming lake ontario",
+            "value": 7,
+            "breakout": false,
+            "formatted": "7"
+          },
+          {
+            "query": "lake of america",
+            "value": 7,
+            "breakout": false,
+            "formatted": "7"
+          },
+          {
+            "query": "lake ontario fishing",
+            "value": 7,
+            "breakout": false,
+            "formatted": "7"
+          },
+          {
+            "query": "lake ontario location",
+            "value": 7,
+            "breakout": false,
+            "formatted": "7"
+          }
+        ]
+      },
+      "suggest": {
+        "suggestions": [
+          {
+            "query": "lake ontario",
+            "rank": 0
+          },
+          {
+            "query": "lake ontario (lake america)",
+            "rank": 0
+          },
+          {
+            "query": "lake ontario name change",
+            "rank": 1
+          },
+          {
+            "query": "lake ontario map",
+            "rank": 2
+          },
+          {
+            "query": "lake ontario sign",
+            "rank": 3
+          },
+          {
+            "query": "lake ontario shirt",
+            "rank": 4
+          },
+          {
+            "query": "lake ontario t shirt",
+            "rank": 5
+          },
+          {
+            "query": "lake ontario name origin",
+            "rank": 6
+          },
+          {
+            "query": "lake ontario renamed",
+            "rank": 7
+          },
+          {
+            "query": "lake ontario trump",
+            "rank": 8
+          },
+          {
+            "query": "lake ontario name",
+            "rank": 9
+          }
+        ]
+      },
+      "related": [
+        {
+          "query": "lake ontario renamed",
+          "sources": [
+            "trendsTop",
+            "trendsRising",
+            "autocomplete"
+          ],
+          "score": 7.14,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "trump lake ontario",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 6.6,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "lake ontario name change",
+          "sources": [
+            "trendsRising",
+            "autocomplete"
+          ],
+          "score": 6.48,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "lake ontario sign",
+          "sources": [
+            "trendsRising",
+            "autocomplete"
+          ],
+          "score": 5.94,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "lake ontario donald trump",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 4.86,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "rename lake ontario",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 4.86,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "trump lake ontario lake america",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 4.86,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "trump rename lake ontario",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 4.86,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "lake ontario to lake america",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 4.86,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "renaming lake ontario",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 4.86,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "lake ontario lake america",
+          "sources": [
+            "trendsTop",
+            "autocomplete"
+          ],
+          "score": 4,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": null,
+          "inEtsyTags": false
+        },
+        {
+          "query": "lake ontario name",
+          "sources": [
+            "trendsTop",
+            "autocomplete"
+          ],
+          "score": 1.26,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": null,
+          "inEtsyTags": false
+        }
+      ]
+    },
+    "9 to 5": {
+      "category": "trending",
+      "origin": "trending",
+      "trending": {
+        "sources": [
+          "wikipedia"
+        ],
+        "traffic": null,
+        "views": 57046,
+        "headlines": [],
+        "commerceScore": 55,
+        "commerceHits": [
+          "printable",
+          "shirt"
+        ],
+        "format": "print-on-demand",
+        "formatScore": 50,
+        "formatExamples": [
+          "9 to 5 print",
+          "9 to 5 print taos",
+          "9 to 5 lyrics print",
+          "9 to 5 shirt"
+        ],
+        "ipRisk": "high",
+        "ipReason": "named entity from an encyclopedia article",
+        "aliases": []
+      },
+      "trends": {
+        "series": [
+          {
+            "date": "2025-08-31",
+            "value": 12
+          },
+          {
+            "date": "2025-09-07",
+            "value": 13
+          },
+          {
+            "date": "2025-09-14",
+            "value": 14
+          },
+          {
+            "date": "2025-09-21",
+            "value": 16
+          },
+          {
+            "date": "2025-09-28",
+            "value": 14
+          },
+          {
+            "date": "2025-10-05",
+            "value": 16
+          },
+          {
+            "date": "2025-10-12",
+            "value": 16
+          },
+          {
+            "date": "2025-10-19",
+            "value": 16
+          },
+          {
+            "date": "2025-10-26",
+            "value": 17
+          },
+          {
+            "date": "2025-11-02",
+            "value": 21
+          },
+          {
+            "date": "2025-11-09",
+            "value": 21
+          },
+          {
+            "date": "2025-11-16",
+            "value": 21
+          },
+          {
+            "date": "2025-11-23",
+            "value": 25
+          },
+          {
+            "date": "2025-11-30",
+            "value": 28
+          },
+          {
+            "date": "2025-12-07",
+            "value": 31
+          },
+          {
+            "date": "2025-12-14",
+            "value": 23
+          },
+          {
+            "date": "2025-12-21",
+            "value": 19
+          },
+          {
+            "date": "2025-12-28",
+            "value": 22
+          },
+          {
+            "date": "2026-01-04",
+            "value": 33
+          },
+          {
+            "date": "2026-01-11",
+            "value": 24
+          },
+          {
+            "date": "2026-01-18",
+            "value": 28
+          },
+          {
+            "date": "2026-01-25",
+            "value": 30
+          },
+          {
+            "date": "2026-02-01",
+            "value": 42
+          },
+          {
+            "date": "2026-02-08",
+            "value": 40
+          },
+          {
+            "date": "2026-02-15",
+            "value": 23
+          },
+          {
+            "date": "2026-02-22",
+            "value": 25
+          },
+          {
+            "date": "2026-03-01",
+            "value": 25
+          },
+          {
+            "date": "2026-03-08",
+            "value": 29
+          },
+          {
+            "date": "2026-03-15",
+            "value": 24
+          },
+          {
+            "date": "2026-03-22",
+            "value": 30
+          },
+          {
+            "date": "2026-03-29",
+            "value": 27
+          },
+          {
+            "date": "2026-04-05",
+            "value": 23
+          },
+          {
+            "date": "2026-04-12",
+            "value": 22
+          },
+          {
+            "date": "2026-04-19",
+            "value": 19
+          },
+          {
+            "date": "2026-04-26",
+            "value": 22
+          },
+          {
+            "date": "2026-05-03",
+            "value": 23
+          },
+          {
+            "date": "2026-05-10",
+            "value": 23
+          },
+          {
+            "date": "2026-05-17",
+            "value": 21
+          },
+          {
+            "date": "2026-05-24",
+            "value": 22
+          },
+          {
+            "date": "2026-05-31",
+            "value": 23
+          },
+          {
+            "date": "2026-06-07",
+            "value": 23
+          },
+          {
+            "date": "2026-06-14",
+            "value": 20
+          },
+          {
+            "date": "2026-06-21",
+            "value": 27
+          },
+          {
+            "date": "2026-06-28",
+            "value": 38
+          },
+          {
+            "date": "2026-07-05",
+            "value": 54
+          },
+          {
+            "date": "2026-07-12",
+            "value": 26
+          },
+          {
+            "date": "2026-07-19",
+            "value": 24
+          },
+          {
+            "date": "2026-07-26",
+            "value": 29
+          },
+          {
+            "date": "2026-08-02",
+            "value": 45
+          },
+          {
+            "date": "2026-08-09",
+            "value": 100
+          },
+          {
+            "date": "2026-08-16",
+            "value": 28
+          },
+          {
+            "date": "2026-08-23",
+            "value": 97
+          }
+        ],
+        "rising": [
+          {
+            "query": "9 to 5 tour",
+            "value": 400,
+            "breakout": false,
+            "formatted": "+400%"
+          },
+          {
+            "query": "9 to 5 uk tour",
+            "value": 400,
+            "breakout": false,
+            "formatted": "+400%"
+          },
+          {
+            "query": "love from 9 to 5",
+            "value": 250,
+            "breakout": false,
+            "formatted": "+250%"
+          },
+          {
+            "query": "9 to 5 musical uk tour",
+            "value": 250,
+            "breakout": false,
+            "formatted": "+250%"
+          },
+          {
+            "query": "what does working 9 to 5 mean",
+            "value": 200,
+            "breakout": false,
+            "formatted": "+200%"
+          },
+          {
+            "query": "where to watch 9 to 5 movie",
+            "value": 180,
+            "breakout": false,
+            "formatted": "+180%"
+          },
+          {
+            "query": "google 9 to 5",
+            "value": 40,
+            "breakout": false,
+            "formatted": "+40%"
+          },
+          {
+            "query": "what does 9 to 5 mean",
+            "value": 40,
+            "breakout": false,
+            "formatted": "+40%"
+          },
+          {
+            "query": "9 to 5 film",
+            "value": 40,
+            "breakout": false,
+            "formatted": "+40%"
+          }
+        ],
+        "top": [
+          {
+            "query": "what is a 9 to 5",
+            "value": 100,
+            "breakout": false,
+            "formatted": "100"
+          },
+          {
+            "query": "9 to 5 hours",
+            "value": 48,
+            "breakout": false,
+            "formatted": "48"
+          },
+          {
+            "query": "google 9 to 5",
+            "value": 39,
+            "breakout": false,
+            "formatted": "39"
+          },
+          {
+            "query": "9 to 5 lyrics",
+            "value": 33,
+            "breakout": false,
+            "formatted": "33"
+          },
+          {
+            "query": "9 to 5 dolly parton",
+            "value": 32,
+            "breakout": false,
+            "formatted": "32"
+          },
+          {
+            "query": "dolly parton",
+            "value": 32,
+            "breakout": false,
+            "formatted": "32"
+          },
+          {
+            "query": "9 to 5 meaning",
+            "value": 31,
+            "breakout": false,
+            "formatted": "31"
+          },
+          {
+            "query": "working 9 to 5",
+            "value": 31,
+            "breakout": false,
+            "formatted": "31"
+          },
+          {
+            "query": "9 to 5 film",
+            "value": 30,
+            "breakout": false,
+            "formatted": "30"
+          },
+          {
+            "query": "9 to 5 song",
+            "value": 25,
+            "breakout": false,
+            "formatted": "25"
+          },
+          {
+            "query": "9 to 5 jobs",
+            "value": 23,
+            "breakout": false,
+            "formatted": "23"
+          },
+          {
+            "query": "9 to 5 job",
+            "value": 22,
+            "breakout": false,
+            "formatted": "22"
+          },
+          {
+            "query": "9 to 5 movie",
+            "value": 21,
+            "breakout": false,
+            "formatted": "21"
+          },
+          {
+            "query": "9 to 5 musical",
+            "value": 21,
+            "breakout": false,
+            "formatted": "21"
+          },
+          {
+            "query": "how long is 9 to 5",
+            "value": 17,
+            "breakout": false,
+            "formatted": "17"
+          },
+          {
+            "query": "9 to 5 how many hours",
+            "value": 15,
+            "breakout": false,
+            "formatted": "15"
+          },
+          {
+            "query": "what does 9 to 5 mean",
+            "value": 15,
+            "breakout": false,
+            "formatted": "15"
+          },
+          {
+            "query": "9 to 5 tour",
+            "value": 15,
+            "breakout": false,
+            "formatted": "15"
+          },
+          {
+            "query": "9 to 5 cast",
+            "value": 13,
+            "breakout": false,
+            "formatted": "13"
+          },
+          {
+            "query": "9 to 5 uk tour",
+            "value": 5,
+            "breakout": false,
+            "formatted": "5"
+          },
+          {
+            "query": "love from 9 to 5",
+            "value": 5,
+            "breakout": false,
+            "formatted": "5"
+          },
+          {
+            "query": "where to watch 9 to 5 movie",
+            "value": 2,
+            "breakout": false,
+            "formatted": "2"
+          },
+          {
+            "query": "what does working 9 to 5 mean",
+            "value": 1,
+            "breakout": false,
+            "formatted": "1"
+          },
+          {
+            "query": "9 to 5 musical uk tour",
+            "value": 1,
+            "breakout": false,
+            "formatted": "1"
+          }
+        ]
+      },
+      "suggest": {
+        "suggestions": [
+          {
+            "query": "9 to 5",
+            "rank": 0
+          },
+          {
+            "query": "9 to 5 meaning",
+            "rank": 0
+          },
+          {
+            "query": "9 to 5 movie",
+            "rank": 1
+          },
+          {
+            "query": "9 to 5 lyrics",
+            "rank": 1
+          },
+          {
+            "query": "9 to 5 cast",
+            "rank": 2
+          },
+          {
+            "query": "9 to 5 how many hours",
+            "rank": 3
+          },
+          {
+            "query": "9 to 5 film",
+            "rank": 4
+          },
+          {
+            "query": "9 to 5 job meaning",
+            "rank": 4
+          },
+          {
+            "query": "9 to 5 streaming",
+            "rank": 5
+          },
+          {
+            "query": "9 to 5 musical",
+            "rank": 5
+          },
+          {
+            "query": "9 to 5 song",
+            "rank": 6
+          },
+          {
+            "query": "9 to 5 movie cast",
+            "rank": 7
+          },
+          {
+            "query": "9 to 5 dolly parton",
+            "rank": 7
+          },
+          {
+            "query": "9 to 5 mac",
+            "rank": 8
+          },
+          {
+            "query": "9 to 5 movie streaming",
+            "rank": 9
+          }
+        ]
+      },
+      "related": [
+        {
+          "query": "9 to 5 film",
+          "sources": [
+            "trendsTop",
+            "trendsRising",
+            "autocomplete"
+          ],
+          "score": 6.63,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+40%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "google 9 to 5",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 4.01,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+40%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "9 to 5 meaning",
+          "sources": [
+            "trendsTop",
+            "autocomplete"
+          ],
+          "score": 3.96,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": null,
+          "inEtsyTags": false
+        },
+        {
+          "query": "9 to 5 lyrics",
+          "sources": [
+            "trendsTop",
+            "autocomplete"
+          ],
+          "score": 3.77,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": null,
+          "inEtsyTags": false
+        },
+        {
+          "query": "9 to 5 movie",
+          "sources": [
+            "trendsTop",
+            "autocomplete"
+          ],
+          "score": 3.28,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": null,
+          "inEtsyTags": false
+        },
+        {
+          "query": "what does 9 to 5 mean",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+40%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "9 to 5 tour",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+400%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "9 to 5 uk tour",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+400%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "love from 9 to 5",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+250%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "where to watch 9 to 5 movie",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+180%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "what does working 9 to 5 mean",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+200%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "9 to 5 musical uk tour",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+250%",
+          "inEtsyTags": false
+        }
+      ]
+    },
+    "alpha": {
+      "category": "trending",
+      "origin": "trending",
+      "trending": {
+        "sources": [
+          "wikipedia"
+        ],
+        "traffic": null,
+        "views": 49677,
+        "headlines": [],
+        "commerceScore": 83,
+        "commerceHits": [
+          "printable",
+          "shirt",
+          "svg"
+        ],
+        "format": "digital-download",
+        "formatScore": 50,
+        "formatExamples": [
+          "printable alpha strike cards",
+          "printable alpha bravo alphabet",
+          "printable alpha bravo charlie alphabet",
+          "alpha svg"
+        ],
+        "ipRisk": "high",
+        "ipReason": "named entity from an encyclopedia article",
+        "aliases": []
+      },
+      "trends": {
+        "series": [
+          {
+            "date": "2025-08-31",
+            "value": 76
+          },
+          {
+            "date": "2025-09-07",
+            "value": 73
+          },
+          {
+            "date": "2025-09-14",
+            "value": 63
+          },
+          {
+            "date": "2025-09-21",
+            "value": 67
+          },
+          {
+            "date": "2025-09-28",
+            "value": 70
+          },
+          {
+            "date": "2025-10-05",
+            "value": 68
+          },
+          {
+            "date": "2025-10-12",
+            "value": 73
+          },
+          {
+            "date": "2025-10-19",
+            "value": 75
+          },
+          {
+            "date": "2025-10-26",
+            "value": 78
+          },
+          {
+            "date": "2025-11-02",
+            "value": 79
+          },
+          {
+            "date": "2025-11-09",
+            "value": 79
+          },
+          {
+            "date": "2025-11-16",
+            "value": 79
+          },
+          {
+            "date": "2025-11-23",
+            "value": 78
+          },
+          {
+            "date": "2025-11-30",
+            "value": 75
+          },
+          {
+            "date": "2025-12-07",
+            "value": 69
+          },
+          {
+            "date": "2025-12-14",
+            "value": 73
+          },
+          {
+            "date": "2025-12-21",
+            "value": 61
+          },
+          {
+            "date": "2025-12-28",
+            "value": 72
+          },
+          {
+            "date": "2026-01-04",
+            "value": 80
+          },
+          {
+            "date": "2026-01-11",
+            "value": 79
+          },
+          {
+            "date": "2026-01-18",
+            "value": 80
+          },
+          {
+            "date": "2026-01-25",
+            "value": 84
+          },
+          {
+            "date": "2026-02-01",
+            "value": 87
+          },
+          {
+            "date": "2026-02-08",
+            "value": 84
+          },
+          {
+            "date": "2026-02-15",
+            "value": 87
+          },
+          {
+            "date": "2026-02-22",
+            "value": 83
+          },
+          {
+            "date": "2026-03-01",
+            "value": 71
+          },
+          {
+            "date": "2026-03-08",
+            "value": 74
+          },
+          {
+            "date": "2026-03-15",
+            "value": 80
+          },
+          {
+            "date": "2026-03-22",
+            "value": 78
+          },
+          {
+            "date": "2026-03-29",
+            "value": 78
+          },
+          {
+            "date": "2026-04-05",
+            "value": 67
+          },
+          {
+            "date": "2026-04-12",
+            "value": 73
+          },
+          {
+            "date": "2026-04-19",
+            "value": 82
+          },
+          {
+            "date": "2026-04-26",
+            "value": 72
+          },
+          {
+            "date": "2026-05-03",
+            "value": 72
+          },
+          {
+            "date": "2026-05-10",
+            "value": 75
+          },
+          {
+            "date": "2026-05-17",
+            "value": 73
+          },
+          {
+            "date": "2026-05-24",
+            "value": 72
+          },
+          {
+            "date": "2026-05-31",
+            "value": 79
+          },
+          {
+            "date": "2026-06-07",
+            "value": 63
+          },
+          {
+            "date": "2026-06-14",
+            "value": 60
+          },
+          {
+            "date": "2026-06-21",
+            "value": 75
+          },
+          {
+            "date": "2026-06-28",
+            "value": 94
+          },
+          {
+            "date": "2026-07-05",
+            "value": 85
+          },
+          {
+            "date": "2026-07-12",
+            "value": 82
+          },
+          {
+            "date": "2026-07-19",
+            "value": 73
+          },
+          {
+            "date": "2026-07-26",
+            "value": 80
+          },
+          {
+            "date": "2026-08-02",
+            "value": 79
+          },
+          {
+            "date": "2026-08-09",
+            "value": 100
+          },
+          {
+            "date": "2026-08-16",
+            "value": 77
+          },
+          {
+            "date": "2026-08-23",
+            "value": 75
+          }
+        ],
+        "rising": [
+          {
+            "query": "alpha 2026",
+            "value": 19100,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "mated to the alpha and his beta",
+            "value": 6500,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "alpha movie 2026",
+            "value": 5800,
+            "breakout": true,
+            "formatted": "Breakout"
+          },
+          {
+            "query": "zero to alpha return of the wolf king",
+            "value": 4350,
+            "breakout": false,
+            "formatted": "+4,350%"
+          },
+          {
+            "query": "leatherman wave alpha",
+            "value": 2400,
+            "breakout": false,
+            "formatted": "+2,400%"
+          },
+          {
+            "query": "alpha drive one",
+            "value": 1800,
+            "breakout": false,
+            "formatted": "+1,800%"
+          },
+          {
+            "query": "alpha infuse",
+            "value": 750,
+            "breakout": false,
+            "formatted": "+750%"
+          },
+          {
+            "query": "alpha infuse reviews",
+            "value": 550,
+            "breakout": false,
+            "formatted": "+550%"
+          },
+          {
+            "query": "alpha 2025",
+            "value": 550,
+            "breakout": false,
+            "formatted": "+550%"
+          },
+          {
+            "query": "alpha futures",
+            "value": 300,
+            "breakout": false,
+            "formatted": "+300%"
+          },
+          {
+            "query": "alpha edge",
+            "value": 250,
+            "breakout": false,
+            "formatted": "+250%"
+          },
+          {
+            "query": "alpha drive",
+            "value": 190,
+            "breakout": false,
+            "formatted": "+190%"
+          },
+          {
+            "query": "alpha gal syndrome",
+            "value": 150,
+            "breakout": false,
+            "formatted": "+150%"
+          },
+          {
+            "query": "alpha gal",
+            "value": 130,
+            "breakout": false,
+            "formatted": "+130%"
+          },
+          {
+            "query": "alpha film",
+            "value": 120,
+            "breakout": false,
+            "formatted": "+120%"
+          },
+          {
+            "query": "alpha movie",
+            "value": 110,
+            "breakout": false,
+            "formatted": "+110%"
+          },
+          {
+            "query": "alpha bank",
+            "value": 90,
+            "breakout": false,
+            "formatted": "+90%"
+          },
+          {
+            "query": "alpha travel",
+            "value": 90,
+            "breakout": false,
+            "formatted": "+90%"
+          },
+          {
+            "query": "alpha wholesale",
+            "value": 80,
+            "breakout": false,
+            "formatted": "+80%"
+          },
+          {
+            "query": "alpha tv greece",
+            "value": 80,
+            "breakout": false,
+            "formatted": "+80%"
+          },
+          {
+            "query": "alpha dental",
+            "value": 80,
+            "breakout": false,
+            "formatted": "+80%"
+          },
+          {
+            "query": "visible alpha",
+            "value": 60,
+            "breakout": false,
+            "formatted": "+60%"
+          },
+          {
+            "query": "alpha tv",
+            "value": 60,
+            "breakout": false,
+            "formatted": "+60%"
+          },
+          {
+            "query": "a for alpha",
+            "value": 60,
+            "breakout": false,
+            "formatted": "+60%"
+          },
+          {
+            "query": "alpha decking",
+            "value": 50,
+            "breakout": false,
+            "formatted": "+50%"
+          }
+        ],
+        "top": [
+          {
+            "query": "alpha 2026",
+            "value": 100,
+            "breakout": false,
+            "formatted": "100"
+          },
+          {
+            "query": "alpha 2025",
+            "value": 57,
+            "breakout": false,
+            "formatted": "57"
+          },
+          {
+            "query": "gen alpha",
+            "value": 47,
+            "breakout": false,
+            "formatted": "47"
+          },
+          {
+            "query": "a for alpha",
+            "value": 31,
+            "breakout": false,
+            "formatted": "31"
+          },
+          {
+            "query": "sony alpha",
+            "value": 28,
+            "breakout": false,
+            "formatted": "28"
+          },
+          {
+            "query": "alpha omega",
+            "value": 25,
+            "breakout": false,
+            "formatted": "25"
+          },
+          {
+            "query": "alpha meaning",
+            "value": 19,
+            "breakout": false,
+            "formatted": "19"
+          },
+          {
+            "query": "alpha group",
+            "value": 19,
+            "breakout": false,
+            "formatted": "19"
+          },
+          {
+            "query": "alpha tv",
+            "value": 17,
+            "breakout": false,
+            "formatted": "17"
+          },
+          {
+            "query": "alpha capital",
+            "value": 17,
+            "breakout": false,
+            "formatted": "17"
+          },
+          {
+            "query": "alpha live",
+            "value": 16,
+            "breakout": false,
+            "formatted": "16"
+          },
+          {
+            "query": "alpha movie",
+            "value": 16,
+            "breakout": false,
+            "formatted": "16"
+          },
+          {
+            "query": "gen z",
+            "value": 15,
+            "breakout": false,
+            "formatted": "15"
+          },
+          {
+            "query": "alpha arbutin",
+            "value": 15,
+            "breakout": false,
+            "formatted": "15"
+          },
+          {
+            "query": "alpha bank",
+            "value": 14,
+            "breakout": false,
+            "formatted": "14"
+          },
+          {
+            "query": "alpha male",
+            "value": 14,
+            "breakout": false,
+            "formatted": "14"
+          },
+          {
+            "query": "alpha wolf",
+            "value": 14,
+            "breakout": false,
+            "formatted": "14"
+          },
+          {
+            "query": "alpha cars",
+            "value": 14,
+            "breakout": false,
+            "formatted": "14"
+          },
+          {
+            "query": "alpha and omega",
+            "value": 12,
+            "breakout": false,
+            "formatted": "12"
+          },
+          {
+            "query": "piper alpha",
+            "value": 12,
+            "breakout": false,
+            "formatted": "12"
+          },
+          {
+            "query": "alpha industries",
+            "value": 12,
+            "breakout": false,
+            "formatted": "12"
+          },
+          {
+            "query": "generation alpha",
+            "value": 11,
+            "breakout": false,
+            "formatted": "11"
+          },
+          {
+            "query": "alpha dog",
+            "value": 10,
+            "breakout": false,
+            "formatted": "10"
+          },
+          {
+            "query": "alpha lipoic acid",
+            "value": 10,
+            "breakout": false,
+            "formatted": "10"
+          },
+          {
+            "query": "alpha futures",
+            "value": 10,
+            "breakout": false,
+            "formatted": "10"
+          }
+        ]
+      },
+      "suggest": {
+        "suggestions": [
+          {
+            "query": "alpha gal syndrome",
+            "rank": 0
+          },
+          {
+            "query": "alphabet",
+            "rank": 1
+          },
+          {
+            "query": "alpha movie",
+            "rank": 1
+          },
+          {
+            "query": "alpha gal",
+            "rank": 2
+          },
+          {
+            "query": "alpha",
+            "rank": 3
+          },
+          {
+            "query": "alpha lipoic acid",
+            "rank": 3
+          },
+          {
+            "query": "alpha gal symptoms",
+            "rank": 4
+          },
+          {
+            "query": "alpha futures",
+            "rank": 5
+          },
+          {
+            "query": "alphabet stock price",
+            "rank": 6
+          },
+          {
+            "query": "alpha and omega",
+            "rank": 6
+          },
+          {
+            "query": "alpha dog",
+            "rank": 7
+          },
+          {
+            "query": "alpha gpc",
+            "rank": 8
+          },
+          {
+            "query": "alpha movie review",
+            "rank": 9
+          }
+        ]
+      },
+      "related": [
+        {
+          "query": "alpha 2026",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 8.1,
+          "crossConfirmed": true,
+          "breakout": true,
+          "growth": "Breakout",
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha movie",
+          "sources": [
+            "trendsTop",
+            "trendsRising",
+            "autocomplete"
+          ],
+          "score": 7.14,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+110%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha futures",
+          "sources": [
+            "trendsTop",
+            "trendsRising",
+            "autocomplete"
+          ],
+          "score": 5.78,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+300%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha gal syndrome",
+          "sources": [
+            "trendsRising",
+            "autocomplete"
+          ],
+          "score": 5.13,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+150%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha 2025",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 4.74,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+550%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha gal",
+          "sources": [
+            "trendsRising",
+            "autocomplete"
+          ],
+          "score": 4.59,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+130%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "a for alpha",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.69,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+60%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha tv",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+60%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha bank",
+          "sources": [
+            "trendsTop",
+            "trendsRising"
+          ],
+          "score": 3.24,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": "+90%",
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha lipoic acid",
+          "sources": [
+            "trendsTop",
+            "autocomplete"
+          ],
+          "score": 2.7,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": null,
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha and omega",
+          "sources": [
+            "trendsTop",
+            "autocomplete"
+          ],
+          "score": 1.89,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": null,
+          "inEtsyTags": false
+        },
+        {
+          "query": "alpha dog",
+          "sources": [
+            "trendsTop",
+            "autocomplete"
+          ],
+          "score": 1.62,
+          "crossConfirmed": true,
+          "breakout": false,
+          "growth": null,
+          "inEtsyTags": false
+        }
+      ]
+    }
+  },
+  "longTail": [
+    {
+      "query": "alpha 2026",
+      "parent": "alpha",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 10.125,
+      "etsy": null
+    },
+    {
+      "query": "lake ontario renamed",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "trendsRising",
+        "autocomplete"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 8.924999999999999,
+      "etsy": null
+    },
+    {
+      "query": "alpha movie",
+      "parent": "alpha",
+      "sources": [
+        "trendsTop",
+        "trendsRising",
+        "autocomplete"
+      ],
+      "breakout": false,
+      "growth": "+110%",
+      "untagged": true,
+      "score": 8.924999999999999,
+      "etsy": null
+    },
+    {
+      "query": "9 to 5 film",
+      "parent": "9 to 5",
+      "sources": [
+        "trendsTop",
+        "trendsRising",
+        "autocomplete"
+      ],
+      "breakout": false,
+      "growth": "+40%",
+      "untagged": true,
+      "score": 8.2875,
+      "etsy": null
+    },
+    {
+      "query": "trump lake ontario",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 8.25,
+      "etsy": null
+    },
+    {
+      "query": "lake ontario name change",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsRising",
+        "autocomplete"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 8.100000000000001,
+      "etsy": null
+    },
+    {
+      "query": "lake ontario sign",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsRising",
+        "autocomplete"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 7.425000000000001,
+      "etsy": null
+    },
+    {
+      "query": "alpha futures",
+      "parent": "alpha",
+      "sources": [
+        "trendsTop",
+        "trendsRising",
+        "autocomplete"
+      ],
+      "breakout": false,
+      "growth": "+300%",
+      "untagged": true,
+      "score": 7.2250000000000005,
+      "etsy": null
+    },
+    {
+      "query": "alpha gal syndrome",
+      "parent": "alpha",
+      "sources": [
+        "trendsRising",
+        "autocomplete"
+      ],
+      "breakout": false,
+      "growth": "+150%",
+      "untagged": true,
+      "score": 6.4125,
+      "etsy": null
+    },
+    {
+      "query": "lake ontario donald trump",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 6.075,
+      "etsy": null
+    },
+    {
+      "query": "rename lake ontario",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 6.075,
+      "etsy": null
+    },
+    {
+      "query": "trump lake ontario lake america",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 6.075,
+      "etsy": null
+    },
+    {
+      "query": "trump rename lake ontario",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 6.075,
+      "etsy": null
+    },
+    {
+      "query": "lake ontario to lake america",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 6.075,
+      "etsy": null
+    },
+    {
+      "query": "renaming lake ontario",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": true,
+      "growth": "Breakout",
+      "untagged": true,
+      "score": 6.075,
+      "etsy": null
+    },
+    {
+      "query": "alpha 2025",
+      "parent": "alpha",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": false,
+      "growth": "+550%",
+      "untagged": true,
+      "score": 5.925000000000001,
+      "etsy": null
+    },
+    {
+      "query": "alpha gal",
+      "parent": "alpha",
+      "sources": [
+        "trendsRising",
+        "autocomplete"
+      ],
+      "breakout": false,
+      "growth": "+130%",
+      "untagged": true,
+      "score": 5.7375,
+      "etsy": null
+    },
+    {
+      "query": "google 9 to 5",
+      "parent": "9 to 5",
+      "sources": [
+        "trendsTop",
+        "trendsRising"
+      ],
+      "breakout": false,
+      "growth": "+40%",
+      "untagged": true,
+      "score": 5.012499999999999,
+      "etsy": null
+    },
+    {
+      "query": "lake ontario lake america",
+      "parent": "lake ontario",
+      "sources": [
+        "trendsTop",
+        "autocomplete"
+      ],
+      "breakout": false,
+      "growth": null,
+      "untagged": true,
+      "score": 5,
+      "etsy": null
+    },
+    {
+      "query": "9 to 5 meaning",
+      "parent": "9 to 5",
+      "sources": [
+        "trendsTop",
+        "autocomplete"
+      ],
+      "breakout": false,
+      "growth": null,
+      "untagged": true,
+      "score": 4.95,
+      "etsy": null
+    }
+  ]
+}

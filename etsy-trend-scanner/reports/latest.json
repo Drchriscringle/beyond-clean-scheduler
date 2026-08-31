@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-31",
+  "generatedAt": "2026-08-31T21:40:35.720Z",
+  "geo": "GB",
+  "formats": [
+    "digital-download",
+    "print-on-demand",
+    "handmade-physical"
+  ],
+  "totalScanned": 3,
+  "newCount": 3,
+  "standingCount": 0,
+  "urgentCount": 0,
+  "urgentTerms": [],
+  "worthNotifying": true,
+  "topPick": {
+    "term": "alpha",
+    "action": "List now, differentiate hard",
+    "product": "SVG cut file bundle"
+  },
+  "filteredCount": 0
+}
