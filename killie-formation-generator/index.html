@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Killie Formation Roulette</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;600&family=Newsreader:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{
+  --ground:#EDF0F6;
+  --panel:#FFFFFF;
+  --panel-2:#F6F8FC;
+  --ink:#0B1B3A;
+  --muted:#56637E;
+  --line:rgba(11,27,58,.14);
+  --killie:#0A3AA8;
+  --killie-ink:#FFFFFF;
+  --killie-soft:#E3EAFB;
+  --pitch-a:#2F7D4F;
+  --pitch-b:#2A7248;
+  --pitch-line:rgba(255,255,255,.55);
+  --dot:#F4F7FF;
+  --dot-ink:#0B1B3A;
+  --calm:#17795E;
+  --spicy:#B4771A;
+  --wild:#C0392B;
+  --shadow:0 1px 2px rgba(11,27,58,.10), 0 8px 24px rgba(11,27,58,.07);
+  --display:'Big Shoulders Display','Saira Condensed','Arial Narrow',sans-serif;
+  --body:'Newsreader',Georgia,'Times New Roman',serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#08132B;
+    --panel:#0F1F41;
+    --panel-2:#132749;
+    --ink:#EAF0FF;
+    --muted:#94A4C6;
+    --line:rgba(160,185,235,.20);
+    --killie:#6C97FF;
+    --killie-ink:#06122C;
+    --killie-soft:#14294F;
+    --pitch-a:#245F3E;
+    --pitch-b:#20573A;
+    --pitch-line:rgba(255,255,255,.42);
+    --dot:#E7EEFF;
+    --dot-ink:#0A1734;
+    --calm:#4FD3A6;
+    --spicy:#E7B255;
+    --wild:#FF8A78;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#08132B;
+  --panel:#0F1F41;
+  --panel-2:#132749;
+  --ink:#EAF0FF;
+  --muted:#94A4C6;
+  --line:rgba(160,185,235,.20);
+  --killie:#6C97FF;
+  --killie-ink:#06122C;
+  --killie-soft:#14294F;
+  --pitch-a:#245F3E;
+  --pitch-b:#20573A;
+  --pitch-line:rgba(255,255,255,.42);
+  --dot:#E7EEFF;
+  --dot-ink:#0A1734;
+  --calm:#4FD3A6;
+  --spicy:#E7B255;
+  --wild:#FF8A78;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px 64px}
+
+/* ---------- header ---------- */
+.rail{height:8px;background:repeating-linear-gradient(90deg,var(--killie) 0 14px,transparent 14px 28px);opacity:.9}
+header{padding:26px 0 22px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6.2vw,58px);line-height:.92;letter-spacing:-.01em;margin:0;text-wrap:balance;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--killie)}
+.blurb{margin:10px 0 0;max-width:56ch;color:var(--muted);font-size:15px}
+.themebtn{
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:999px;
+  padding:7px 13px;cursor:pointer;
+}
+.themebtn:hover{color:var(--ink);border-color:var(--killie)}
+
+/* ---------- layout ---------- */
+.board{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:28px;align-items:start;padding-top:26px}
+@media (max-width:860px){.board{grid-template-columns:1fr;gap:22px}}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow)}
+.sectionlabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+
+/* ---------- the shape ---------- */
+.shapecard{padding:22px 24px 24px}
+.shapenum{
+  font-family:var(--display);font-weight:800;
+  font-size:clamp(64px,14vw,124px);line-height:.86;letter-spacing:-.02em;
+  margin:2px 0 0;color:var(--killie);font-variant-numeric:tabular-nums;
+}
+.shapenum.rolling{opacity:.55}
+.nickname{font-family:var(--body);font-style:italic;font-size:21px;margin:8px 0 0;color:var(--ink)}
+.odds{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin:6px 0 0;letter-spacing:.04em}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;align-items:center}
+.spin{
+  font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+  font-size:23px;line-height:1;padding:15px 26px 13px;
+  background:var(--killie);color:var(--killie-ink);border:0;border-radius:4px;cursor:pointer;
+  transition:transform .12s ease, filter .12s ease;
+}
+.spin:hover{filter:brightness(1.08)}
+.spin:active{transform:translateY(1px)}
+.ghost{
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:4px;
+  padding:12px 14px;cursor:pointer;
+}
+.ghost:hover{color:var(--ink);border-color:var(--killie)}
+:where(button,select,a):focus-visible{outline:2px solid var(--killie);outline-offset:2px}
+.hint{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em;margin:12px 0 0}
+
+/* ---------- chaos dial ---------- */
+.dial{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.dialrow{display:flex;gap:0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.dialrow button{
+  flex:1;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  padding:10px 6px;background:transparent;color:var(--muted);border:0;border-right:1px solid var(--line);cursor:pointer;
+}
+.dialrow button:last-child{border-right:0}
+.dialrow button[aria-pressed="true"]{background:var(--killie-soft);color:var(--killie);font-weight:600}
+.dialnote{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin:8px 0 0}
+
+/* ---------- pitch ---------- */
+.pitchwrap{padding:16px}
+.pitch{
+  position:relative;width:100%;aspect-ratio:3/4;border-radius:4px;overflow:hidden;
+  container-type:size;
+  background:repeating-linear-gradient(180deg,var(--pitch-a) 0 8.5%,var(--pitch-b) 8.5% 17%);
+  border:1px solid rgba(0,0,0,.25);
+}
+.mark{position:absolute;border:1.5px solid var(--pitch-line)}
+.m-edge{inset:3%}
+.m-half{left:3%;right:3%;top:50%;border-width:0 0 1.5px 0}
+.m-circle{left:50%;top:50%;width:26%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
+.m-boxbig{left:22%;right:22%;height:15%}
+.m-boxsmall{left:35%;right:35%;height:6.5%}
+.m-top{top:3%;border-width:0 1.5px 1.5px 1.5px}
+.m-bot{bottom:3%;border-width:1.5px 1.5px 0 1.5px}
+.player{
+  position:absolute;transform:translate(-50%,-50%);
+  width:calc(var(--d) * 1cqw);aspect-ratio:1;border-radius:50%;
+  background:var(--dot);color:var(--dot-ink);border:1.5px solid rgba(10,23,52,.35);
+  display:grid;place-items:center;
+  font-family:var(--mono);font-weight:600;font-size:calc(var(--d) * .26cqw);letter-spacing:.02em;
+  box-shadow:0 2px 5px rgba(0,0,0,.3);
+  animation:pop .22s ease-out both;
+}
+.player.gk{background:var(--killie);color:var(--killie-ink);border-color:rgba(255,255,255,.5)}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.7)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@media (prefers-reduced-motion: reduce){.player{animation:none}}
+.pitchfoot{display:flex;justify-content:space-between;gap:12px;padding:12px 4px 2px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+
+/* ---------- read-out ---------- */
+.readout{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+.lines li{display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:baseline}
+.lines dt,.lines .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lines .v{font-size:15.5px;line-height:1.5}
+
+/* ---------- stats strip ---------- */
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:28px}
+@media (max-width:640px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--panel);padding:14px 16px 16px}
+.stat .k{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.stat .v{display:block;font-family:var(--display);font-weight:800;font-size:34px;line-height:1.05;margin-top:6px;font-variant-numeric:tabular-nums}
+.stat .sub{display:block;font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px}
+.stat .v.word{font-size:26px;line-height:1.12;letter-spacing:0}
+.risk-calm{color:var(--calm)}
+.risk-spicy{color:var(--spicy)}
+.risk-wild{color:var(--wild)}
+.meter{display:flex;gap:2px;margin-top:8px}
+.meter i{flex:1;height:5px;border-radius:1px;background:var(--line)}
+.meter i.on{background:currentColor}
+
+/* ---------- history ---------- */
+.history{margin-top:28px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:10px 0 0;list-style:none}
+.chip{
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--muted);
+  background:var(--panel-2);
+}
+.chip b{color:var(--ink);font-weight:600}
+.empty{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin:10px 0 0}
+
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px);
+  background:var(--ink);color:var(--ground);font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;
+  padding:10px 16px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="rail"></div>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Rugby Park &middot; Ayrshire &middot; team sheet generator</p>
+      <h1>Killie Formation <em>Roulette</em></h1>
+      <p class="blurb">Ten outfield players, sixty-six ways to line them up &mdash; everything from 0&#8209;0&#8209;10 to 10&#8209;0&#8209;0. Spin it, hand the shape to Neil McCann, and let the plastic at Rugby Park sort out the rest.</p>
+    </div>
+    <button class="themebtn" id="theme" type="button">Theme</button>
+  </header>
+
+  <div class="board">
+
+    <section class="panel shapecard">
+      <p class="sectionlabel">Tonight&rsquo;s shape</p>
+      <p class="shapenum" id="shape" aria-live="polite">4-2-4</p>
+      <p class="nickname" id="nickname">The 1970 Throwback</p>
+      <p class="odds" id="odds">1 in 66 &middot; drawn from all possible shapes</p>
+
+      <div class="controls">
+        <button class="spin" id="spin" type="button">Spin the shape</button>
+        <button class="ghost" id="copy" type="button">Copy team sheet</button>
+      </div>
+      <p class="hint">Press <b>space</b> to spin again</p>
+
+      <div class="dial">
+        <p class="sectionlabel">How brave are we feeling?</p>
+        <div class="dialrow" role="group" aria-label="Chaos level">
+          <button type="button" data-mode="sensible" aria-pressed="false">Sensible</button>
+          <button type="button" data-mode="adventurous" aria-pressed="false">Adventurous</button>
+          <button type="button" data-mode="chaos" aria-pressed="true">Anything goes</button>
+        </div>
+        <p class="dialnote" id="dialnote">66 shapes in the hat, including the ones that lose you the dressing room.</p>
+      </div>
+
+      <div class="readout">
+        <p class="sectionlabel">The thinking</p>
+        <ul class="lines" id="readout">
+          <li><span class="k">Back</span><span class="v">&mdash;</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel pitchwrap">
+      <div class="pitch" id="pitch" role="img" aria-label="Pitch view of the current formation">
+        <div class="mark m-edge"></div>
+        <div class="mark m-half"></div>
+        <div class="mark m-circle"></div>
+        <div class="mark m-boxbig m-top"></div>
+        <div class="mark m-boxsmall m-top"></div>
+        <div class="mark m-boxbig m-bot"></div>
+        <div class="mark m-boxsmall m-bot"></div>
+      </div>
+      <div class="pitchfoot"><span>Attacking the Chadwick End</span><span id="surface">Artificial surface</span></div>
+    </section>
+  </div>
+
+  <div class="strip">
+    <div class="stat"><span class="k">Behind the ball</span><span class="v" id="s-back">6</span><span class="sub" id="s-back-sub">keeper, defence &amp; midfield</span></div>
+    <div class="stat"><span class="k">In the box</span><span class="v" id="s-front">4</span><span class="sub">bodies past the halfway line</span></div>
+    <div class="stat"><span class="k">Rugby Park risk index</span><span class="v" id="s-risk">7</span><span class="sub" id="s-risk-word">spicy</span><span class="meter" id="s-meter"></span></div>
+    <div class="stat"><span class="k">Board patience</span><span class="v word" id="s-board">Twitchy</span><span class="sub" id="s-board-sub">if it goes wrong by half time</span></div>
+  </div>
+
+  <section class="history">
+    <p class="sectionlabel">Shapes tried so far</p>
+    <ul class="chips" id="history"></ul>
+    <p class="empty" id="history-empty">Nothing yet &mdash; spin one and it lands here.</p>
+  </section>
+
+  <footer>
+    <span>66 three-band shapes &middot; 0-0-10 through 10-0-0</span>
+    <span>Eleven a side, one of them in gloves</span>
+  </footer>
+</div>
+<div class="toast" id="toast">Team sheet copied</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---------- every way to split ten outfield players ---------- */
+  var ALL = [];
+  for (var d = 0; d <= 10; d++)
+    for (var m = 0; m + d <= 10; m++)
+      ALL.push([d, m, 10 - d - m]);
+
+  var SENSIBLE = ['4-4-2','4-3-3','3-5-2','5-3-2','4-5-1','3-4-3','5-4-1','4-2-4','3-6-1','5-2-3','4-6-0','2-5-3'];
+  var POOLS = {
+    sensible: ALL.filter(function(s){ return SENSIBLE.indexOf(s.join('-')) > -1; }),
+    adventurous: ALL.filter(function(s){ return s[0] >= 2 && s[0] <= 6 && s[2] >= 1 && s[2] <= 5; }),
+    chaos: ALL
+  };
+  var NOTES = {
+    sensible: 'shapes a scout would recognise. Safe, sound, slightly boring.',
+    adventurous: 'two to six at the back, up to five up top. Watchable either way.',
+    chaos: 'shapes in the hat, including the ones that lose you the dressing room.'
+  };
+
+  /* ---------- names ---------- */
+  var SPECIAL = {
+    '0-0-10':'Ten Up Top',
+    '0-10-0':'All Middle, No Ends',
+    '10-0-0':'The Rugby Park Wall',
+    '4-4-2':'The Ayrshire Standard',
+    '4-3-3':'Modern Killie',
+    '3-5-2':'Wing-backs and Hope',
+    '5-3-2':'Away Day Killie',
+    '4-2-4':'The 1970 Throwback',
+    '5-4-1':'The Point-Nicking Special',
+    '3-4-3':'Front-Foot Killie',
+    '4-5-1':'Smother the Middle',
+    '6-2-2':'The Ayrshire Fortress',
+    '2-2-6':'Six Strikers and a Prayer',
+    '1-1-8':'Kick-off and Chaos',
+    '0-1-9':'One Man Holding'
+  };
+  var GRID = [
+    ['The Ayrshire Free-for-All','Both Ends Wide Open','The Kilmarnock Cavalry Charge','The Ayrshire Avalanche'],
+    ['The Slow Handclap','Front-Foot Killie','Full Tilt at the Chadwick End','Everybody Forward'],
+    ['The Goalless Draw Special','The Ayrshire Standard','The Killie Cavalry','Two Banks, No Middle'],
+    ['Park the Bus, Then the Depot','Backs to the Ayrshire Wind','Bypass the Middle Entirely','The Long Way Round']
+  ];
+  function tier(n){ return n <= 1 ? 0 : n <= 3 ? 1 : n <= 5 ? 2 : 3; }
+  function nameFor(s){
+    return SPECIAL[s.join('-')] || GRID[tier(s[0])][tier(s[2])];
+  }
+
+  /* ---------- position labels ---------- */
+  function fill(n, label){ var a = []; while (a.length < n) a.push(label); return a; }
+  function defLabels(n){
+    if (n === 0) return [];
+    if (n <= 3) return fill(n, 'CB');
+    if (n === 4) return ['RB','CB','CB','LB'];
+    if (n === 5) return ['RWB','CB','CB','CB','LWB'];
+    return ['RWB','RB'].concat(fill(n - 4, 'CB'), ['LB','LWB']);
+  }
+  function midLabels(n){
+    if (n === 0) return [];
+    if (n <= 3) return fill(n, 'CM');
+    return ['RM'].concat(fill(n - 2, 'CM'), ['LM']);
+  }
+  function attLabels(n){
+    if (n === 0) return [];
+    if (n <= 2) return fill(n, 'ST');
+    return ['RW'].concat(fill(n - 2, 'ST'), ['LW']);
+  }
+
+  /* ---------- copy ---------- */
+  var BACK = {
+    0:'Nobody at the back. The keeper is the defence, and he is not happy about it.',
+    1:'One centre-half against the world. Give him a shout of encouragement.',
+    2:'A pair at the back, both of them permanently one-on-one.',
+    3:'Three centre-halves, no cover out wide. Fine until a winger runs at them.',
+    4:'A flat four. Nothing to explain, nothing to apologise for.',
+    5:'Five at the back with wing-backs high. Solid, and knackered by seventy minutes.',
+    6:'Six defenders. The eighteen-yard box is standing room only.'
+  };
+  var MID = {
+    0:'No midfield whatsoever. The ball goes over the top, or it goes nowhere.',
+    1:'One man in the middle, covering an acre each way.',
+    2:'Two in the engine room, both told not to leave it.',
+    3:'A proper three: one sitting, one running, one arriving late.',
+    4:'Four across the middle, plenty of bodies between the lines.',
+    5:'Five in midfield. Nobody gets through the middle, including us.',
+    6:'Six in the middle. The centre circle is a rush-hour platform.'
+  };
+  var FRONT = {
+    0:'No strikers. Goals are somebody else’s problem tonight.',
+    1:'A lone striker holding it up, waiting on company that may never arrive.',
+    2:'Two up top, the oldest idea in Scottish football and still a good one.',
+    3:'A front three stretching the pitch corner to corner.',
+    4:'Four forwards. The away keeper will need a lie-down.',
+    5:'Five up front. This is not a formation, it is a stampede.'
+  };
+  function band(map, n, big){ return map[n] || big; }
+
+  /* ---------- state ---------- */
+  var mode = 'chaos';
+  try { var saved = localStorage.getItem('killie-mode'); if (saved && POOLS[saved]) mode = saved; } catch (e) {}
+  var current = null;
+  var history = [];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var pitch = $('pitch');
+
+  function riskOf(s){
+    var d = s[0], m = s[1], f = s[2], r = 5;
+    r += d === 0 ? 4 : d === 1 ? 3 : d === 2 ? 2 : d === 3 ? 1 : d === 4 ? 0 : d === 5 ? -1 : -2;
+    r += f >= 5 ? 3 : f === 4 ? 2 : f === 3 ? 1 : f === 2 ? 0 : f === 1 ? -1 : 1;
+    r += m === 0 ? 3 : m === 1 ? 2 : m === 2 ? 0 : (m === 3 || m === 4) ? -1 : m === 5 ? 0 : 1;
+    return Math.max(1, Math.min(10, r));
+  }
+
+  function drawPitch(s){
+    Array.prototype.slice.call(pitch.querySelectorAll('.player')).forEach(function(el){ el.remove(); });
+    var rows = [
+      { y: 91, labels: ['GK'], gk: true },
+      { y: 71, labels: defLabels(s[0]) },
+      { y: 47, labels: midLabels(s[1]) },
+      { y: 22, labels: attLabels(s[2]) }
+    ];
+    rows.forEach(function(row){
+      var n = row.labels.length;
+      if (!n) return;
+      var d = n <= 4 ? 13 : n <= 6 ? 11 : n <= 8 ? 9.5 : 8.4;
+      row.labels.forEach(function(label, i){
+        var el = document.createElement('div');
+        el.className = 'player' + (row.gk ? ' gk' : '');
+        el.style.setProperty('--d', d);
+        el.style.left = ((i + 1) / (n + 1) * 100) + '%';
+        el.style.top = row.y + '%';
+        el.textContent = label;
+        pitch.appendChild(el);
+      });
+    });
+  }
+
+  function render(s){
+    current = s;
+    var key = s.join('-');
+    var risk = riskOf(s);
+    var pool = POOLS[mode];
+
+    $('shape').textContent = key;
+    $('nickname').textContent = nameFor(s);
+    $('odds').textContent = '1 in ' + pool.length + ' · ' +
+      (mode === 'chaos' ? 'drawn from all possible shapes' : 'drawn from the ' + mode + ' set');
+
+    $('readout').innerHTML = '';
+    [['Back', band(BACK, s[0], 'Seven or more defenders. This is a siege, not a shape.')],
+     ['Middle', band(MID, s[1], 'Seven or more in midfield. Somebody will have to play a pass eventually.')],
+     ['Front', band(FRONT, s[2], 'Six or more forwards. Every throw-in is a corner waiting to happen.')],
+     ['Watch for', risk >= 8 ? 'The counter-attack. There will be several, and they will all arrive at once.'
+        : risk >= 5 ? 'The second ball. Whoever wins it decides how this night goes.'
+        : 'Boredom. Take a flask, it may be a long one.']
+    ].forEach(function(pair){
+      var li = document.createElement('li');
+      var k = document.createElement('span'); k.className = 'k'; k.textContent = pair[0];
+      var v = document.createElement('span'); v.className = 'v'; v.textContent = pair[1];
+      li.appendChild(k); li.appendChild(v);
+      $('readout').appendChild(li);
+    });
+
+    drawPitch(s);
+
+    $('s-back').textContent = 1 + s[0] + s[1];
+    $('s-front').textContent = s[2];
+    var word = risk <= 4 ? 'calm' : risk <= 7 ? 'spicy' : 'wild';
+    var cls = 'risk-' + word;
+    $('s-risk').textContent = risk;
+    $('s-risk').className = 'v ' + cls;
+    $('s-risk-word').textContent = word + ' · ' + risk + ' out of 10';
+    var meter = $('s-meter');
+    meter.className = 'meter ' + cls;
+    meter.innerHTML = '';
+    for (var i = 1; i <= 10; i++) {
+      var pip = document.createElement('i');
+      if (i <= risk) pip.className = 'on';
+      meter.appendChild(pip);
+    }
+    $('s-board').className = 'v word';
+    $('s-board').textContent = risk <= 3 ? 'Content' : risk <= 6 ? 'Twitchy' : risk <= 8 ? 'Restless' : 'Reaching for the phone';
+    $('s-board-sub').textContent = risk <= 6 ? 'if it goes wrong by half time' : 'before the ball is even kicked';
+  }
+
+  function teamSheet(s){
+    return 'Kilmarnock — ' + s.join('-') + ' (' + nameFor(s) + ')\n' +
+      'GK: 1\n' +
+      'Defence (' + s[0] + '): ' + (defLabels(s[0]).join(', ') || 'none') + '\n' +
+      'Midfield (' + s[1] + '): ' + (midLabels(s[1]).join(', ') || 'none') + '\n' +
+      'Attack (' + s[2] + '): ' + (attLabels(s[2]).join(', ') || 'none') + '\n' +
+      'Risk index: ' + riskOf(s) + '/10';
+  }
+
+  function pick(){
+    var pool = POOLS[mode];
+    var next = pool[Math.floor(Math.random() * pool.length)];
+    if (pool.length > 1 && current && next.join('-') === current.join('-')) {
+      next = pool[Math.floor(Math.random() * pool.length)];
+    }
+    return next;
+  }
+
+  function logShape(s){
+    var key = s.join('-');
+    history = history.filter(function(h){ return h.key !== key; });
+    history.unshift({ key: key, name: nameFor(s) });
+    history = history.slice(0, 8);
+    var list = $('history');
+    list.innerHTML = '';
+    history.forEach(function(h){
+      var li = document.createElement('li');
+      li.className = 'chip';
+      var b = document.createElement('b'); b.textContent = h.key;
+      li.appendChild(b);
+      li.appendChild(document.createTextNode(' · ' + h.name));
+      list.appendChild(li);
+    });
+    $('history-empty').hidden = history.length > 0;
+  }
+
+  var rolling = false;
+  function spin(){
+    if (rolling) return;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var final = pick();
+    if (reduce) { render(final); logShape(final); return; }
+    rolling = true;
+    var el = $('shape');
+    el.classList.add('rolling');
+    var ticks = 0;
+    var timer = setInterval(function(){
+      ticks++;
+      var flash = POOLS[mode][Math.floor(Math.random() * POOLS[mode].length)];
+      el.textContent = flash.join('-');
+      if (ticks >= 11) {
+        clearInterval(timer);
+        el.classList.remove('rolling');
+        rolling = false;
+        render(final);
+        logShape(final);
+      }
+    }, 55);
+  }
+
+  function setMode(next){
+    mode = next;
+    try { localStorage.setItem('killie-mode', next); } catch (e) {}
+    Array.prototype.slice.call(document.querySelectorAll('.dialrow button')).forEach(function(b){
+      b.setAttribute('aria-pressed', String(b.dataset.mode === next));
+    });
+    $('dialnote').textContent = POOLS[next].length + ' ' + NOTES[next];
+    spin();
+  }
+
+  var toastTimer;
+  function toast(msg){
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+
+  $('spin').addEventListener('click', spin);
+  $('copy').addEventListener('click', function(){
+    var text = teamSheet(current);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){ toast('Team sheet copied'); },
+        function(){ toast('Copy blocked — select the shape and copy by hand'); });
+    } else {
+      toast('Copy blocked — select the shape and copy by hand');
+    }
+  });
+  Array.prototype.slice.call(document.querySelectorAll('.dialrow button')).forEach(function(b){
+    b.addEventListener('click', function(){ setMode(b.dataset.mode); });
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.code === 'Space' && !/^(BUTTON|INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) {
+      e.preventDefault();
+      spin();
+    }
+  });
+  $('theme').addEventListener('click', function(){
+    var root = document.documentElement;
+    var dark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+  });
+
+  Array.prototype.slice.call(document.querySelectorAll('.dialrow button')).forEach(function(b){
+    b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+  });
+  $('dialnote').textContent = POOLS[mode].length + ' ' + NOTES[mode];
+  var opener = pick();
+  render(opener);
+  logShape(opener);
+})();
+</script>
+</body>
+</html>
