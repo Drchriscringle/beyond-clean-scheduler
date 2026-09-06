@@ -1,0 +1,24 @@
+name: Time Left CI
+
+on:
+  pull_request:
+    paths: [time-left/**, .github/workflows/ci-time-left.yml]
+  push:
+    branches: [main]
+    paths: [time-left/**, .github/workflows/ci-time-left.yml]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: time-left
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx oxlint
+      - run: npm test
+      - run: npm run build
