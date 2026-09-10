@@ -86,28 +86,60 @@
     var api = null
     var connected = false
 
+    /*
+     * Reading any property of a cross-origin window throws a SecurityError,
+     * and a host that frames the course from another origin is exactly that.
+     * An ancestor we cannot see into is not our LMS, so every one of these
+     * reads is treated as "not here" rather than being allowed to escape —
+     * an uncaught throw here would stop the player booting at all.
+     */
+    function read(get) {
+      try {
+        return get()
+      } catch {
+        return null
+      }
+    }
+
     function find(win, depth) {
       while (win && depth > 0) {
-        if (win.API) return win.API
-        win = win.parent === win ? null : win.parent
+        var found = read(function () { return win.API })
+        if (found) return found
+        win = read(function () { return win.parent === win ? null : win.parent })
         depth -= 1
       }
       return null
     }
 
     function init() {
-      api = find(window, 10) || (window.opener ? find(window.opener, 10) : null)
-      if (!api) return
-      connected = api.LMSInitialize('') === 'true'
-      if (connected) {
-        var status = api.LMSGetValue('cmi.core.lesson_status')
-        if (!status || status === 'not attempted') api.LMSSetValue('cmi.core.lesson_status', 'incomplete')
-        api.LMSCommit('')
+      try {
+        var opener = read(function () { return window.opener })
+        api = find(window, 10) || (opener ? find(opener, 10) : null)
+        if (!api) return
+        connected = api.LMSInitialize('') === 'true'
+        if (connected) {
+          var status = api.LMSGetValue('cmi.core.lesson_status')
+          if (!status || status === 'not attempted') api.LMSSetValue('cmi.core.lesson_status', 'incomplete')
+          api.LMSCommit('')
+        }
+      } catch {
+        // A refused handshake just means this is a standalone run.
+        api = null
+        connected = false
       }
     }
 
     function report(p) {
       if (!connected || !api) return
+      try {
+        reportTo(p)
+      } catch {
+        // Losing the LMS mid-course must not stop the learner finishing it.
+        connected = false
+      }
+    }
+
+    function reportTo(p) {
       if (p.score !== null) {
         api.LMSSetValue('cmi.core.score.raw', String(Math.round(p.score * 100)))
         api.LMSSetValue('cmi.core.score.min', '0')
@@ -122,7 +154,12 @@
     }
 
     function finish() {
-      if (connected && api) api.LMSFinish('')
+      if (!connected || !api) return
+      try {
+        api.LMSFinish('')
+      } catch {
+        /* the page is going away; nothing useful to do */
+      }
     }
 
     return { init: init, report: report, finish: finish }
