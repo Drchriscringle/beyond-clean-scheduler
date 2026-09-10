@@ -121,6 +121,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .banner { border-radius: 10px; padding: 12px 15px; margin-bottom: 18px; font-size: 14px; border: 1px solid; }
 .banner.warn { border-color: rgba(251, 191, 36, .4); background: rgba(251, 191, 36, .08); }
 .banner.err { border-color: rgba(248, 113, 113, .45); background: rgba(248, 113, 113, .1); }
+.banner.ok { border-color: rgba(74, 222, 128, .35); background: rgba(74, 222, 128, .07); }
 
 .frame { width: 100%; height: 640px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }
 

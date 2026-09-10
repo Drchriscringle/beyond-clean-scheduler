@@ -10,7 +10,10 @@ const FALLBACK_BETA = 'server-side-fallback-2026-07-01'
  * response to a JSON Schema, and returns parsed JSON.
  */
 export function createAnthropicProvider(options = {}) {
-  const client = options.client ?? new Anthropic()
+  // An explicit key lets a hosted deployment run on the caller's own
+  // credentials, supplied per request, rather than keeping one on the server.
+  const client =
+    options.client ?? (options.apiKey ? new Anthropic({ apiKey: options.apiKey }) : new Anthropic())
   const model = options.model ?? process.env.COURSE_FORGE_MODEL ?? DEFAULT_MODEL
   const effort = options.effort ?? process.env.COURSE_FORGE_EFFORT ?? 'high'
   // Server-side fallbacks reroute a request the safety classifiers decline,

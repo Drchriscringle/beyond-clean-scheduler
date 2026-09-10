@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createCourseForgeServer } from '../server/index.js'
 import { createStore } from '../server/store.js'
-import { applyEdit } from '../server/routes.js'
+import { applyEdit } from '../server/http/api.js'
 import { sampleCourse } from './helpers.js'
 
 let server
@@ -32,14 +32,19 @@ const post = (body) => ({
 })
 
 /**
- * Runs a build to completion. `fetch` resolves as soon as the response
- * headers land, and generation streams after that — so the body has to be
- * drained before the course is finished.
+ * Starts a build and waits for it to finish. Generation is accepted and runs
+ * in the background, so the test polls the course the way the studio does
+ * rather than holding a response open.
  */
 async function runGeneration(id, body = {}) {
   const response = await fetch(`${base}/api/courses/${id}/generate`, post(body))
-  const frames = (await response.text()).split('\n\n').filter(Boolean)
-  return { response, events: frames.map((frame) => JSON.parse(frame.replace(/^data: /, ''))) }
+
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    const { body: state } = await json(`/api/courses/${id}`)
+    if (state.job && state.job.status !== 'running') return { response, job: state.job, state }
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+  throw new Error('generation did not finish')
 }
 
 test('the meta endpoint reports which generator is in use', async () => {
@@ -57,22 +62,29 @@ test('a course is created from a brief and normalized on the way in', async () =
   assert.equal(body.course.stage, 'brief')
 })
 
-test('generation streams progress and ends with the finished course', async () => {
-  const { body: created } = await json('/api/courses', post({ brief: { topic: 'SSE', audience: 'Devs', durationMinutes: 20, moduleCount: 1 } }))
+test('a build is accepted immediately and reports its own progress', async () => {
+  const { body: created } = await json('/api/courses', post({ brief: { topic: 'Jobs', audience: 'Devs', durationMinutes: 20, moduleCount: 1 } }))
 
-  const { response, events } = await runGeneration(created.course.id)
-  assert.equal(response.status, 200)
-  assert.match(response.headers.get('content-type'), /text\/event-stream/)
+  const { response, job, state } = await runGeneration(created.course.id)
+  assert.equal(response.status, 202, 'the request returns rather than being held open')
 
-  assert.equal(events[0].type, 'start')
-  assert.ok(events.some((event) => event.type === 'step:done'))
-  const done = events.at(-1)
-  assert.equal(done.type, 'done')
-  assert.equal(done.progress.complete, true)
-  assert.ok(done.course.modules.length > 0)
+  assert.equal(job.status, 'done')
+  assert.ok(job.steps.length > 0, 'each stage was recorded as it ran')
+  assert.ok(job.steps.every((step) => step.state === 'done'))
+  assert.ok(job.startedAt && job.finishedAt)
+  assert.equal(state.progress.complete, true)
+  assert.ok(state.course.modules.length > 0, 'the finished course was persisted')
+})
 
-  const { body: reloaded } = await json(`/api/courses/${created.course.id}`)
-  assert.equal(reloaded.progress.complete, true, 'the finished course was persisted')
+test('a second build is refused while one is running', async () => {
+  const { body: created } = await json('/api/courses', post({ brief: { topic: 'Busy', audience: 'Devs', durationMinutes: 20, moduleCount: 1 } }))
+
+  const first = await fetch(`${base}/api/courses/${created.course.id}/generate`, post({}))
+  assert.equal(first.status, 202)
+  const second = await fetch(`${base}/api/courses/${created.course.id}/generate`, post({}))
+  assert.ok([202, 409].includes(second.status), 'either it was already done, or it was refused as busy')
+
+  await runGeneration(created.course.id).catch(() => {})
 })
 
 test('every export format is served with the right headers', async () => {

@@ -10,9 +10,14 @@ export function selectProvider(options = {}) {
   const requested = options.provider ?? process.env.COURSE_FORGE_PROVIDER
   if (requested === 'mock') return createMockProvider()
   if (requested === 'anthropic') return createAnthropicProvider(options)
-  return hasCredentials() ? createAnthropicProvider(options) : createMockProvider()
+  return hasCredentials(options) ? createAnthropicProvider(options) : createMockProvider()
 }
 
-export function hasCredentials() {
-  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN)
+/**
+ * A key supplied with the request counts as credentials — that is how the
+ * hosted studio works, where each author brings their own and the server
+ * keeps none.
+ */
+export function hasCredentials(options = {}) {
+  return Boolean(options.apiKey || process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN)
 }

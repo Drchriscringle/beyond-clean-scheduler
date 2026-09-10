@@ -6,7 +6,9 @@ import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
 import { loadEnv } from './lib/env.js'
 import { createStore } from './store.js'
-import { createApi } from './routes.js'
+import { createApiHandler } from './http/api.js'
+import { toRequest, sendResponse } from './http/node-adapter.js'
+import { runGeneration } from './generate.js'
 import { hasCredentials, selectProvider } from './ai/provider.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -26,13 +28,23 @@ const MIME = {
 
 export function createCourseForgeServer(options = {}) {
   const store = options.store ?? createStore(options.dataDir)
-  const api = createApi({ store, providerOptions: options.providerOptions ?? {} })
+  const api = createApiHandler({
+    store,
+    providerOptions: options.providerOptions ?? {},
+    // Locally a build just runs in the background of this process; hosted, the
+    // same work is a background function. Either way the studio polls for it.
+    generatePath: '/api/courses/:id/generate',
+    startGeneration: async (job) => {
+      runGeneration({ store, ...job }).catch((error) => console.error('[course-forge]', error))
+    },
+  })
 
   return createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`)
     try {
       if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
-        return await api(req, res, url)
+        const response = await api(await toRequest(req, url.origin))
+        return await sendResponse(res, response)
       }
       return await serveStatic(res, url.pathname)
     } catch (error) {

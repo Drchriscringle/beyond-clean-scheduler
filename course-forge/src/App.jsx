@@ -1,26 +1,50 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api, generate } from './api.js'
+import { api, key, startGeneration, watchGeneration } from './api.js'
 import BriefForm from './components/BriefForm.jsx'
 import LessonEditor from './components/LessonEditor.jsx'
 import QuizView from './components/QuizView.jsx'
 import GenerationLog from './components/GenerationLog.jsx'
+import KeyPanel from './components/KeyPanel.jsx'
+
+/** The open course lives in the URL, so a reload or a shared link lands back on it. */
+function courseFromHash() {
+  const match = /^#\/course\/([A-Za-z0-9_-]+)$/.exec(window.location.hash)
+  return match ? match[1] : null
+}
 
 export default function App() {
   const [meta, setMeta] = useState(null)
   const [courses, setCourses] = useState([])
-  const [openId, setOpenId] = useState(null)
+  const [openId, setOpenId] = useState(courseFromHash)
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState(null)
+  const [hasKey, setHasKey] = useState(() => Boolean(key.get()))
 
   const refresh = useCallback(async () => {
     const { courses: list } = await api.listCourses()
     setCourses(list)
   }, [])
 
-  useEffect(() => {
+  const reloadMeta = useCallback(() => {
     api.meta().then(setMeta).catch(() => setMeta(null))
+  }, [])
+
+  useEffect(() => {
+    reloadMeta()
     refresh().catch((problem) => setError(problem.message))
-  }, [refresh])
+  }, [refresh, reloadMeta])
+
+  // Back and forward move between the list and a course.
+  useEffect(() => {
+    const onHashChange = () => setOpenId(courseFromHash())
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  const open = useCallback((id) => {
+    window.location.hash = id ? `#/course/${id}` : ''
+    setOpenId(id)
+  }, [])
 
   return (
     <>
@@ -37,26 +61,37 @@ export default function App() {
         <div className="spacer" />
         {meta && (
           <span className={`pill ${meta.hasCredentials ? 'live' : 'mock'}`}>
-            {meta.hasCredentials ? `${meta.model}` : 'offline mock generator'}
+            {meta.hasCredentials ? `${meta.model}` : 'no API key — placeholder courses'}
           </span>
         )}
         {openId && (
-          <button className="btn sm" onClick={() => setOpenId(null)}>
+          <button className="btn sm" onClick={() => open(null)}>
             All courses
           </button>
         )}
       </header>
 
       {openId ? (
-        <Studio id={openId} meta={meta} onBack={() => { setOpenId(null); refresh() }} />
+        <Studio id={openId} meta={meta} onBack={() => { open(null); refresh() }} />
       ) : (
         <main className="page">
           {error && <div className="banner err">{error}</div>}
-          {!meta?.hasCredentials && (
+
+          {meta?.needsKey && (
+            <KeyPanel
+              hasKey={hasKey}
+              onChange={() => {
+                setHasKey(Boolean(key.get()))
+                reloadMeta()
+              }}
+            />
+          )}
+
+          {meta && !meta.hasCredentials && !meta.needsKey && (
             <div className="banner warn">
-              No Anthropic API key found, so courses are built by the offline mock generator — structurally
-              complete, but the prose is placeholder. Set <code>ANTHROPIC_API_KEY</code> and restart to
-              generate real courses.
+              No Anthropic API key on this server, so courses are built by the offline mock generator —
+              structurally complete, but the prose is placeholder. Set <code>ANTHROPIC_API_KEY</code> in
+              a <code>.env</code> file and restart to generate real courses.
             </div>
           )}
 
@@ -68,7 +103,7 @@ export default function App() {
                   const { course } = await api.createCourse(brief)
                   setCreating(false)
                   await refresh()
-                  setOpenId(course.id)
+                  open(course.id)
                 } catch (problem) {
                   setError(problem.message)
                 }
@@ -94,7 +129,7 @@ export default function App() {
               ) : (
                 <div className="grid">
                   {courses.map((course) => (
-                    <button className="card course-card" key={course.id} onClick={() => setOpenId(course.id)}>
+                    <button className="card course-card" key={course.id} onClick={() => open(course.id)}>
                       <h3>{course.title}</h3>
                       <p className="muted small" style={{ margin: '0 0 10px' }}>
                         {course.brief.audience} · {course.brief.level}
@@ -143,35 +178,64 @@ function Studio({ id, meta, onBack }) {
     load().catch((problem) => setError(problem.message))
   }, [load])
 
-  const append = (text, kind) => setLog((entries) => [...entries, { text, kind }].slice(-200))
+  /** Turns the job the server recorded into the lines shown in the log. */
+  const render = (state) => {
+    if (state.progress) setProgress(state.progress)
+    if (state.course) setCourse(state.course)
+    const current = state.job
+    if (!current) return
+
+    const lines = current.steps.map((step) =>
+      step.state === 'done'
+        ? { text: `✓ ${step.label} (${((step.ms ?? 0) / 1000).toFixed(1)}s)`, kind: 'ok' }
+        : { text: `→ ${step.label}`, kind: '' },
+    )
+    if (current.status === 'done') lines.push({ text: 'Course build complete.', kind: 'ok' })
+    if (current.status === 'error') lines.push({ text: `✗ ${current.message}`, kind: 'err' })
+    setLog([{ text: `Building with ${current.provider} (${current.model})…`, kind: '' }, ...lines])
+  }
 
   const run = async (options = {}) => {
     if (job) return
     setError(null)
-    setLog([])
-    const handle = generate(id, options, (event) => {
-      if (event.type === 'start') append(`Building with ${event.provider} (${event.model})…`)
-      if (event.type === 'step:start') append(`→ ${event.label}`)
-      if (event.type === 'step:done') append(`✓ ${event.label} (${(event.ms / 1000).toFixed(1)}s)`, 'ok')
-      if (event.type === 'error') append(`✗ ${event.message}`, 'err')
-      if (event.type === 'done') append('Course build complete.', 'ok')
-      if (event.progress) setProgress(event.progress)
-    })
+    setLog([{ text: 'Starting the build…', kind: '' }])
+
+    try {
+      await startGeneration(id, { ...options, generatePath: meta?.generatePath })
+    } catch (problem) {
+      setLog([])
+      setError(problem.message)
+      return
+    }
+
+    const handle = watchGeneration(id, render)
     setJob(handle)
     try {
       await handle.done
     } catch (problem) {
-      if (problem.name !== 'AbortError') setError(problem.message)
+      setError(problem.message)
     } finally {
       setJob(null)
       const fresh = await load().catch(() => null)
-      if (fresh && selected) {
-        // Keep the same lesson open after a rebuild replaced its content.
-        const module = fresh.modules.find((entry) => entry.id === selected.moduleId)
-        if (!module) setSelected(null)
+      if (fresh && selected && !fresh.modules.some((entry) => entry.id === selected.moduleId)) {
+        // The lesson that was open no longer exists after a rebuild.
+        setSelected(null)
       }
     }
   }
+
+  // A build started in another tab, or before a reload, is still running.
+  useEffect(() => {
+    if (job || !course?.generation?.job || course.generation.job.status !== 'running') return
+    const handle = watchGeneration(id, render)
+    setJob(handle)
+    handle.done.finally(() => {
+      setJob(null)
+      load().catch(() => {})
+    })
+    return () => handle.stop()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course?.generation?.job?.status])
 
   if (error && !course) return <main className="page"><div className="banner err">{error}</div></main>
   if (!course) return <main className="page"><p className="muted">Loading…</p></main>
@@ -194,8 +258,8 @@ function Studio({ id, meta, onBack }) {
         </div>
         <div className="row">
           {job ? (
-            <button className="btn danger" onClick={() => job.abort()}>
-              Stop
+            <button className="btn" disabled>
+              Building…
             </button>
           ) : (
             <button className="btn primary" onClick={() => run({})}>
@@ -211,16 +275,17 @@ function Studio({ id, meta, onBack }) {
         </div>
       </div>
 
-      {!meta?.hasCredentials && (
+      {meta && !meta.hasCredentials && (
         <div className="banner warn">
-          Offline mock generator — placeholder prose. Set <code>ANTHROPIC_API_KEY</code> for real courses.
+          No API key, so this build will be placeholder prose. Add your key on the courses screen for
+          real courses.
         </div>
       )}
 
       {(job || log.length > 0) && (
         <div className="card" style={{ marginBottom: 16 }}>
           <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-            <b>{job ? 'Building…' : 'Last build'}</b>
+            <b>{job ? 'Building… (you can close this tab)' : 'Last build'}</b>
             {progress && (
               <span className="muted small">
                 {progress.lessonsWritten}/{progress.lessons} lessons · {progress.modulesQuizzed}/{progress.modules} checks

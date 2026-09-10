@@ -1,7 +1,39 @@
+const KEY_STORAGE = 'course-forge:anthropic-key'
+
+/**
+ * The author's Anthropic key.
+ *
+ * The hosted studio keeps no key of its own, so each author brings theirs.
+ * It lives in this browser and is sent with the requests that generate, so
+ * the deployment never stores anyone's credentials.
+ */
+export const key = {
+  get() {
+    try {
+      return window.localStorage.getItem(KEY_STORAGE) ?? ''
+    } catch {
+      return ''
+    }
+  },
+  set(value) {
+    try {
+      if (value) window.localStorage.setItem(KEY_STORAGE, value)
+      else window.localStorage.removeItem(KEY_STORAGE)
+    } catch {
+      /* a browser refusing storage still works for this session */
+    }
+  },
+}
+
+function headers(extra = {}) {
+  const current = key.get()
+  return { ...extra, ...(current ? { 'x-anthropic-key': current } : {}) }
+}
+
 async function request(path, options = {}) {
   const response = await fetch(`/api${path}`, {
-    headers: options.body ? { 'content-type': 'application/json' } : undefined,
     ...options,
+    headers: headers(options.body ? { 'content-type': 'application/json' } : {}),
   })
   const text = await response.text()
   const body = text ? JSON.parse(text) : {}
@@ -20,47 +52,46 @@ export const api = {
 }
 
 /**
- * Runs a generation and yields the server's progress events.
- *
- * fetch + a reader rather than EventSource, because the request is a POST
- * carrying which steps to run, and because the returned abort function has to
- * be able to cancel a build that is minutes long.
+ * Starts a build at the path the server named in /api/meta. Hosted, that is
+ * the background function that owns the long-running work; locally it is the
+ * API route, which starts it in this process.
  */
-export function generate(id, { steps, reset } = {}, onEvent) {
-  const controller = new AbortController()
+export async function startGeneration(id, { steps, reset, generatePath } = {}) {
+  const path = (generatePath ?? '/api/courses/:id/generate').replace(':id', id)
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: headers({ 'content-type': 'application/json' }),
+    body: JSON.stringify({ steps, reset }),
+  })
+
+  if (!response.ok && response.status !== 202) {
+    const detail = await response.json().catch(() => ({}))
+    throw new Error(detail.error ?? `Could not start the build (${response.status})`)
+  }
+}
+
+/**
+ * Polls a running build until it finishes, reporting the course each time.
+ * Polling rather than a held-open connection is what lets a build outlive the
+ * request that started it — and the tab that started it.
+ */
+export function watchGeneration(id, onUpdate, { intervalMs = 1500 } = {}) {
+  let stopped = false
 
   const done = (async () => {
-    const response = await fetch(`/api/courses/${id}/generate`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ steps, reset }),
-      signal: controller.signal,
-    })
-    if (!response.ok || !response.body) throw new Error(`Generation failed (${response.status})`)
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    for (;;) {
-      const { done: finished, value } = await reader.read()
-      if (finished) break
-      buffer += decoder.decode(value, { stream: true })
-      // Events are separated by a blank line; the trailing fragment is an
-      // incomplete event and stays in the buffer for the next chunk.
-      const parts = buffer.split('\n\n')
-      buffer = parts.pop() ?? ''
-      for (const part of parts) {
-        const line = part.split('\n').find((entry) => entry.startsWith('data: '))
-        if (!line) continue
-        try {
-          onEvent(JSON.parse(line.slice(6)))
-        } catch {
-          /* ignore a malformed frame rather than kill the stream */
-        }
+    // A build that has not written its first job state yet still reads as
+    // running, so a few empty polls at the start are expected.
+    for (let attempt = 0; !stopped; attempt += 1) {
+      const state = await api.getCourse(id).catch(() => null)
+      if (state) {
+        onUpdate(state)
+        if (state.job && state.job.status !== 'running') return state
+        if (!state.job && attempt > 10) return state
       }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs))
     }
+    return null
   })()
 
-  return { done, abort: () => controller.abort() }
+  return { done, stop: () => { stopped = true } }
 }
