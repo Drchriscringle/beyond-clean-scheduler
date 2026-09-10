@@ -1,10 +1,4 @@
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
-
-const here = dirname(fileURLToPath(import.meta.url))
-const PLAYER_CSS = readFileSync(join(here, 'player', 'player.css'), 'utf8')
-const PLAYER_JS = readFileSync(join(here, 'player', 'player.js'), 'utf8')
+import { PLAYER_CSS, PLAYER_JS } from './player/assets.js'
 
 /**
  * Renders the course as a single self-contained HTML file: no build step, no

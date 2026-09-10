@@ -27,6 +27,28 @@ advances scene by scene, so a generated script plays back as a lesson rather
 than sitting on the page as text. Learner progress and quiz scores persist
 locally, and inside an LMS the same file reports them upstream.
 
+## Deploy it (no terminal needed after this)
+
+The studio runs as a hosted site: a static front end plus two serverless
+functions. `netlify.toml` already carries the build settings, so connecting the
+repo is the whole setup.
+
+1. In Netlify, **Add new site → Import an existing project**, and pick this repo.
+2. Set **Base directory** to `course-forge`. Everything else is read from
+   `netlify.toml` (build `npm run build`, publish `dist`, functions
+   `netlify/functions`).
+3. Deploy.
+
+The hosted studio holds no API key. Each author pastes their own on the
+courses screen; it is kept in that browser and travels with the requests that
+generate a course, so the deployment never stores anyone's credentials. If you
+would rather the site carry one key for everybody, set `ANTHROPIC_API_KEY` in
+the site's environment variables and the studio stops asking.
+
+Courses are stored in Netlify Blobs. A build runs as a background function and
+records its progress on the course, so it keeps going if you close the tab, and
+the studio picks it back up when you return.
+
 ## Getting started
 
 ```bash
@@ -121,11 +143,18 @@ All optional; see `.env.example` for the full list.
 ## Project layout
 
 ```
+netlify/
+  functions/
+    api.mjs                  Hosted API
+    generate-background.mjs  Hosted course build (long-running)
 server/
-  index.js          HTTP server: API plus the built studio
-  routes.js         REST endpoints and the SSE generation stream
+  index.js          Local HTTP server: API plus the built studio
+  http/api.js       The API, as a Request/Response handler both hosts share
+  http/node-adapter.js  Bridges Node's http server to that handler
   pipeline.js       Stage-by-stage course build
+  generate.js       Runs a build and records its progress on the course
   store.js          One JSON file per course, atomic and serialized writes
+  store-blobs.js    The same interface backed by Netlify Blobs
   cli.js            Headless builds and exports
   ai/
     anthropic.js    Structured-output calls to Claude
@@ -138,9 +167,14 @@ server/
     scorm.js        SCORM 1.2 manifest and package
     zip.js          Minimal zip writer
     player/         The player's own CSS and runtime, inlined at export
+scripts/            Generates the player assets as a module, for bundlers
 src/                The studio (React)
 tests/              node --test
 ```
+
+Editing `server/export/player/player.css` or `player.js` means re-running
+`npm run generate:player` (the build does it for you). A test fails if the
+generated module drifts from its source.
 
 ## Testing
 
