@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { writeFile, mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import { loadEnv } from './lib/env.js'
 import { createCourse } from './lib/course.js'
 import { buildCourse } from './pipeline.js'
 import { selectProvider, hasCredentials } from './ai/provider.js'
@@ -31,6 +32,8 @@ Options:
   --out <dir>           Where to write exports             (default: ./exports)
   --provider <name>     anthropic | mock
 `
+
+loadEnv()
 
 const [command, ...rest] = process.argv.slice(2)
 const flags = parseFlags(rest)
@@ -78,7 +81,10 @@ async function build(preset) {
 
   const provider = selectProvider({ provider: flags.provider })
   if (provider.name === 'mock' && !hasCredentials()) {
-    console.log('No ANTHROPIC_API_KEY found — building with the offline mock generator.\n')
+    console.log(
+      'No ANTHROPIC_API_KEY found — building with the offline mock generator, so the prose will be\n' +
+        'placeholder. Copy .env.example to .env and add your key for a real course.\n',
+    )
   }
 
   const store = createStore()

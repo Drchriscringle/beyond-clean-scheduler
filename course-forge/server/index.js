@@ -4,6 +4,7 @@ import { stat } from 'node:fs/promises'
 import { extname, join, normalize, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
+import { loadEnv } from './lib/env.js'
 import { createStore } from './store.js'
 import { createApi } from './routes.js'
 import { hasCredentials, selectProvider } from './ai/provider.js'
@@ -76,12 +77,18 @@ async function serveStatic(res, pathname) {
 
 const isEntryPoint = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))
 if (isEntryPoint) {
+  const envFile = loadEnv()
   const provider = selectProvider()
   createCourseForgeServer().listen(PORT, () => {
     console.log(`CourseForge API listening on http://localhost:${PORT}`)
-    console.log(`Provider: ${provider.name} (${provider.model})`)
+    if (envFile) console.log(`Loaded ${envFile}`)
+    console.log(`Generator: ${provider.name} (${provider.model})`)
     if (!hasCredentials()) {
-      console.log('No ANTHROPIC_API_KEY found — running the offline mock generator. See .env.example.')
+      console.log(
+        envFile
+          ? `No ANTHROPIC_API_KEY in ${envFile} — running the offline mock generator, so courses will be placeholder prose.`
+          : 'No ANTHROPIC_API_KEY found and no .env file — running the offline mock generator, so courses will be\n  placeholder prose. Copy .env.example to .env and add your key to generate real courses.',
+      )
     }
   })
 }
