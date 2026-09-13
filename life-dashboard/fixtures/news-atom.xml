@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Regulator Notices</title>
+  <link href="https://regulator.example.gov" rel="alternate"/>
+  <updated>2026-09-12T11:00:00Z</updated>
+  <entry>
+    <title>Acme Group wins £40m facilities contract - Trade Journal</title>
+    <link rel="alternate" href="https://www.example.com/acme-contract/"/>
+    <id>tag:example.com,2026:1</id>
+    <published>2026-09-12T09:20:00Z</published>
+    <summary>Syndicated copy of the same story.</summary>
+  </entry>
+  <entry>
+    <title>Consultation opened on cleaning standards</title>
+    <link rel="alternate" href="https://regulator.example.gov/consultation-2026"/>
+    <id>tag:example.gov,2026:7</id>
+    <published>2026-09-13T06:00:00Z</published>
+    <summary>The regulator seeks views on revised commercial cleaning standards.</summary>
+    <author><name>Policy Team</name></author>
+  </entry>
+</feed>
