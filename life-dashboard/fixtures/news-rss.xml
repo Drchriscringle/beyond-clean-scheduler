@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Trade Journal Daily</title>
+    <link>https://example.com</link>
+    <item>
+      <title>Acme Group wins £40m facilities contract</title>
+      <link>https://example.com/acme-contract?utm_source=rss&amp;utm_medium=feed</link>
+      <description>&lt;p&gt;Acme Group has been awarded a five-year contract, beating Beta Services to the work.&lt;/p&gt;</description>
+      <pubDate>Sat, 12 Sep 2026 09:14:00 GMT</pubDate>
+      <dc:creator>A Reporter</dc:creator>
+    </item>
+    <item>
+      <title><![CDATA[Beta Services names new chief executive]]></title>
+      <link>https://example.com/beta-ceo</link>
+      <description><![CDATA[Jane Okafor joins from a rival, the company said.]]></description>
+      <pubDate>Fri, 11 Sep 2026 16:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Apex predators return to the valley</title>
+      <link>https://example.com/wildlife</link>
+      <description>Conservationists celebrate a milestone for the region&#8217;s wildlife.</description>
+      <pubDate>Fri, 11 Sep 2026 08:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Old news about Acme Group from last year</title>
+      <link>https://example.com/acme-old</link>
+      <description>Archive piece.</description>
+      <pubDate>Mon, 02 Sep 2025 08:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
