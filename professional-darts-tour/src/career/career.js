@@ -269,12 +269,6 @@ function monthly(career, event) {
         body: `Winners: ${winners.slice(-14).map((h) => `${h.name}: ${sideName(career, h.winner)} (${money(h.prize)})`).join('; ')}.\n\nTop earners this season: ${top.map(([p, v], i) => `${i + 1}. ${p.name} ${money(v)}`).join(', ')}.`,
       })
     }
-    const r = rankOf(ranking(career, 'oom'), 'user')
-    if (r && (career.players.user.earn[career.year]?.ranked || career.players.user.tour === 'pro')) {
-      const last = career.lastRank
-      sendMail(career, { from: 'office', date, subject: `Order of Merit update: #${r}`, body: `You are #${r} on the PDC Order of Merit${last ? ` (${last > r ? `up ${last - r}` : last < r ? `down ${r - last}` : 'no change'} since last month)` : ''}. The top 64 keep their Tour Cards when they expire.` })
-      career.lastRank = r
-    }
   }
 }
 
@@ -764,6 +758,7 @@ export function finishEvent(career, rng = Math.random) {
   if (event.key === 'qsFirst' || event.key === 'qsFinal') qschoolAfterDay(career, event, t)
 
   if (resultText && event.key !== 'qsFirst') sendNewspaper(career, event, { t, inDraw, userSide, resultText, userPrize, runnerUp, final }, rng)
+  if (resultText) rankingUpdate(career, event)
   career.results[event.id] = { champion: t.champion, user: resultText, prize: userPrize }
   career.lastResult = { eventName: event.name, text: resultText, prize: userPrize, champion: t.champion }
   career.active = null
@@ -803,6 +798,71 @@ function sendNewspaper(career, event, { t, inDraw, userSide, resultText, userPri
     date: dateStr(career, event),
   }, rng)
   sendMail(career, { from: PAPER, subject: `📰 ${article.headline}`, body: `${article.subhead}.\n\n${article.body.join('\n\n')}`, article, date: dateStr(career, event) })
+}
+
+// ---------- ranking updates ----------
+
+const RANK_LISTS = {
+  oom: 'PDC Order of Merit',
+  pt: 'Pro Tour Order of Merit',
+  pc: 'Players Championship Order of Merit',
+  et: 'European Tour Order of Merit',
+  ct: 'Challenge Tour Order of Merit',
+  dt: 'Development Tour Order of Merit',
+}
+
+// The user's position on every ranking that matters to them right now.
+export function rankingSnapshot(career) {
+  const user = career.players.user
+  const y = career.year
+  const e = user.earn[y] ?? {}
+  const ranked = (e.ranked ?? 0) + (user.earn[y - 1]?.ranked ?? 0) > 0
+  const keys = []
+  if (user.tour === 'pro' || ranked) keys.push('oom')
+  if (user.tour === 'pro') keys.push('pt', 'pc')
+  if (e.et) keys.push('et')
+  if (user.tour !== 'pro') keys.push('ct')
+  if (user.age <= 24) keys.push('dt')
+  const out = {}
+  for (const k of keys) {
+    const list = ranking(career, k)
+    const value = k === 'oom' ? (e.ranked ?? 0) + (user.earn[y - 1]?.ranked ?? 0) : e[k] ?? 0
+    if (k !== 'oom' && !value) continue
+    const pos = rankOf(list, 'user')
+    const target = { oom: 64, pt: 16, pc: 64, et: 32, ct: 2, dt: 2 }[k]
+    const at = list[target - 1]
+    const targetValue = at ? (k === 'oom' ? rankingValueOf(career, at, 'oom') : career.players[at].earn[y]?.[k] ?? 0) : 0
+    out[k] = { pos, value, target, gap: pos > target ? Math.max(0, targetValue - value) : 0 }
+  }
+  return out
+}
+
+function rankingValueOf(career, id, key) {
+  const p = career.players[id]
+  const y = career.year
+  return key === 'oom' ? (p.earn[y]?.ranked ?? 0) + (p.earn[y - 1]?.ranked ?? 0) : p.earn[y]?.[key] ?? 0
+}
+
+const TARGET_TEXT = { oom: 'the top 64 (Tour Card safety)', pt: 'the top 16 (Matchplay & Grand Prix)', pc: 'the top 64 (Players Championship Finals)', et: 'the top 32 (European Championship)', ct: 'the top 2 (Tour Card)', dt: 'the top 2 (Tour Card)' }
+
+function rankingUpdate(career, event) {
+  const now = rankingSnapshot(career)
+  const before = career.rankSnapshot?.ranks ?? {}
+  const rows = Object.entries(now).map(([k, r]) => {
+    const prev = before[k]?.pos
+    const move = prev ? prev - r.pos : null
+    return { key: k, label: RANK_LISTS[k], pos: r.pos, prev, move, value: r.value, target: r.target, gap: r.gap }
+  })
+  career.rankSnapshot = { ranks: now, rows, date: dateStr(career, event), eventName: event.name }
+  if (!rows.length) return
+  const line = (x) => `${x.label}: #${x.pos}${x.move ? (x.move > 0 ? ` (▲ up ${x.move})` : ` (▼ down ${-x.move})`) : x.prev ? ' (no change)' : ' (new)'} · ${money(x.value)}${x.gap ? ` · ${money(x.gap)} behind ${TARGET_TEXT[x.key]}` : x.pos <= x.target ? ` · inside ${TARGET_TEXT[x.key]}` : ''}`
+  const main = rows[0]
+  sendMail(career, {
+    from: 'office',
+    date: dateStr(career, event),
+    subject: `Ranking update after ${event.name}: #${main.pos}${main.move ? (main.move > 0 ? ` ▲${main.move}` : ` ▼${-main.move}`) : ''}`,
+    body: `Your rankings after the ${event.name} (movement since your last event):\n\n${rows.map(line).join('\n')}`,
+  })
 }
 
 // Personal roll of honour: best finish in each competition. European Tour and World

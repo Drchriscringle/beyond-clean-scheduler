@@ -122,6 +122,13 @@ in your inbox and the news each January.
 - **Stats**: checkout %, darts at a double, favourite doubles, head-to-head records and rivalries.
 - **Practice**: friendly 501 at any average (with optional double in), Bob's 27, Round the Clock
   on doubles and the 121 checkout challenge, with personal bests.
+- **Down the Pub**: your own (renameable) local. Climb a ladder of ten regulars from Young Kieran
+  (~25 average) to Ray "The Legend" (~64), or enter an eight-player pub knockout on a quiet
+  Tuesday, Friday night or league night. Separate from your career.
+- **Ranking updates**: after every event you play, an email and a home-screen card show your
+  position on every ranking that matters to you (Order of Merit, Pro Tour, Players Championship,
+  European Tour, Challenge/Development Tour), the movement since your last event, and how much
+  prize money you are from the key cut-off (top 64, top 16, top 2…).
 
 ## The virtual opponent
 

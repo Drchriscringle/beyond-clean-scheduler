@@ -351,3 +351,33 @@ test('The Oche Times writes a front page from the result', async () => {
   assert.equal(loss.extra, false)
   assert.ok(loss.body[0].includes('day to forget'))
 })
+
+test('a ranking update email follows every event the player enters', () => {
+  const c = fresh({ avg: 90 })
+  c.players.user.tour = 'pro'
+  c.players.user.cardExpiry = c.year + 1
+  c.qschool.registered = false
+  c.pl.pending = false
+  touch(c)
+  c.eventIndex = c.calendar.findIndex((e) => e.name === 'Players Championship 1')
+  simulatePeriod(c, { until: Date.UTC(c.year, 1, 17), mode: 'play' }, seededRng(4))
+  const updates = c.inbox.filter((m) => m.subject.startsWith('Ranking update after'))
+  assert.ok(updates.length >= 3, `${updates.length} updates`)
+  assert.ok(updates[0].body.includes('PDC Order of Merit: #'))
+  assert.ok(c.rankSnapshot.rows.some((r) => r.key === 'oom'))
+})
+
+test('every confirmed entry puts the player in the draw, even ranked last', () => {
+  const c = fresh({ avg: 60 })
+  c.players.user.tour = 'pro'
+  c.players.user.cardExpiry = c.year + 1
+  c.qschool.registered = false
+  c.pl.pending = false
+  touch(c)
+  c.eventIndex = c.calendar.findIndex((e) => e.name === 'Players Championship 1')
+  simulatePeriod(c, { until: Date.UTC(c.year, 5, 30), mode: 'play' }, seededRng(8))
+  const confirmed = c.calendar.filter((e) => c.entries[e.id] === 'confirmed' && c.results[e.id])
+  assert.ok(confirmed.length > 10)
+  const missing = confirmed.filter((e) => !c.results[e.id].user).map((e) => e.name)
+  assert.deepEqual(missing, [])
+})

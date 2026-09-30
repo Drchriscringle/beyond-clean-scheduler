@@ -173,6 +173,23 @@ function Home({ career, onContinue, onOpenEvent, onAction, onEntry, onSimulate, 
         <button className="btn ghost small" onClick={() => goTab('Calendar')}>Full calendar</button>
       </div>
 
+      {career.rankSnapshot?.rows?.length > 0 && (
+        <div className="card">
+          <div className="card-label">Ranking update · after {career.rankSnapshot.eventName}</div>
+          <table className="rank-update"><tbody>
+            {career.rankSnapshot.rows.map((r) => (
+              <tr key={r.key}>
+                <td>{r.label.replace(' Order of Merit', '')}</td>
+                <td className="num"><b>#{r.pos}</b></td>
+                <td className={`move ${r.move > 0 ? 'up' : r.move < 0 ? 'down' : ''}`}>{r.move ? (r.move > 0 ? `▲ ${r.move}` : `▼ ${-r.move}`) : r.prev ? '–' : 'new'}</td>
+                <td className="num muted small-text">{r.gap ? `${money(r.gap)} to top ${r.target}` : r.pos <= r.target ? `top ${r.target} ✓` : ''}</td>
+              </tr>
+            ))}
+          </tbody></table>
+          <button className="btn ghost small" onClick={() => goTab('Rankings')}>Full rankings</button>
+        </div>
+      )}
+
       {career.lastResult && (
         <div className="card">
           <div className="card-label">Last event</div>

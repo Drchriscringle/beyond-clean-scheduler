@@ -242,7 +242,8 @@ export function buildField(career, event, userIn, rng = Math.random) {
       const away = new Set(shuffle(ai(cards), rng).slice(0, withdrawals))
       let field = cards.filter((id) => !away.has(id) && (id !== 'user' || userIn))
       const reserves = (career.qschool?.reserveList ?? nonCard).filter((id) => !isPro(career, id) && id !== 'user')
-      if (userIn && !field.includes('user')) field.push('user')
+      // A confirmed entry always makes the draw, even for the lowest-ranked card holder.
+      if (userIn) field = ['user', ...field.filter((id) => id !== 'user')]
       field = [...field, ...take(reserves, new Set(field), comp.size - field.length)]
       return { entrants: field.slice(0, comp.size), spare: withdrawals }
     }
@@ -259,7 +260,7 @@ export function buildField(career, event, userIn, rng = Math.random) {
     }
     case 'ukopen': {
       const holders = ai(cards)
-      if (userIn && isPro(career, 'user')) holders.splice(Math.min(holders.length, (rankOf(cards, 'user') ?? 128) - 1), 0, 'user')
+      if (userIn && isPro(career, 'user')) holders.splice(Math.min(127, (rankOf(cards, 'user') ?? 128) - 1), 0, 'user')
       const joins = [holders.slice(96, 128), holders.slice(64, 96), holders.slice(32, 64), holders.slice(0, 32)]
       const r1Extra = [...lastYearTop(career, 'ct', 8), ...lastYearTop(career, 'dt', 8)].filter((id) => !isPro(career, id) && id !== 'user')
       if (userIn && !isPro(career, 'user')) r1Extra.push('user')

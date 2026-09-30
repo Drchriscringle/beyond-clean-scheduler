@@ -280,3 +280,15 @@ details summary { cursor: pointer; }
   .paper-side .paper-box:last-child:nth-child(odd) { grid-column: span 2; }
   .paper-main p { text-align: left; }
 }
+.rank-update { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 6px; }
+.rank-update td { padding: 5px 4px; border-bottom: 1px solid var(--line); }
+.rank-update .move { font-weight: 700; font-size: 13px; }
+.rank-update .move.up { color: #9be7b4; }
+.rank-update .move.down { color: #ffb4ab; }
+.pub-sign h2 { cursor: pointer; font-family: UnifrakturMaguntia, Georgia, serif; font-size: 30px; color: var(--gold); margin: 0 0 4px; }
+.ladder { list-style: none; margin: 0; padding: 0; }
+.ladder li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.ladder li.locked { opacity: 0.45; }
+.ladder li.next { background: rgba(244, 197, 66, 0.08); }
+.legs-pick { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+.pub-next { display: flex; justify-content: space-between; align-items: center; gap: 8px; }

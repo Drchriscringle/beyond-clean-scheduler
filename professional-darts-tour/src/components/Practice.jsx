@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { checkoutRoute } from '../engine/checkout.js'
+import PubMode from './PubMode.jsx'
+import { loadPub } from '../pub.js'
 
 const KEY = 'pdt-practice-v1'
 
@@ -21,14 +23,16 @@ function saveRecord(name, value, better) {
   return false
 }
 
-export default function Practice({ onPlay }) {
-  const [mode, setMode] = useState(null)
+export default function Practice({ onPlay, initialMode = null }) {
+  const [mode, setMode] = useState(initialMode)
   const records = loadRecords()
   if (mode === 'bobs') return <Bobs27 onBack={() => setMode(null)} />
   if (mode === 'atc') return <RoundTheClock onBack={() => setMode(null)} />
   if (mode === '121') return <Checkout121 onBack={() => setMode(null)} />
   if (mode === 'friendly') return <FriendlySetup onPlay={onPlay} onBack={() => setMode(null)} />
+  if (mode === 'pub') return <PubMode onPlay={onPlay} onBack={() => setMode(null)} />
   const games = [
+    ['pub', 'Down the Pub 🍺', 'Your local: beat the regulars on the ladder one by one, or enter the pub knockout. Averages from 25 to 64.', loadPub().ladder ? `Ladder: ${loadPub().ladder}/10` : null],
     ['friendly', 'Friendly match', 'Play 501 against a virtual opponent at any average. Nothing counts towards your career.', null],
     ['bobs', "Bob's 27", 'Three darts at each double from 1 to bull. Hit to add, miss them all to lose the double. Start on 27.', records.bobs27 !== undefined ? `Best: ${records.bobs27}` : null],
     ['atc', 'Round the Clock (doubles)', 'Double 1 to double 20, then the bull, in as few darts as possible.', records.atc !== undefined ? `Best: ${records.atc} darts` : null],
