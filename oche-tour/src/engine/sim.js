@@ -1,12 +1,17 @@
-// Fast AI-vs-AI matches using the same dart-by-dart engine the opponent uses.
-// Kept allocation-light because whole 128-player brackets are simulated at once.
+// Dart-by-dart match simulation (used when the player auto-sims their own match).
+// sides: [sigmas for side 0, sigmas for side 1]; one sigma each, or two for pairs.
 import { playVisit, sigmaForAverage } from './bot.js'
+import { recordLeg } from './rules.js'
 
-function simulateLeg(sigmas, starter, rng, totals) {
+function simulateLeg(sigmas, starter, format, rng, totals, visitCount) {
   const rem = [501, 501]
+  const opened = [!format.doubleIn, !format.doubleIn]
   let p = starter
   for (let guard = 0; guard < 2000; guard++) {
-    const v = playVisit(rem[p], sigmas[p], rng)
+    const list = sigmas[p]
+    const sigma = list[visitCount[p]++ % list.length]
+    const v = playVisit(rem[p], sigma, rng, { needIn: !opened[p] })
+    if (v.opened) opened[p] = true
     totals.darts[p] += v.darts.length
     totals.points[p] += v.scored
     rem[p] -= v.scored
@@ -17,26 +22,26 @@ function simulateLeg(sigmas, starter, rng, totals) {
 }
 
 export function simulateMatch(avgA, avgB, format, rng = Math.random) {
-  const sigmas = [sigmaForAverage(avgA), sigmaForAverage(avgB)]
+  const toSigmas = (a) => (Array.isArray(a) ? a : [a]).map(sigmaForAverage)
+  const sigmas = [toSigmas(avgA), toSigmas(avgB)]
   const totals = { darts: [0, 0], points: [0, 0] }
+  const visitCount = [0, 0]
+  const score = { legs: [0, 0], sets: [0, 0] }
+  const legsWon = [0, 0]
   let starter = rng() < 0.5 ? 0 : 1
-  const sets = [0, 0]
-  let legs = [0, 0]
-  for (;;) {
-    const w = simulateLeg(sigmas, starter, rng, totals)
+  for (let guard = 0; guard < 400; guard++) {
+    const w = simulateLeg(sigmas, starter, format, rng, totals, visitCount)
     starter = 1 - starter
-    legs[w]++
-    if (legs[w] >= format.legs) {
-      if (!format.sets) break
-      sets[w]++
-      if (sets[w] >= format.sets) break
-      legs = [0, 0]
+    legsWon[w]++
+    const { matchWinner } = recordLeg(score, format, w)
+    if (matchWinner !== null) {
+      return {
+        winner: matchWinner,
+        score: format.sets ? score.sets : score.legs,
+        legs: legsWon,
+        averages: [0, 1].map((i) => (totals.darts[i] ? (totals.points[i] * 3) / totals.darts[i] : 0)),
+      }
     }
   }
-  const winner = format.sets ? (sets[0] > sets[1] ? 0 : 1) : legs[0] > legs[1] ? 0 : 1
-  return {
-    winner,
-    score: format.sets ? sets : legs,
-    averages: [0, 1].map((i) => (totals.darts[i] ? (totals.points[i] * 3) / totals.darts[i] : 0)),
-  }
+  return { winner: 0, score: [1, 0], legs: legsWon, averages: [0, 0] }
 }

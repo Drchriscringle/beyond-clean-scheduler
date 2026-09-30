@@ -1,14 +1,41 @@
 import { useState } from 'react'
-import { formatLabel, MATCH_LENGTHS, MONTHS, prizeFund, roundFormat } from '../career/calendar.js'
-import { challengeRanking, currentEvent, proMoney, proRanking, rankOf, resolveEntry, CHALLENGE_CARDS, TOUR_CARD_KEEP_RANK } from '../career/career.js'
-import { DIFFICULTIES } from '../career/difficulty.js'
-import { threeDartAverage } from '../engine/match.js'
-import { money, playerLabel, statusText, TIER_LABELS } from './common.jsx'
+import { COMPETITIONS } from '../career/data/competitions.js'
+import { currentEvent } from '../career/career.js'
+import { eligibility } from '../career/entry.js'
+import { formatLabel, prizeFund, roundFormat } from '../career/formats.js'
+import { unreadCount } from '../career/inbox.js'
+import { flag } from '../career/players.js'
+import { ranking, rankOf, rankingValue } from '../career/rankings.js'
+import { dateLabel, KEY_LABELS, money, statusText, TIER_LABELS } from './common.jsx'
+import Inbox from './Inbox.jsx'
+import CalendarView from './CalendarView.jsx'
+import Rankings from './Rankings.jsx'
+import StatsView from './StatsView.jsx'
+import MoneyView from './MoneyView.jsx'
+import SettingsView from './SettingsView.jsx'
+import Practice from './Practice.jsx'
 
-const TABS = ['Tour', 'Calendar', 'Rankings', 'Stats', 'News', 'Settings']
+const TABS = ['Home', 'Inbox', 'Calendar', 'Rankings', 'News', 'Stats', 'Money', 'Practice', 'Settings']
 
-export default function Hub({ career, update, onContinue, onOpenEvent, onDelete }) {
-  const [tab, setTab] = useState('Tour')
+export function eventStatus(career, e) {
+  const state = career.entries[e.id]
+  if (career.results[e.id]) return { label: career.results[e.id].user ?? 'Not entered', kind: career.results[e.id].user ? 'done' : 'muted' }
+  if (career.active?.eventId === e.id) return { label: 'In progress', kind: 'in' }
+  if (state === 'confirmed') return { label: 'Entered', kind: 'in' }
+  if (state === 'withdrawn') return { label: 'Withdrawn', kind: 'muted' }
+  if (state === 'pending') return { label: 'Confirm entry', kind: 'pending' }
+  const el = eligibility(career, e)
+  if (el.status === 'in') return { label: 'Qualified', kind: 'in' }
+  if (el.status === 'qualifier') return { label: 'Qualifier available', kind: 'pending' }
+  if (el.status === 'reserve') return { label: 'Reserve list', kind: 'muted' }
+  if (el.status === 'skip') return { label: '—', kind: 'muted' }
+  return { label: 'Not eligible', kind: 'muted' }
+}
+
+export default function Hub(props) {
+  const { career } = props
+  const [tab, setTab] = useState('Home')
+  const unread = unreadCount(career)
   return (
     <div className="screen hub">
       <header className="hub-head">
@@ -17,28 +44,36 @@ export default function Hub({ career, update, onContinue, onOpenEvent, onDelete 
       </header>
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t} className={t === tab ? 'tab active' : 'tab'} onClick={() => setTab(t)}>{t}</button>
+          <button key={t} className={t === tab ? 'tab active' : 'tab'} onClick={() => setTab(t)}>
+            {t}{t === 'Inbox' && unread ? <span className="badge">{unread}</span> : null}
+          </button>
         ))}
       </nav>
-      {tab === 'Tour' && <TourTab career={career} onContinue={onContinue} onOpenEvent={onOpenEvent} />}
-      {tab === 'Calendar' && <CalendarTab career={career} />}
-      {tab === 'Rankings' && <RankingsTab career={career} />}
-      {tab === 'Stats' && <StatsTab career={career} />}
-      {tab === 'News' && <NewsTab career={career} />}
-      {tab === 'Settings' && <SettingsTab career={career} update={update} onDelete={onDelete} />}
+      {tab === 'Home' && <Home {...props} goTab={setTab} />}
+      {tab === 'Inbox' && <Inbox career={career} update={props.update} onAction={props.onAction} />}
+      {tab === 'Calendar' && <CalendarView career={career} onEntry={props.onEntry} />}
+      {tab === 'Rankings' && <Rankings career={career} />}
+      {tab === 'News' && <News career={career} />}
+      {tab === 'Stats' && <StatsView career={career} />}
+      {tab === 'Money' && <MoneyView career={career} />}
+      {tab === 'Practice' && <Practice onPlay={props.onPractice} />}
+      {tab === 'Settings' && <SettingsView career={career} update={props.update} onDelete={props.onDelete} />}
     </div>
   )
 }
 
-function TourTab({ career, onContinue, onOpenEvent }) {
+function Home({ career, onContinue, onOpenEvent, onAction, onEntry, goTab }) {
   const user = career.players.user
   const y = career.year
-  const pros = proRanking(career)
-  const ct = challengeRanking(career)
+  const oom = ranking(career, 'oom')
   const event = currentEvent(career)
-  const entry = event && !career.active ? resolveEntry(career, event, () => 0.5) : career.active?.entry
-  const userEntered = career.active && (career.active.entry.userIn || career.active.qualifier)
-  const seasonEarnings = (user.money[y] ?? 0) + (user.ctMoney[y] ?? 0)
+  const comp = event ? COMPETITIONS[event.key] : null
+  const qsMail = career.inbox.find((m) => m.key === `qs-${y}` && !m.resolved)
+  const plMail = career.inbox.find((m) => m.key === `pl-${y}` && !m.resolved)
+  const needQs = event && (event.key === 'qsFirst' || event.key === 'qsFinal') && career.qschool.registered === null
+  const needPl = event && event.key === 'premier' && career.pl.pending
+  const pendingEntry = event && career.entries[event.id] === 'pending' && !career.active
+  const upcoming = career.calendar.slice(career.eventIndex + 1, career.eventIndex + 7)
 
   return (
     <div className="tab-body">
@@ -50,43 +85,75 @@ function TourTab({ career, onContinue, onOpenEvent }) {
         </div>
       )}
       <div className="card status">
-        <div className="player-name">{user.name}{user.nickname ? <span className="nick"> “{user.nickname}”</span> : null}</div>
+        <div className="player-name">{flag(user.nation)} {user.name}{user.nickname ? <span className="nick"> “{user.nickname}”</span> : null}</div>
         <div className="pill">{statusText(career)}</div>
         <div className="status-grid">
-          {career.status.qschool ? (
-            <div><b>{career.qschoolPoints.user ?? 0} pts</b><span>Q-School</span></div>
-          ) : user.tour === 'pro' ? (
-            <div><b>#{rankOf(pros, 'user')}</b><span>Order of Merit</span></div>
-          ) : (
-            <div><b>#{rankOf(ct, 'user') ?? '—'}</b><span>Challenge Tour</span></div>
-          )}
-          <div><b>{money(user.tour === 'pro' ? proMoney(user, y) : user.ctMoney[y])}</b><span>{user.tour === 'pro' ? '2-year money' : 'CT money'}</span></div>
-          <div><b>{money(seasonEarnings)}</b><span>This season</span></div>
+          <div><b>{rankOf(oom, 'user') && (user.earn[y]?.ranked || user.earn[y - 1]?.ranked || user.tour === 'pro') ? `#${rankOf(oom, 'user')}` : '—'}</b><span>Order of Merit</span></div>
+          {user.tour === 'pro'
+            ? <div><b>{money(rankingValue(user, y, 'oom'))}</b><span>2-year ranking money</span></div>
+            : <div><b>{user.earn[y]?.ct ? `#${rankOf(ranking(career, 'ct'), 'user')}` : '—'}</b><span>Challenge Tour</span></div>}
+          <div><b>{money(career.finance.bank)}</b><span>Bank balance</span></div>
           <div><b>{career.user.avg}</b><span>Your average</span></div>
         </div>
-        <p className="goal">{goalText(career, pros)}</p>
+        <p className="goal">{goalText(career)}</p>
       </div>
 
       {event && (
         <div className="card next-event">
-          <div className="card-label">Next up · {MONTHS[event.month]}</div>
+          <div className="card-label">Next up · {dateLabel(event)} · {KEY_LABELS[event.key]}</div>
           <h2>{event.name}</h2>
-          <div className="event-meta">{TIER_LABELS[event.tier]} · {event.size} players{prizeFund(event) ? ` · Prize fund ${money(prizeFund(event))}` : ''}</div>
+          <div className="event-meta">{event.venue ?? ''}</div>
+          <div className="event-meta">{TIER_LABELS[event.tier]}{prizeFund(event.key) ? ` · Prize fund ${money(prizeFund(event.key))}` : ''}</div>
           <div className="event-meta">{formatLabel(roundFormat(event, 0, career.settings.matchLength))} in round one</div>
           {career.active ? (
-            <button className="btn primary big" onClick={onOpenEvent}>{userEntered ? 'Go to event' : 'Open event'}</button>
-          ) : (
+            <button className="btn primary big" onClick={onOpenEvent}>Go to event</button>
+          ) : needQs ? (
             <>
-              <div className={`entry ${entry?.userIn || entry?.qualifierOpponent ? 'in' : 'out'}`}>
-                {entry?.skip ? 'Not needed this year' : entry?.userIn ? `You're in: ${entry.reason}` : entry?.qualifierOpponent ? entry.reason : `Not entered: ${entry?.reason}`}
-              </div>
-              <button className="btn primary big" onClick={onContinue}>
-                {entry?.userIn || entry?.qualifierOpponent ? 'Enter event' : 'Simulate to my next event'}
-              </button>
+              <div className="entry out">Q-School registration is open: decide before 5 January.</div>
+              <div className="btn-row">{qsMail?.actions.map((act) => <button key={act.action} className={`btn ${act.action === 'registerQschool' ? 'primary' : ''}`} onClick={() => onAction(qsMail.id, act.action, act.payload)}>{act.label}</button>)}</div>
             </>
+          ) : needPl ? (
+            <>
+              <div className="entry in">You've been invited to the Premier League.</div>
+              <div className="btn-row">{plMail?.actions.map((act) => <button key={act.action} className={`btn ${act.action === 'acceptPL' ? 'primary' : ''}`} onClick={() => onAction(plMail.id, act.action, act.payload)}>{act.label}</button>)}</div>
+            </>
+          ) : pendingEntry ? (
+            <>
+              <div className="entry in">{eligibility(career, event).status === 'qualifier' ? `Qualifier: ${eligibility(career, event).reason}` : 'Entry confirmation needed.'}</div>
+              <div className="btn-row">
+                <button className="btn primary" onClick={() => onEntry(event.id, 'confirmed', true)}>Confirm & play</button>
+                <button className="btn" onClick={() => onEntry(event.id, 'withdrawn', true)}>Withdraw</button>
+              </div>
+            </>
+          ) : (
+            <button className="btn primary big" onClick={onContinue}>Continue</button>
           )}
+          {comp && <details><summary className="muted small-text">About this event</summary><p className="small-text">{comp.blurb}</p></details>}
         </div>
       )}
+
+      {unreadCount(career) > 0 && (
+        <button className="card inbox-teaser" onClick={() => goTab('Inbox')}>
+          ✉️ {unreadCount(career)} unread email{unreadCount(career) > 1 ? 's' : ''}: <b>{career.inbox.find((m) => !m.read)?.subject}</b>
+        </button>
+      )}
+
+      <div className="card">
+        <div className="card-label">Coming up</div>
+        <ul className="upcoming">
+          {upcoming.map((e) => {
+            const st = eventStatus(career, e)
+            return (
+              <li key={e.id}>
+                <span className="muted">{dateLabel(e)}</span>
+                <span>{e.name}</span>
+                <span className={`tag ${st.kind}`}>{st.label}</span>
+              </li>
+            )
+          })}
+        </ul>
+        <button className="btn ghost small" onClick={() => goTab('Calendar')}>Full calendar</button>
+      </div>
 
       {career.lastResult && (
         <div className="card">
@@ -98,156 +165,22 @@ function TourTab({ career, onContinue, onOpenEvent }) {
   )
 }
 
-function goalText(career, pros) {
+function goalText(career) {
   const user = career.players.user
-  if (career.status.qschool) return 'Q-School: reach the final on any of the four days, or finish top 4 on the Q-School Order of Merit, to win a two-year Tour Card.'
-  if (user.tour === 'challenge') return `Finish top ${CHALLENGE_CARDS} on the Challenge Tour Order of Merit to earn a Tour Card. Top ${CHALLENGE_CARDS} also go to the World Championship.`
-  const r = rankOf(pros, 'user')
-  if (career.status.cardExpiry === career.year) return `Your card is up at the end of this season: be inside the top ${TOUR_CARD_KEEP_RANK} (you're #${r}) to keep it.`
-  return `Build your two-year prize money: you'll need to be top ${TOUR_CARD_KEEP_RANK} at the end of ${career.status.cardExpiry} to keep your card.`
+  const qs = career.qschool
+  if (qs.registered && !qs.done && user.tour !== 'pro') return qs.userStage === 'final' ? 'Q-School Final Stage: reach a day’s final, or finish high on the Q-School Order of Merit, for a two-year Tour Card.' : 'Q-School First Stage: reach the last 16 on any day (or finish top of the points list) to reach the Final Stage.'
+  if (user.tour !== 'pro') return `Finish top 2 on the Challenge Tour${user.age <= 24 ? ' or Development Tour' : ''} Order of Merit to earn a Tour Card. Top 3 also go to the World Championship.`
+  const r = rankOf(ranking(career, 'oom'), 'user')
+  if (user.cardExpiry === career.year) return `Your card is up at the end of this season: be inside the top 64 (you're #${r}) to keep it.`
+  return `Build your two-year prize money: you'll need to be top 64 at the end of ${user.cardExpiry} to keep your card.`
 }
 
-function CalendarTab({ career }) {
-  return (
-    <div className="tab-body">
-      <ul className="calendar">
-        {career.calendar.map((e, i) => {
-          const r = career.results[e.id]
-          const done = i < career.eventIndex
-          return (
-            <li key={e.id} className={`${done ? 'done' : ''} ${i === career.eventIndex ? 'current' : ''} tier-${e.tier}`}>
-              <span className="cal-month">{MONTHS[e.month].slice(0, 3)}</span>
-              <span className="cal-name">{e.name}</span>
-              <span className="cal-result">
-                {r ? (r.user ? <b>{r.user}</b> : <span className="muted">{playerLabel(career, r.champion)}</span>) : done ? <span className="muted">—</span> : ''}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
-  )
-}
-
-function RankingsTab({ career }) {
-  const [which, setWhich] = useState(career.players.user.tour === 'pro' ? 'pro' : 'ct')
-  const y = career.year
-  const list = which === 'pro' ? proRanking(career) : challengeRanking(career)
-  const userRank = rankOf(list, 'user')
-  const shown = list.slice(0, 100)
-  return (
-    <div className="tab-body">
-      <div className="btn-row tight">
-        <button className={`btn small ${which === 'pro' ? 'primary' : ''}`} onClick={() => setWhich('pro')}>Order of Merit (2 years)</button>
-        <button className={`btn small ${which === 'ct' ? 'primary' : ''}`} onClick={() => setWhich('ct')}>Challenge Tour {y}</button>
-      </div>
-      {userRank && userRank > 100 && <p className="muted">You are #{userRank}.</p>}
-      <table className="rank-table">
-        <tbody>
-          {shown.map((id, i) => {
-            const p = career.players[id]
-            const cut = which === 'pro' ? i + 1 === TOUR_CARD_KEEP_RANK : i + 1 === CHALLENGE_CARDS
-            return (
-              <tr key={id} className={`${id === 'user' ? 'me' : ''} ${cut ? 'cutline' : ''}`}>
-                <td>{i + 1}</td>
-                <td>{playerLabel(career, id)}</td>
-                <td className="num">{money(which === 'pro' ? proMoney(p, y) : p.ctMoney[y])}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function StatsTab({ career }) {
-  const s = career.stats
-  const user = career.players.user
-  const avg = threeDartAverage(s)
-  const items = [
-    ['Matches won', `${s.won} / ${s.played + s.simulated}`],
-    ['Played on the oche', s.played],
-    ['Career average', avg ? avg.toFixed(2) : '–'],
-    ['Best match average', s.bestAvg || '–'],
-    ['180s', s.s180],
-    ['140+', s.s140],
-    ['100+', s.s100],
-    ['Highest checkout', s.highCheckout || '–'],
-    ['Legs', `${s.legsWon} won · ${s.legsLost} lost`],
-  ]
-  return (
-    <div className="tab-body">
-      <div className="card">
-        <div className="stats-grid">
-          {items.map(([k, v]) => (
-            <div key={k}><b>{v}</b><span>{k}</span></div>
-          ))}
-        </div>
-      </div>
-      <div className="card">
-        <div className="card-label">Titles</div>
-        {user.titles.length ? <ul className="plain">{user.titles.map((t, i) => <li key={i}>🏆 {t}</li>)}</ul> : <p className="muted">None yet.</p>}
-      </div>
-      {career.seasons.length > 0 && (
-        <div className="card">
-          <div className="card-label">Seasons</div>
-          <ul className="plain">
-            {career.seasons.map((x) => (
-              <li key={x.year}><b>{x.year}</b> · {x.outcome} · {money(x.money)}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function NewsTab({ career }) {
+function News({ career }) {
   return (
     <div className="tab-body">
       <ul className="news">
-        {career.news.slice(0, 80).map((n, i) => (
-          <li key={i}><span className="muted">{MONTHS[n.month].slice(0, 3)} {n.year}</span> {n.text}</li>
-        ))}
+        {career.news.slice(0, 150).map((n, i) => <li key={i}><span className="muted">{n.date}</span> {n.text}</li>)}
       </ul>
-    </div>
-  )
-}
-
-function SettingsTab({ career, update, onDelete }) {
-  const set = (fn) => update(fn)
-  return (
-    <div className="tab-body">
-      <div className="card form">
-        <label>
-          Difficulty
-          <select value={career.user.difficulty} onChange={(e) => set((c) => { c.user.difficulty = e.target.value })}>
-            {Object.entries(DIFFICULTIES).map(([k, d]) => <option key={k} value={k}>{d.label}</option>)}
-          </select>
-          <small>{DIFFICULTIES[career.user.difficulty]?.blurb}</small>
-        </label>
-        <label>
-          Match length
-          <select value={career.settings.matchLength} onChange={(e) => set((c) => { c.settings.matchLength = e.target.value })}>
-            {Object.entries(MATCH_LENGTHS).map(([k, m]) => <option key={k} value={k}>{m.label}</option>)}
-          </select>
-        </label>
-        <label>
-          Your 3-dart average
-          <input type="number" min="15" max="120" step="0.5" value={career.user.avg} onChange={(e) => set((c) => { c.user.avg = Number(e.target.value) || c.user.avg })} />
-          <small>Opponents are scaled to this.</small>
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={career.user.autoAdjust} onChange={(e) => set((c) => { c.user.autoAdjust = e.target.checked })} />
-          Adjust my average automatically after each match
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={career.settings.caller} onChange={(e) => set((c) => { c.settings.caller = e.target.checked })} />
-          Match caller (spoken scores)
-        </label>
-      </div>
-      <button className="btn danger" onClick={onDelete}>Delete career</button>
     </div>
   )
 }

@@ -1,61 +1,63 @@
-// How hard is the opponent in front of you?
+// How good is the opponent standing next to you?
 //
-// AI ratings live on a "pro scale" (roughly real tour averages). The difficulty
-// setting decides where *you* sit on that scale; opponents are then rescaled to
-// your actual standard. So on Normal, a Challenge Tour grinder is usually a bit
-// weaker than you, a mid-ranked tour pro is about level, and the elite are better.
-// On top of that every opponent gets a random form swing, and gets sharper the
-// deeper you go into an event and the bigger the event.
+// Two modes, switchable any time in Settings:
+//   fixed        every opponent throws close to the average you choose
+//   progressive  a random average from the band for that level of event, which climbs
+//                as you go deeper into it. Better-ranked players sit higher in the band.
 import { gaussian } from '../engine/rng.js'
 
-export const DIFFICULTIES = {
-  easy: { label: 'Easy', proRating: 97, blurb: 'Relative to the field you are a top-25 pro' },
-  normal: { label: 'Normal', proRating: 92, blurb: 'Relative to the field you are a top-50 pro: keeping your card is a fight' },
-  hard: { label: 'Hard', proRating: 87, blurb: 'Relative to the field you are a fringe card holder' },
-  brutal: { label: 'Brutal', proRating: 81, blurb: 'Even the Challenge Tour will test you' },
-  realistic: { label: 'Real averages', proRating: null, blurb: 'No scaling: opponents throw genuine tour-level averages' },
+// [early rounds, semi-finals and final] as [low, high] 3-dart averages.
+export const LEVEL_BANDS = {
+  dev: { label: 'Q-School, Challenge & Development Tour', early: [60, 75], late: [75, 90] },
+  pro: { label: 'Players Championships, European Tour, UK Open', early: [72, 86], late: [86, 98] },
+  major: { label: 'Majors & invitationals', early: [84, 95], late: [94, 105] },
+  worlds: { label: 'World Championship', early: [84, 96], late: [96, 108] },
+}
+
+export const DIFFICULTY_MODES = {
+  progressive: 'Random averages that get harder as you progress',
+  fixed: 'Opponents throw my chosen average',
 }
 
 export const SKILL_PRESETS = [
   { label: 'Beginner', avg: 30 },
   { label: 'Pub player', avg: 42 },
   { label: 'League player', avg: 52 },
-  { label: 'Strong league / county', avg: 62 },
+  { label: 'County standard', avg: 62 },
   { label: 'Semi-pro', avg: 75 },
   { label: 'Pro standard', avg: 90 },
 ]
 
-function setting(career) {
-  return DIFFICULTIES[career.user.difficulty] ?? DIFFICULTIES.normal
+const lerp = (a, b, t) => a + (b - a) * t
+const round1 = (x) => Math.round(x * 10) / 10
+
+// progress: 0 for the first match of an event, 1 for the final.
+export function bandFor(level, progress) {
+  const b = LEVEL_BANDS[level] ?? LEVEL_BANDS.pro
+  const t = Math.max(0, Math.min(1, progress))
+  return [lerp(b.early[0], b.late[0], t), lerp(b.early[1], b.late[1], t)]
 }
 
-// Your standard on the pro scale (used when your own matches are auto-simulated).
-export function userProRating(career) {
-  return setting(career).proRating ?? career.user.avg
+// Where a player of this rating sits in a level's overall range (0–1).
+function standing(level, rating) {
+  const b = LEVEL_BANDS[level] ?? LEVEL_BANDS.pro
+  return Math.max(0, Math.min(1, (rating - b.early[0]) / (b.late[1] - b.early[0])))
 }
 
-export function scaleFactor(career) {
-  const d = setting(career)
-  return d.proRating ? career.user.avg / d.proRating : 1
-}
-
-export function pressureBoost(round, tier) {
-  return round * 0.7 + tier * 0.6
-}
-
-const clamp = (v) => Math.max(12, Math.min(118, v))
-
-export function opponentAverages(career, rating, { round = 0, tier = 0 } = {}, rng = Math.random) {
-  const f = scaleFactor(career)
-  const base = rating + pressureBoost(round, tier)
-  return {
-    expected: Math.round(clamp(base * f) * 10) / 10,
-    actual: Math.round(clamp((base + gaussian(rng) * 3.5) * f) * 10) / 10,
+export function opponentAverage(career, rating, { level = 'pro', progress = 0 } = {}, rng = Math.random) {
+  const d = career.user.difficulty
+  if (d.mode === 'fixed') {
+    return { expected: round1(d.fixedAvg), actual: round1(Math.max(15, d.fixedAvg + gaussian(rng) * 1.5)) }
   }
+  const [lo, hi] = bandFor(level, progress)
+  const s = standing(level, rating)
+  const expected = lo + (hi - lo) * (0.25 + 0.5 * s)
+  const actual = lo + (hi - lo) * (0.55 * rng() + 0.45 * s)
+  return { expected: round1(expected), actual: round1(actual) }
 }
 
-// Pro-scale averages used for AI-vs-AI simulation.
+// Averages used when AI players meet each other (and when your match is auto-simmed).
 export function simAverage(career, id, rng = Math.random) {
-  const base = id === 'user' ? userProRating(career) : career.players[id].rating
+  const base = id === 'user' ? career.user.avg : career.players[id].rating
   return base + gaussian(rng) * 3
 }

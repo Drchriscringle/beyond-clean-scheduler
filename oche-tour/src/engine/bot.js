@@ -25,22 +25,27 @@ export function throwDart(target, sigma, rng = Math.random) {
   return { ...scoreAt(x, y), x, y, target }
 }
 
-// One visit of up to three darts. Handles busts and double-out.
-export function playVisit(remaining, sigma, rng = Math.random) {
+// One visit of up to three darts. Handles busts, double-out and (optionally) double-in.
+export function playVisit(remaining, sigma, rng = Math.random, { needIn = false } = {}) {
   const darts = []
   let left = remaining
+  let opened = !needIn
   for (let i = 0; i < 3; i++) {
-    const target = chooseTarget(left, 3 - i)
+    const target = opened ? chooseTarget(left, 3 - i) : 'D20'
     const dart = throwDart(target, sigma, rng)
     darts.push(dart)
+    if (!opened) {
+      if (dart.mult !== 2) continue
+      opened = true
+    }
     const after = left - dart.value
     if (after === 0 && dart.mult === 2) {
-      return { darts, scored: remaining, bust: false, checkout: true, remaining: 0 }
+      return { darts, scored: remaining, bust: false, checkout: true, remaining: 0, opened, double: dart.label }
     }
     if (after < 2) {
-      return { darts, scored: 0, bust: true, checkout: false, remaining }
+      return { darts, scored: 0, bust: true, checkout: false, remaining, opened }
     }
     left = after
   }
-  return { darts, scored: remaining - left, bust: false, checkout: false, remaining: left }
+  return { darts, scored: remaining - left, bust: false, checkout: false, remaining: left, opened }
 }

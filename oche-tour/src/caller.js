@@ -1,4 +1,7 @@
-// The MC. Uses the browser's speech synthesis, preferring a British voice.
+// The MC. On a phone it uses the native text-to-speech plugin (Android's WebView has no
+// speech synthesis); in a browser it uses the Web Speech API, preferring a British voice.
+import { Capacitor } from '@capacitor/core'
+import { TextToSpeech } from '@capacitor-community/text-to-speech'
 const ONES = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
 const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
 
@@ -20,7 +23,12 @@ function pickVoice() {
 }
 
 export function say(text, enabled = true) {
-  if (!enabled || typeof speechSynthesis === 'undefined') return
+  if (!enabled) return
+  if (Capacitor.isNativePlatform()) {
+    TextToSpeech.speak({ text, lang: 'en-GB', rate: 0.95, pitch: 0.9, queueStrategy: 1 }).catch(() => {})
+    return
+  }
+  if (typeof speechSynthesis === 'undefined') return
   const u = new SpeechSynthesisUtterance(text)
   const v = pickVoice()
   if (v) u.voice = v

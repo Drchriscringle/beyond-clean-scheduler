@@ -3,8 +3,27 @@ import Hub from './components/Hub.jsx'
 import EventScreen from './components/EventScreen.jsx'
 import MatchScreen from './components/MatchScreen.jsx'
 import NewCareer from './components/NewCareer.jsx'
-import { advance, finishEvent, newCareer, prepareLiveMatch, simulateUntilUserMatch, simulateUserMatch, submitUserResult } from './career/career.js'
+import Practice from './components/Practice.jsx'
+import { advance, currentEvent, finishEvent, handleAction, newCareer, prepareLiveMatch, setEntry, simulateUntilUserMatch, simulateUserMatch, submitUserResult } from './career/career.js'
 import { loadCareer, saveCareer } from './persistence.js'
+
+function liveSetup(career) {
+  const live = career.active.live
+  const user = career.players.user
+  const opp = live.opponent.startsWith('T:') ? null : career.players[live.opponent]
+  const team = live.oppPlayers?.map((id) => career.players[id].name)
+  return {
+    me: { name: user.name, nation: user.nation, nickname: user.nickname },
+    opp: opp ? { name: opp.name, nickname: opp.nickname, nation: opp.nation } : { name: team.join(' & '), nation: live.opponent.slice(2) },
+    oppNames: team,
+    partner: live.partner ? { name: career.players[live.partner].name, avg: live.partnerAvg } : null,
+    format: live.format,
+    expectedAvg: live.expectedAvg,
+    actualAvg: live.actualAvg,
+    stage: live.stage,
+    h2h: career.h2h[live.opponent],
+  }
+}
 
 export default function App() {
   const [career, setCareer] = useState(loadCareer)
@@ -12,11 +31,11 @@ export default function App() {
     const c = loadCareer()
     return c?.active?.live?.match ? 'match' : c?.active ? 'event' : 'hub'
   })
-
-  // Always build on the latest career, even if two updates land before a re-render.
+  const [practice, setPractice] = useState(null)
   const latest = useRef(career)
   latest.current = career
 
+  // Always build on the latest career, even if two updates land before a re-render.
   function update(fn) {
     const next = structuredClone(latest.current)
     fn(next)
@@ -26,9 +45,33 @@ export default function App() {
     return next
   }
 
+  function goNext(next) {
+    setScreen(next.active ? 'event' : 'hub')
+  }
+
+  if (practice) {
+    const p = practice
+    if (p.playing) {
+      return (
+        <MatchScreen
+          setup={{ me: { name: career?.players.user.name ?? 'You', nation: career?.players.user.nation }, opp: { name: 'Practice partner', nation: null, nickname: `${p.avg} average` }, format: p.format, expectedAvg: p.avg, actualAvg: p.avg, stage: 'Friendly' }}
+          settings={{ caller: career?.settings.caller ?? true, trackDoubles: false }}
+          onExit={() => setPractice(null)}
+        />
+      )
+    }
+    return (
+      <div className="screen">
+        <button className="btn ghost small back" onClick={() => setPractice(null)}>‹ Back</button>
+        <Practice onPlay={(cfg) => setPractice({ ...cfg, playing: true })} />
+      </div>
+    )
+  }
+
   if (!career) {
     return (
       <NewCareer
+        onPractice={() => setPractice({})}
         onStart={(opts) => {
           const c = newCareer(opts)
           latest.current = c
@@ -43,8 +86,11 @@ export default function App() {
   if (screen === 'match' && career.active?.live) {
     return (
       <MatchScreen
-        career={career}
-        update={update}
+        key={career.active.live.stage + career.active.eventId}
+        setup={liveSetup(career)}
+        initialMatch={career.active.live.match}
+        settings={{ caller: career.settings.caller, trackDoubles: career.user.trackDoubles && !career.active.live.partner }}
+        onPersist={(match) => update((c) => { if (c.active?.live) c.active.live.match = match })}
         onExit={(result) => {
           if (result === 'pause') return setScreen('event')
           if (result === null) {
@@ -52,7 +98,7 @@ export default function App() {
             return setScreen('event')
           }
           update((c) => {
-            submitUserResult(c, result)
+            submitUserResult(c, { ...result, pairs: !!c.active.live?.partner })
             simulateUntilUserMatch(c)
           })
           setScreen('event')
@@ -87,19 +133,34 @@ export default function App() {
     )
   }
 
+  const proceed = (c) => {
+    advance(c)
+    if (c.active) simulateUntilUserMatch(c)
+  }
+
   return (
     <Hub
       career={career}
       update={update}
       onOpenEvent={() => setScreen('event')}
-      onContinue={() => {
+      onContinue={() => goNext(update((c) => { c.seasonEnded = null; proceed(c) }))}
+      onAction={(mailId, action, payload) => {
         const next = update((c) => {
-          c.seasonEnded = null
-          advance(c)
-          if (c.active) simulateUntilUserMatch(c)
+          handleAction(c, mailId, action, payload)
+          const e = currentEvent(c)
+          const decided = (action === 'confirmEntry' || action === 'withdrawEntry') && String(payload).split(',').includes(e?.id)
+          if (decided || action === 'registerQschool' || action === 'skipQschool' || action === 'acceptPL' || action === 'declinePL') proceed(c)
         })
-        if (next.active) setScreen('event')
+        if (next.active && ['confirmEntry', 'registerQschool', 'acceptPL'].includes(action)) setScreen('event')
       }}
+      onEntry={(eventId, state, go = false) => {
+        const next = update((c) => {
+          setEntry(c, eventId, state)
+          if (go) proceed(c)
+        })
+        if (go) goNext(next)
+      }}
+      onPractice={(cfg) => setPractice({ ...cfg, playing: true })}
       onDelete={() => {
         if (!window.confirm('Delete this career? This cannot be undone.')) return
         saveCareer(null)
@@ -109,3 +170,4 @@ export default function App() {
     />
   )
 }
+
