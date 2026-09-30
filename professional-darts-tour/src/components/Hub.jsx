@@ -39,6 +39,12 @@ export function eventStatus(career, e) {
 export default function Hub(props) {
   const { career } = props
   const [tab, setTab] = useState('Home')
+  const [openMail, setOpenMail] = useState(null)
+  const readMail = (id) => {
+    setOpenMail(id)
+    setTab('Inbox')
+    props.update((c) => { const m = c.inbox.find((x) => x.id === id); if (m) m.read = true })
+  }
   const unread = unreadCount(career)
   return (
     <div className="screen hub">
@@ -48,13 +54,13 @@ export default function Hub(props) {
       </header>
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t} className={t === tab ? 'tab active' : 'tab'} onClick={() => setTab(t)}>
+          <button key={t} className={t === tab ? 'tab active' : 'tab'} onClick={() => { setOpenMail(null); setTab(t) }}>
             {t}{t === 'Inbox' && unread ? <span className="badge">{unread}</span> : null}
           </button>
         ))}
       </nav>
-      {tab === 'Home' && <Home {...props} goTab={setTab} />}
-      {tab === 'Inbox' && <Inbox career={career} update={props.update} onAction={props.onAction} />}
+      {tab === 'Home' && <Home {...props} goTab={setTab} readMail={readMail} />}
+      {tab === 'Inbox' && <Inbox key={openMail ?? 'list'} career={career} update={props.update} onAction={props.onAction} initialOpen={openMail} />}
       {tab === 'Calendar' && <CalendarView career={career} onEntry={props.onEntry} />}
       {tab === 'Rankings' && <Rankings career={career} />}
       {tab === 'News' && <News career={career} />}
@@ -68,7 +74,7 @@ export default function Hub(props) {
   )
 }
 
-function Home({ career, onContinue, onOpenEvent, onAction, onEntry, onSimulate, simSummary, onCloseSummary, goTab }) {
+function Home({ career, onContinue, onOpenEvent, onAction, onEntry, onSimulate, simSummary, onCloseSummary, goTab, readMail }) {
   const user = career.players.user
   const y = career.year
   const oom = ranking(career, 'oom')
@@ -171,6 +177,10 @@ function Home({ career, onContinue, onOpenEvent, onAction, onEntry, onSimulate, 
         <div className="card">
           <div className="card-label">Last event</div>
           <p><b>{career.lastResult.eventName}</b>: {career.lastResult.text ?? 'Not entered'}{career.lastResult.prize ? ` · ${money(career.lastResult.prize)}` : ''}</p>
+          {(() => {
+            const paper = career.inbox.find((m) => m.article)
+            return paper && career.lastResult.text ? <button className="btn small" onClick={() => readMail(paper.id)}>📰 Read {paper.from}: “{paper.article.headline}”</button> : null
+          })()}
         </div>
       )}
     </div>

@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import Newspaper from './Newspaper.jsx'
 
-export default function Inbox({ career, update, onAction }) {
-  const [openId, setOpenId] = useState(null)
+export default function Inbox({ career, update, onAction, initialOpen = null }) {
+  const [openId, setOpenId] = useState(initialOpen)
   const open = career.inbox.find((m) => m.id === openId)
 
   function view(m) {
@@ -13,6 +14,7 @@ export default function Inbox({ career, update, onAction }) {
     return (
       <div className="tab-body">
         <button className="btn ghost small back" onClick={() => setOpenId(null)}>‹ Inbox</button>
+        {open.article ? <Newspaper article={open.article} career={career} /> : (
         <div className="card mail">
           <div className="mail-from">{open.from}</div>
           <h2>{open.subject}</h2>
@@ -25,6 +27,7 @@ export default function Inbox({ career, update, onAction }) {
           )}
           {open.resolved && <p className="tag done">{open.resolved}</p>}
         </div>
+        )}
       </div>
     )
   }

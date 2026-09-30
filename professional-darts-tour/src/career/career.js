@@ -6,6 +6,7 @@ import { buildField, eligibility, isPro, plTable } from './entry.js'
 import { acceptSponsor, ledger, milestone, monthlySponsorship, negotiateSponsor, paySponsors, titleBonuses, travelCost } from './finance.js'
 import { formatLabel, prizeFund, qualifierFormat, roundFormat, roundName, scaledPrizes } from './formats.js'
 import { dateStr, news, resolveMail, sendMail } from './inbox.js'
+import { buildArticle, PAPER } from './newspaper.js'
 import { agePlayers, generatePools, nationName, TOUR_CARDS, UK_QSCHOOL_NATIONS } from './players.js'
 import { addEarnings, prune, ranking, rankOf } from './rankings.js'
 import { createGroups, createKnockout, createStaged, findPair, resolveRound, roundsWon, stageFor } from './tournament.js'
@@ -462,7 +463,13 @@ export function startEvent(career, userIn, el, rng = Math.random) {
     }
   }
   const qualifier = userIn && el?.status === 'qualifier' ? { ...el.qualifier, won: 0, lost: false, opponents: qualifierOpponents(career, event, el.qualifier, rng) } : null
-  career.active = { eventId: event.id, key: event.key, tournament: t, userIn: !!userIn, userSide, teams, qualifier, userLog: [], live: null, reason: el?.reason ?? null }
+  const user = career.players.user
+  const ranked = (user.earn[career.year]?.ranked ?? 0) + (user.earn[career.year - 1]?.ranked ?? 0) > 0
+  career.active = {
+    eventId: event.id, key: event.key, tournament: t, userIn: !!userIn, userSide, teams, qualifier, userLog: [], live: null, reason: el?.reason ?? null,
+    rankBefore: userIn && ranked ? rankOf(ranking(career, 'oom'), 'user') : null,
+    statsBefore: userIn ? { s180: career.stats.s180, high: career.stats.highCheckout, tour: user.tour } : null,
+  }
   if (userIn) {
     const cost = travelCost(event)
     if (cost) ledger(career, -cost, `Travel & accommodation: ${event.name}`, dateStr(career, event))
@@ -756,12 +763,46 @@ export function finishEvent(career, rng = Math.random) {
   }
   if (event.key === 'qsFirst' || event.key === 'qsFinal') qschoolAfterDay(career, event, t)
 
+  if (resultText && event.key !== 'qsFirst') sendNewspaper(career, event, { t, inDraw, userSide, resultText, userPrize, runnerUp, final }, rng)
   career.results[event.id] = { champion: t.champion, user: resultText, prize: userPrize }
   career.lastResult = { eventName: event.name, text: resultText, prize: userPrize, champion: t.champion }
   career.active = null
   career.eventIndex++
   checkRankMilestones(career, rng)
   if (career.eventIndex >= career.calendar.length) endSeason(career, rng)
+}
+
+function sendNewspaper(career, event, { t, inDraw, userSide, resultText, userPrize, runnerUp }, rng) {
+  const a = career.active
+  const user = career.players.user
+  const stage = inDraw ? stageFor(t, userSide) : null
+  const oom = ranking(career, 'oom')
+  const ranked = (user.earn[career.year]?.ranked ?? 0) + (user.earn[career.year - 1]?.ranked ?? 0) > 0
+  const finalMatch = stage === 0 ? a.userLog.at(-1) : null
+  const played = a.userLog.filter((m) => !m.simulated)
+  const others = career.news.slice(1, 12).filter((n) => !n.text.includes(user.name) && / wins /.test(n.text)).slice(0, 3).map((n) => n.text.replace(/\. You:.*$/, '').replace(/, beating.*?final/, '').slice(0, 90))
+  const article = buildArticle(career, event, {
+    stageRank: stage === null ? 99 : stage === 'group' ? 90 : stage,
+    resultText,
+    prize: userPrize,
+    userLog: a.userLog,
+    userSide,
+    champion: t.champion,
+    runnerUp,
+    final: finalMatch,
+    rankBefore: a.rankBefore,
+    rankAfter: ranked && user.tour === 'pro' ? rankOf(oom, 'user') : ranked ? rankOf(oom, 'user') : null,
+    ctAfter: user.tour !== 'pro' && (user.earn[career.year]?.ct ?? 0) > 0 ? rankOf(ranking(career, 'ct'), 'user') : null,
+    cardWon: event.key === 'qsFinal' && a.statsBefore?.tour !== 'pro' && user.tour === 'pro',
+    titles: user.titles.length,
+    qualifierLost: !inDraw && !!a.qualifier?.lost,
+    oomList: oom,
+    best180s: played.length && a.statsBefore ? career.stats.s180 - a.statsBefore.s180 : 0,
+    highCheckout: played.length && a.statsBefore && career.stats.highCheckout > a.statsBefore.high ? career.stats.highCheckout : 0,
+    otherNews: others,
+    date: dateStr(career, event),
+  }, rng)
+  sendMail(career, { from: PAPER, subject: `📰 ${article.headline}`, body: `${article.subhead}.\n\n${article.body.join('\n\n')}`, article, date: dateStr(career, event) })
 }
 
 // Personal roll of honour: best finish in each competition. European Tour and World

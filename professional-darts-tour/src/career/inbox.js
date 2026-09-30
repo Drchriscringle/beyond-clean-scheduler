@@ -16,9 +16,10 @@ export function dateStr(career, event) {
   return `${y}-${String(e?.month ?? 12).padStart(2, '0')}-${String(e?.day ?? 31).padStart(2, '0')}`
 }
 
-export function sendMail(career, { from, subject, body, actions = null, key = null, date = null }) {
+export function sendMail(career, { from, subject, body, actions = null, key = null, date = null, article = null }) {
   if (key && career.inbox.some((m) => m.key === key)) return null
   const mail = { id: `m${++career.mailSeq}`, key, date: date ?? dateStr(career), from: SENDERS[from] ?? from, subject, body, actions, read: false, resolved: null }
+  if (article) mail.article = article
   career.inbox.unshift(mail)
   if (career.inbox.length > 400) career.inbox.length = 400
   return mail

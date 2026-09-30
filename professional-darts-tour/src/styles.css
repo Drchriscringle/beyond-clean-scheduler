@@ -248,3 +248,35 @@ details summary { cursor: pointer; }
 .roll td { vertical-align: top; }
 .title-art { width: 100%; max-width: 420px; align-self: center; border-radius: 16px; box-shadow: 0 10px 40px rgba(212, 58, 51, 0.25); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* The Oche Times */
+.paper { background: #d9d6cc; color: #141414; padding: 12px; border: 3px solid #1b1b3a; box-shadow: inset 0 0 0 6px #b9bccb; font-family: 'Old Standard TT', Georgia, serif; }
+.paper-strap { display: flex; justify-content: space-between; gap: 8px; font-family: VT323, monospace; font-size: 17px; color: #b3261e; letter-spacing: 0.04em; border-bottom: 2px solid #141414; padding-bottom: 4px; }
+.paper-strap span:last-child { text-align: right; }
+.paper-mast { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; border-bottom: 3px double #141414; padding: 6px 0; }
+.paper-extra { font-family: VT323, monospace; font-size: 22px; line-height: 0.95; }
+.paper-title { font-family: UnifrakturMaguntia, 'Old English Text MT', serif; font-size: clamp(28px, 9vw, 44px); text-align: center; line-height: 1; }
+.paper-edition { display: flex; flex-direction: column; font-family: VT323, monospace; font-size: 16px; text-align: right; line-height: 1; }
+.paper-dateline { font-family: VT323, monospace; font-size: 15px; text-align: center; border-bottom: 1px solid #141414; padding: 3px 0; }
+.paper-kicker { margin-top: 8px; font-family: VT323, monospace; font-size: 17px; color: #b3261e; letter-spacing: 0.1em; }
+.paper-headline { font-family: Oswald, Impact, sans-serif; font-size: clamp(26px, 8vw, 38px); line-height: 1.02; margin: 2px 0 6px; text-transform: uppercase; color: #141414; }
+.paper-sub { font-weight: 700; font-size: 15px; border-bottom: 2px solid #141414; padding-bottom: 6px; margin-bottom: 8px; }
+.paper-cols { display: grid; grid-template-columns: 1fr 108px; gap: 10px; }
+.paper-main p { font-size: 14px; line-height: 1.4; margin: 0 0 8px; text-align: justify; hyphens: auto; }
+.paper-main p.lead { font-weight: 700; }
+.paper-photo { float: left; margin: 0 10px 6px 0; width: 118px; background: #bfc3d4; border: 2px solid #141414; padding: 4px; text-align: center; }
+.paper-photo figcaption { font-size: 11px; font-style: italic; line-height: 1.2; }
+.paper-photo.mood-bad { filter: grayscale(0.8); }
+.paper blockquote { margin: 8px 0; padding: 6px 8px; border-left: 4px solid #b3261e; font-style: italic; font-size: 14px; background: rgba(255, 255, 255, 0.35); }
+.paper blockquote cite { display: block; font-style: normal; font-size: 12px; margin-top: 3px; }
+.paper blockquote.pundit { border-left-color: #1b1b3a; }
+.paper-side { display: flex; flex-direction: column; gap: 8px; }
+.paper-box { border: 2px solid #141414; padding: 6px; font-family: VT323, monospace; font-size: 15px; line-height: 1.1; background: rgba(255, 255, 255, 0.3); }
+.paper-box-title { font-family: Oswald, sans-serif; font-size: 12px; font-weight: 700; border-bottom: 1px solid #141414; margin-bottom: 4px; }
+.paper-foot { clear: both; margin-top: 8px; border-top: 3px double #141414; padding-top: 4px; font-family: VT323, monospace; font-size: 14px; text-align: center; }
+@media (max-width: 520px) {
+  .paper-cols { grid-template-columns: 1fr; }
+  .paper-side { display: grid; grid-template-columns: 1fr 1fr; }
+  .paper-side .paper-box:last-child:nth-child(odd) { grid-column: span 2; }
+  .paper-main p { text-align: left; }
+}

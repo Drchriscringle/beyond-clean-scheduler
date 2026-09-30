@@ -333,3 +333,21 @@ test('personal records and the roll of honour are kept', () => {
   assert.ok(c.records.bestIn.ct || c.records.bestIn.pc, JSON.stringify(Object.keys(c.records.bestIn)))
   assert.ok(Object.values(c.records.bestIn).every((b) => typeof b.rank === 'number' && b.text))
 })
+
+test('The Oche Times writes a front page from the result', async () => {
+  const { buildArticle } = await import('../src/career/newspaper.js')
+  const c = fresh({ name: 'Sam Carter' })
+  const event = c.calendar.find((e) => e.key === 'matchplay')
+  const opp = Object.keys(c.players).find((id) => id !== 'user')
+  const base = { prize: 0, userSide: 'user', oomList: [], date: '2027-07-26', rankBefore: 40, rankAfter: 25, otherNews: [] }
+  const win = buildArticle(c, event, { ...base, stageRank: 0, resultText: 'Champion!', prize: 225000, titles: 1, userLog: [{ stage: 'Final', opponent: opp, userWon: true, score: [6, 4], userAvg: 98.2, oppAvg: 95, simulated: false }] }, seededRng(1))
+  assert.equal(win.extra, true)
+  assert.equal(win.kicker, 'FIRST TITLE')
+  assert.ok(win.headline.includes('CARTER'))
+  assert.ok(win.body.join(' ').includes('£225,000'))
+  assert.ok(win.body.join(' ').includes('98.20'))
+  assert.ok(win.sidebar.some((b) => b.title === 'RANKING WATCH' && b.lines.includes('▲ up 15')))
+  const loss = buildArticle(c, event, { ...base, stageRank: 5, resultText: 'Lost in the Last 32', titles: 0, userLog: [{ stage: 'Last 32', opponent: opp, userWon: false, score: [1, 3], userAvg: 70, oppAvg: 90, simulated: false }] }, seededRng(2))
+  assert.equal(loss.extra, false)
+  assert.ok(loss.body[0].includes('day to forget'))
+})

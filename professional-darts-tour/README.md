@@ -100,6 +100,10 @@ in your inbox and the news each January.
 - **Inbox**: entry confirmations (one per weekend for tour blocks), Q-School registration,
   Premier League invitations, reserve-list call-ups, draw and qualification news, prize money
   statements, monthly Order of Merit updates and a monthly news round-up with winners and prize money.
+- **The Oche Times**: after every event you play, a retro newspaper front page lands in your
+  inbox, written from your result: headline, story of your run with scores and averages,
+  ranking movement, prize money, your quote, a pundit's verdict, your shirt as the photo, and
+  other results. Titles get an "EXTRA! EXTRA!" special edition.
 - **Calendar**: month grid and list, colour-coded by tour, with your entry status on every event.
   Confirm or withdraw from any event ahead of time.
 - **News**: every winner, final score and prize, season earnings leaders, Premier League nights.
