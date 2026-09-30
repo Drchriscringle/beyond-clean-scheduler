@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Professional Darts Tour</string>
+    <string name="title_activity_main">Professional Darts Tour</string>
+    <string name="package_name">com.professionaldartstour.app</string>
+    <string name="custom_url_scheme">com.professionaldartstour.app</string>
+</resources>

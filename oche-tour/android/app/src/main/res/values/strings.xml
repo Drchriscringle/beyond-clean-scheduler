@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Oche Tour</string>
-    <string name="title_activity_main">Oche Tour</string>
-    <string name="package_name">com.ochetour.app</string>
-    <string name="custom_url_scheme">com.ochetour.app</string>
-</resources>
