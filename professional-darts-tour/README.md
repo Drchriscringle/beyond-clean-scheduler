@@ -31,7 +31,7 @@ npm run cap:android  # build, sync and open Android Studio
 npm run cap:ios      # build, sync and open Xcode (needs a Mac)
 ```
 
-Two native plugins are included: text-to-speech for the match caller (Android's WebView has no
+The app icon and splash screen come from `assets/` (regenerate with `npx @capacitor/assets generate`). Two native plugins are included: text-to-speech for the match caller (Android's WebView has no
 speech of its own) and keep-awake so the screen stays on while you're at the board.
 
 ## The season

@@ -246,3 +246,5 @@ details summary { cursor: pointer; }
 .totals { margin-top: 4px; }
 .offer { border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 8px; }
 .roll td { vertical-align: top; }
+.title-art { width: 100%; max-width: 420px; align-self: center; border-radius: 16px; box-shadow: 0 10px 40px rgba(212, 58, 51, 0.25); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

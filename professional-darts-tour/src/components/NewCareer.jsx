@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import titleArt from '../assets-title.jpg'
 import { SKILL_PRESETS, suggestedRange } from '../career/difficulty.js'
 import DifficultyPicker from './DifficultyPicker.jsx'
 import { MATCH_LENGTHS } from '../career/formats.js'
@@ -23,7 +24,8 @@ export default function NewCareer({ onStart, onPractice }) {
 
   return (
     <div className="screen new-career">
-      <div className="logo big">PROFESSIONAL DARTS TOUR</div>
+      <h1 className="sr-only">Professional Darts Tour</h1>
+      <img className="title-art" src={titleArt} alt="Professional Darts Tour" />
       <p className="tagline">Throw real darts at your own board. Your virtual opponent throws back. Win your Tour Card at Q-School, and keep it.</p>
       <div className="card form">
         <label>Your name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sam Carter" maxLength={28} /></label>
