@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { KeepAwake } from '@capacitor-community/keep-awake'
 import Dartboard from './Dartboard.jsx'
+import Shirt from './Shirt.jsx'
 import { playVisit, sigmaForAverage } from '../engine/bot.js'
 import { checkoutRoute, minDartsToFinish } from '../engine/checkout.js'
 import { applyVisit, createMatch, interpretEnteredScore, pairsThrower, threeDartAverage } from '../engine/match.js'
@@ -167,6 +168,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
         <div className="stage-tag">{setup.stage}</div>
         <div className="versus">
           <div className="vs-player">
+            {setup.shirt && <Shirt shirt={setup.shirt} sponsors={setup.sponsors} nation={me.nation} side="front" size={70} />}
             <div className="vs-name">{flag(me.nation)} {me.name}</div>
             {setup.partner && <div className="vs-nick">with {setup.partner.name}</div>}
             {me.nickname && <div className="vs-nick">“{me.nickname}”</div>}

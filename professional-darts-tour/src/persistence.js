@@ -4,7 +4,13 @@ export function loadCareer() {
   try {
     const raw = localStorage.getItem(KEY)
     const c = raw ? JSON.parse(raw) : null
-    return c?.version === 2 ? c : null
+    if (c?.version !== 2) return null
+    // Fields added after the first v2 saves.
+    c.records ??= { bestIn: {}, peakRank: null, most180s: null, lowestLeg: null, highestCheckout: null, bestAverage: null }
+    c.offers ??= {}
+    c.prizeScale ??= 1
+    c.shirt ??= null
+    return c
   } catch {
     return null
   }

@@ -103,10 +103,19 @@ in your inbox and the news each January.
 - **Calendar**: month grid and list, colour-coded by tour, with your entry status on every event.
   Confirm or withdraw from any event ahead of time.
 - **News**: every winner, final score and prize, season earnings leaders, Premier League nights.
-- **Money**: bank balance, travel costs, entry fees, prize money and sponsorship. Sponsors make
-  offers as you hit milestones (Tour Card, first title, top 64/32/16, TV runs, major titles).
-- **Stats**: career average, 180s, checkout %, darts at a double, favourite doubles,
-  nine-darters, head-to-head records and rivalries, titles and a season-by-season history.
+- **Sponsors & negotiation**: your market value rises with your Order of Merit ranking and
+  titles. Offers arrive for three slots (main shirt, darts & equipment, sleeve) at milestones and
+  each month, bigger the better you do. Accept, or ask for 10%, 25% or 50% more: sponsors agree,
+  meet you partway, or walk away if you push too hard.
+- **Shirt designer**: colours, eight patterns (stripes, hoops, sash, halves, flames, chevron,
+  panels), name and nickname on the back, lettering style and your flag. Your real sponsors'
+  names appear on the shirt, and it shows on your profile and at the oche.
+- **Money**: bank balance, travel costs, entry fees, prize money and sponsorship income.
+- **Honours**: your own roll of honour (titles, TV titles, highest ranking, career prize money,
+  record average, lowest leg, highest checkout, most 180s in a match, totals, your best finish
+  in every competition and a season-by-season table), plus a roll of honour for every
+  competition with winners, runners-up, final scores and a most-titles list.
+- **Stats**: checkout %, darts at a double, favourite doubles, head-to-head records and rivalries.
 - **Practice**: friendly 501 at any average (with optional double in), Bob's 27, Round the Clock
   on doubles and the 121 checkout challenge, with personal bests.
 

@@ -231,3 +231,18 @@ details summary { cursor: pointer; }
 .date-row input { flex: 1; }
 .range-box { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
 .difficulty { display: flex; flex-direction: column; gap: 6px; }
+.shirt-pair { display: flex; justify-content: center; gap: 12px; }
+.shirt-pair > div { display: flex; flex-direction: column; align-items: center; }
+.colour-row { display: flex; gap: 12px; }
+.colour-row label { flex: 1; }
+.colour-row input[type=color] { width: 100%; height: 40px; padding: 2px; }
+.chip.theme i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 2px; vertical-align: middle; }
+.status { position: relative; }
+.status-shirt { position: absolute; top: 8px; right: 8px; cursor: pointer; }
+.records { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
+.record { background: var(--panel-2); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; }
+.record b { font-family: Oswald, sans-serif; font-size: 22px; color: var(--gold); }
+.record span { font-size: 12px; color: var(--muted); }
+.totals { margin-top: 4px; }
+.offer { border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 8px; }
+.roll td { vertical-align: top; }

@@ -280,3 +280,56 @@ test('simulating a two-week holiday skips your events; playing mode enters them'
   assert.ok(names.includes('Players Championship 1') && names.includes('Players Championship 4'), names.join(', '))
   assert.equal(home.active, null)
 })
+
+test('sponsors: better rankings mean better offers, and negotiation can win or lose', async () => {
+  const { marketValue, negotiateSponsor, milestone } = await import('../src/career/finance.js')
+  const c = fresh()
+  c.players.user.tour = 'pro'
+  c.players.user.earn[c.year] = { ranked: 20000 }
+  touch(c)
+  const low = marketValue(c)
+  c.players.user.earn[c.year] = { ranked: 4000000 }
+  touch(c)
+  const high = marketValue(c)
+  assert.ok(high > low * 10, `${low} -> ${high}`)
+
+  // Asking for a little more usually works; asking for far too much usually fails.
+  let modestWins = 0
+  let greedyWins = 0
+  for (let i = 0; i < 60; i++) {
+    for (const [ask, tally] of [[1.1, 'm'], [1.5, 'g']]) {
+      const x = fresh()
+      milestone(x, 'card', seededRng(i))
+      const offer = Object.values(x.offers)[0]
+      offer.fair = offer.monthly // treat the offer as exactly fair
+      negotiateSponsor(x, `${offer.id}:${ask}`, seededRng(i * 7 + 1))
+      if (x.sponsors.length && tally === 'm') modestWins++
+      if (x.sponsors.length && tally === 'g') greedyWins++
+    }
+  }
+  assert.ok(modestWins > greedyWins * 2, `modest ${modestWins}, greedy ${greedyWins}`)
+})
+
+test('personal records and the roll of honour are kept', () => {
+  const c = fresh({ avg: 95 })
+  const rng = seededRng(31)
+  let guard = 0
+  while (c.seasons.length < 1 && guard++ < 3000) {
+    const res = advance(c, rng)
+    if (res.needs === 'qschool') { handleAction(c, c.inbox.find((m) => m.actions?.some((a) => a.action === 'registerQschool') && !m.resolved).id, 'registerQschool'); continue }
+    if (res.needs === 'premier') { c.pl.pending = false; continue }
+    if (res.needs === 'entry') { setEntry(c, currentEvent(c).id, 'confirmed'); continue }
+    if (!c.active) continue
+    for (;;) {
+      simulateUntilUserMatch(c, rng)
+      const task = nextUserTask(c)
+      if (task.kind === 'qualifier' || task.kind === 'round') simulateUserMatch(c, rng)
+      else break
+    }
+    finishEvent(c, rng)
+  }
+  const worlds = c.honours.find((h) => h.key === 'worlds')
+  assert.ok(worlds.winner && worlds.runnerUp && worlds.score)
+  assert.ok(c.records.bestIn.ct || c.records.bestIn.pc, JSON.stringify(Object.keys(c.records.bestIn)))
+  assert.ok(Object.values(c.records.bestIn).every((b) => typeof b.rank === 'number' && b.text))
+})

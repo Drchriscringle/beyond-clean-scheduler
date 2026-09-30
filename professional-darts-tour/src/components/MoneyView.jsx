@@ -1,6 +1,7 @@
+import { marketValue, SLOTS } from '../career/finance.js'
 import { money } from './common.jsx'
 
-export default function MoneyView({ career }) {
+export default function MoneyView({ career, onAction }) {
   const f = career.finance
   const y = career.year
   const e = career.players.user.earn[y] ?? {}
@@ -15,6 +16,24 @@ export default function MoneyView({ career }) {
         </div>
         {f.bank < 0 && <p className="error">You're overdrawn: prize money and sponsors will clear it.</p>}
       </div>
+      <div className="card">
+        <div className="card-label">Your market value</div>
+        <p>A main shirt deal is worth about <b>{money(marketValue(career))}</b> a month to you right now ({Object.entries(SLOTS).filter(([k]) => k !== 'shirt').map(([k, sl]) => `${sl.label.toLowerCase()} ~${money(marketValue(career) * SLOTS[k].factor)}`).join(', ')}). It rises as you climb the Order of Merit and win titles, and sponsors come to you with better offers.</p>
+      </div>
+      {Object.values(career.offers).length > 0 && (
+        <div className="card">
+          <div className="card-label">Offers on the table</div>
+          {Object.values(career.offers).map((o) => {
+            const mail = career.inbox.find((m) => m.key?.startsWith(`offer-${o.id}-`) && !m.resolved)
+            return (
+              <div key={o.id} className="offer">
+                <p><b>{o.brand}</b> · {SLOTS[o.slot].label}: {money(o.monthly)}/month for {o.months} months, {money(o.titleBonus)} per title</p>
+                {mail && <div className="btn-row tight">{mail.actions.map((a, i) => <button key={a.label} className={`btn small ${i === 0 ? 'primary' : ''}`} onClick={() => onAction(mail.id, a.action, a.payload)}>{a.label}</button>)}</div>}
+              </div>
+            )
+          })}
+        </div>
+      )}
       <div className="card">
         <div className="card-label">Sponsors</div>
         {career.sponsors.length ? (

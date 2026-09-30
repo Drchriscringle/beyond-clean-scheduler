@@ -3,7 +3,7 @@ import { COMPETITIONS, QSCHOOL_CARDS, QSCHOOL_FEE } from './data/competitions.js
 import { seasonSchedule } from './data/schedule.js'
 import { opponentAverage, simAverage, suggestedRange } from './difficulty.js'
 import { buildField, eligibility, isPro, plTable } from './entry.js'
-import { acceptSponsor, ledger, milestone, paySponsors, titleBonuses, travelCost } from './finance.js'
+import { acceptSponsor, ledger, milestone, monthlySponsorship, negotiateSponsor, paySponsors, titleBonuses, travelCost } from './finance.js'
 import { formatLabel, prizeFund, qualifierFormat, roundFormat, roundName, scaledPrizes } from './formats.js'
 import { dateStr, news, resolveMail, sendMail } from './inbox.js'
 import { agePlayers, generatePools, nationName, TOUR_CARDS, UK_QSCHOOL_NATIONS } from './players.js'
@@ -67,6 +67,8 @@ export function newCareer(opts, rng = Math.random) {
     lastMonth: 0,
     moneyStamp: 0,
     prizeScale: 1,
+    records: { bestIn: {}, peakRank: null, most180s: null, lowestLeg: null, highestCheckout: null, bestAverage: null },
+    shirt: null,
   }
   sendMail(career, {
     from: 'pdpa',
@@ -252,6 +254,7 @@ function monthly(career, event) {
   career.lastMonth = event.month
   const date = dateStr(career, event)
   paySponsors(career, date)
+  if (prevMonth > 0) monthlySponsorship(career)
   if (prevMonth > 0) {
     const winners = career.honours.filter((h) => h.year === career.year && h.month === prevMonth && h.prize)
     if (winners.length) {
@@ -383,11 +386,13 @@ export function handleAction(career, mailId, action, payload, rng = Math.random)
     case 'acceptSponsor':
       acceptSponsor(career, payload)
       break
+    case 'negotiateSponsor':
+      negotiateSponsor(career, payload, rng)
+      break
     case 'declineSponsor':
       delete career.offers[payload]
       break
   }
-  void rng
 }
 
 // ---------- events ----------
@@ -577,6 +582,13 @@ function recordUserStats(career, result, opponent, stage) {
   if (st.dartsAtDouble) s.trackedCheckouts += st.checkouts
   for (const [d, n] of Object.entries(st.doubles ?? {})) s.doubles[d] = (s.doubles[d] ?? 0) + n
   if (st.legDarts?.includes(9)) s.nineDarters++
+  const rec = career.records
+  const where = { event: currentEvent(career).name, year: career.year, opponent }
+  if (st.s180 && st.s180 > (rec.most180s?.value ?? 0)) rec.most180s = { value: st.s180, ...where }
+  const best = st.legDarts?.length ? Math.min(...st.legDarts) : null
+  if (best && best < (rec.lowestLeg?.value ?? Infinity)) rec.lowestLeg = { value: best, ...where }
+  if (st.highCheckout && st.highCheckout > (rec.highestCheckout?.value ?? 0)) rec.highestCheckout = { value: st.highCheckout, ...where }
+  if (result.userAvg > (rec.bestAverage?.value ?? 0) && st.darts >= 15) rec.bestAverage = { value: Math.round(result.userAvg * 100) / 100, ...where }
   if (career.user.autoAdjust && st.darts >= 24) career.user.avg = Math.round((career.user.avg * 0.8 + result.userAvg * 0.2) * 10) / 10
 }
 
@@ -699,10 +711,13 @@ export function finishEvent(career, rng = Math.random) {
 
   const final = t.results[t.totalRounds - 1]?.find((r) => !r.bye)
   const runnerUp = final ? (final.winner === final.a ? final.b : final.a) : null
-  for (const id of teamOf(t.champion)) career.players[id]?.titles.push(`${y} ${event.name}`)
+  // Premier League nights and Q-School days aren't titles.
+  const isTitle = !['qsFirst', 'qsFinal', 'premier'].includes(event.key)
+  if (isTitle) for (const id of teamOf(t.champion)) career.players[id]?.titles.push(`${y} ${event.key === 'plPlayoffs' ? `Premier League` : event.name}`)
   if (!['qsFirst', 'qsFinal'].includes(event.key)) {
-    career.honours.push({ year: y, month: event.month, day: event.day, key: event.key, name: event.name, winner: t.champion, runnerUp, prize: comp.prizes[0] || comp.nightBonus || 0 })
-    if (career.honours.length > 600) career.honours.splice(0, career.honours.length - 600)
+    const fs = final?.score ? (final.winner === final.a ? final.score : [final.score[1], final.score[0]]) : null
+    career.honours.push({ year: y, month: event.month, day: event.day, key: event.key, name: event.name, winner: t.champion, runnerUp, score: fs, sets: !!final?.sets, prize: comp.prizes[0] || comp.nightBonus || 0 })
+    if (career.honours.length > 4000) career.honours.splice(0, career.honours.length - 4000)
   }
 
   // User outcome
@@ -718,7 +733,7 @@ export function finishEvent(career, rng = Math.random) {
     else if (stage !== null) resultText = `Lost in the ${roundName(t, t.eliminated[userSide])}`
     if (event.key === 'premier') resultText = stage === 0 ? 'Night winner (5 pts)' : stage === 1 ? 'Runner-up (3 pts)' : stage === 2 ? 'Semi-final (2 pts)' : 'Quarter-final (0 pts)'
     if (userPrize) sendMail(career, { from: 'finance', date: dateStr(career, event), subject: `Prize money statement: ${event.name}`, body: `${resultText}. ${money(userPrize)} has been paid into your account${comp.cats.includes('ranked') ? ' and counts towards the Order of Merit' : ' (non-ranking)'}.` })
-    if (stage === 0 && !['qsFirst', 'qsFinal'].includes(event.key)) {
+    if (stage === 0 && isTitle) {
       titleBonuses(career, event.name, dateStr(career, event))
       milestone(career, 'firstTitle', rng)
       if (event.tier >= 3) milestone(career, 'majorTitle', rng)
@@ -726,6 +741,11 @@ export function finishEvent(career, rng = Math.random) {
     if (typeof stage === 'number' && stage <= 3 && event.tier >= 3) milestone(career, 'majorQF', rng)
   } else if (a.qualifier?.lost) {
     resultText = `Lost in the ${a.qualifier.name}`
+  }
+  if (resultText && event.key !== 'qsFirst') {
+    const stage = inDraw ? stageFor(t, userSide) : null
+    const rank = !inDraw ? 99 : stage === 'group' ? 90 : typeof stage === 'number' ? stage : 95
+    recordBest(career, event, rank, resultText)
   }
   const champName = sideName(career, t.champion)
   const scoreText = final?.score ? ` ${final.score[final.winner === final.a ? 0 : 1]}–${final.score[final.winner === final.a ? 1 : 0]}${final.sets ? ' in sets' : ''}` : ''
@@ -744,8 +764,27 @@ export function finishEvent(career, rng = Math.random) {
   if (career.eventIndex >= career.calendar.length) endSeason(career, rng)
 }
 
+// Personal roll of honour: best finish in each competition. European Tour and World
+// Series events are separate tournaments, so they are tracked by name.
+export function competitionKey(event) {
+  return ['et', 'ws'].includes(event.key) ? event.name : event.key
+}
+
+function recordBest(career, event, rank, text) {
+  const k = competitionKey(event)
+  const cur = career.records.bestIn[k]
+  const name = ['et', 'ws'].includes(event.key) ? event.name : ({ qsFinal: 'Q-School Final Stage', premier: 'Premier League nights', plPlayoffs: 'Premier League' })[event.key] ?? COMPETITIONS[event.key].name
+  if (!cur || rank < cur.rank) career.records.bestIn[k] = { rank, text, year: career.year, name, times: rank === 0 ? 1 : 0 }
+  else if (rank === 0 && cur.rank === 0) cur.times++
+}
+
 function checkRankMilestones(career, rng) {
   const r = rankOf(ranking(career, 'oom'), 'user')
+  const user = career.players.user
+  const ranked = (user.earn[career.year]?.ranked ?? 0) + (user.earn[career.year - 1]?.ranked ?? 0) > 0
+  if (r && ranked && (!career.records.peakRank || r < career.records.peakRank.rank)) {
+    career.records.peakRank = { rank: r, date: dateStr(career) }
+  }
   if (!r || career.players.user.tour !== 'pro') return
   if (r <= 64) milestone(career, 'top64', rng)
   if (r <= 32) milestone(career, 'top32', rng)

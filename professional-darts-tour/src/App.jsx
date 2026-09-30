@@ -6,6 +6,7 @@ import NewCareer from './components/NewCareer.jsx'
 import Practice from './components/Practice.jsx'
 import { advance, autoPlayEvent, currentEvent, finishEvent, handleAction, newCareer, prepareLiveMatch, simulatePeriod, setEntry, simulateUntilUserMatch, simulateUserMatch, submitUserResult } from './career/career.js'
 import { loadCareer, saveCareer } from './persistence.js'
+import { defaultShirt } from './components/Shirt.jsx'
 
 function liveSetup(career) {
   const live = career.active.live
@@ -22,6 +23,8 @@ function liveSetup(career) {
     actualAvg: live.actualAvg,
     stage: live.stage,
     h2h: career.h2h[live.opponent],
+    shirt: career.shirt ?? defaultShirt(career),
+    sponsors: career.sponsors,
   }
 }
 

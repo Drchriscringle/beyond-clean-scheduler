@@ -14,9 +14,12 @@ import StatsView from './StatsView.jsx'
 import MoneyView from './MoneyView.jsx'
 import SettingsView from './SettingsView.jsx'
 import Practice from './Practice.jsx'
+import Honours from './Honours.jsx'
+import ShirtDesigner from './ShirtDesigner.jsx'
+import Shirt, { defaultShirt } from './Shirt.jsx'
 import SimulatePanel, { SimSummary } from './SimulatePanel.jsx'
 
-const TABS = ['Home', 'Inbox', 'Calendar', 'Rankings', 'News', 'Stats', 'Money', 'Practice', 'Settings']
+const TABS = ['Home', 'Inbox', 'Calendar', 'Rankings', 'News', 'Honours', 'Stats', 'Money', 'Shirt', 'Practice', 'Settings']
 
 export function eventStatus(career, e) {
   const state = career.entries[e.id]
@@ -56,7 +59,9 @@ export default function Hub(props) {
       {tab === 'Rankings' && <Rankings career={career} />}
       {tab === 'News' && <News career={career} />}
       {tab === 'Stats' && <StatsView career={career} />}
-      {tab === 'Money' && <MoneyView career={career} />}
+      {tab === 'Money' && <MoneyView career={career} onAction={props.onAction} />}
+      {tab === 'Honours' && <Honours career={career} />}
+      {tab === 'Shirt' && <ShirtDesigner career={career} update={props.update} />}
       {tab === 'Practice' && <Practice onPlay={props.onPractice} />}
       {tab === 'Settings' && <SettingsView career={career} update={props.update} onDelete={props.onDelete} />}
     </div>
@@ -87,6 +92,9 @@ function Home({ career, onContinue, onOpenEvent, onAction, onEntry, onSimulate, 
         </div>
       )}
       <div className="card status">
+        <div className="status-shirt" onClick={() => goTab('Shirt')} title="Design your shirt">
+          <Shirt shirt={career.shirt ?? defaultShirt(career)} sponsors={career.sponsors} nation={user.nation} side="back" size={64} />
+        </div>
         <div className="player-name">{flag(user.nation)} {user.name}{user.nickname ? <span className="nick"> “{user.nickname}”</span> : null}</div>
         <div className="pill">{statusText(career)}</div>
         <div className="status-grid">
