@@ -1,0 +1,671 @@
+import { useEffect, useRef, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { KeepAwake } from '@capacitor-community/keep-awake'
+import Dartboard from './Dartboard.jsx'
+import Shirt from './Shirt.jsx'
+import Face from './Face.jsx'
+import { playVisit, sigmaForAverage, throwDart } from '../engine/bot.js'
+import { checkoutRoute, minDartsToFinish } from '../engine/checkout.js'
+import { applyVisit, createMatch, interpretEnteredScore, pairsThrower, threeDartAverage } from '../engine/match.js'
+import { formatLabel } from '../career/formats.js'
+import { flag } from '../career/players.js'
+import { callGameShot, callIntro, callRequire, callScore, pickAnnouncer, say, speakParts, stopSpeech } from '../caller.js'
+import { applause, groan, roar, startAmbience, stopAmbience } from '../crowd.js'
+import { heard, listen, voiceAvailable } from '../voice.js'
+
+const QUICK = [26, 41, 45, 60, 81, 85, 100, 140, 180]
+const DART_DELAY = 650
+const DOUBLES = ['D20', 'D16', 'D8', 'D10', 'D18', 'D12', 'D4', 'D2', 'D1', 'D6', 'D14', 'D3', 'D5', 'D7', 'D9', 'D11', 'D13', 'D15', 'D17', 'D19', 'DB']
+
+// Keep the screen on while you're at the board.
+function useWakeLock() {
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      KeepAwake.keepAwake().catch(() => {})
+      return () => { KeepAwake.allowSleep().catch(() => {}) }
+    }
+    let lock = null
+    navigator.wakeLock?.request('screen').then((l) => { lock = l }).catch(() => {})
+    return () => { lock?.release().catch(() => {}) }
+  }, [])
+}
+
+// setup: { me: {name, nation}, opp: {name, nickname, nation}, partner?: {name, avg}, oppNames?: [a, b],
+//          format, expectedAvg, actualAvg, stage }
+export default function MatchScreen({ setup, initialMatch, settings, onPersist, onExit, onAnnouncer }) {
+  useWakeLock()
+  const { me, opp, format } = setup
+  const pairs = !!format.pairs
+  const two = !!setup.twoPlayer // a friend at the same board: both sides typed in
+  const callerOn = settings.caller
+  const [match, setMatch] = useState(initialMatch ?? null)
+  const [entry, setEntry] = useState('')
+  const [error, setError] = useState('')
+  const [pendingCheckout, setPendingCheckout] = useState(null)
+  const [atDouble, setAtDouble] = useState(0)
+  const [aiDarts, setAiDarts] = useState([])
+  const [, setAiThrowing] = useState(false)
+  const [banner, setBanner] = useState('')
+  const [celebration, setCelebration] = useState(null)
+  const [pop, setPop] = useState(null)
+  const [shake, setShake] = useState(false)
+  const [walkOn, setWalkOn] = useState(null)
+  const [bullUp, setBullUp] = useState(null) // { oppDart, oppRank, outcome, winner }
+  const [bullHelp, setBullHelp] = useState(false)
+  const [entryMode, setEntryMode] = useState('score') // 'score' | 'left'
+  const [listening, setListening] = useState(false)
+  const [heardText, setHeardText] = useState('')
+  const history = useRef([])
+  const entered = useRef([]) // the score typed for each history step, for editing after Undo
+  const crowdOn = settings.crowd !== false
+  // A different MC for each match (unless a favourite is chosen in Settings).
+  // A resumed match keeps its MC.
+  const [announcer] = useState(() => pickAnnouncer(setup.announcerId ?? settings.announcer ?? 'random'))
+  useEffect(() => {
+    if (announcer.id !== setup.announcerId) onAnnouncer?.(announcer.id)
+  }, [])
+
+  // Background crowd for the whole match.
+  useEffect(() => {
+    if (crowdOn) startAmbience(setup.ambience ?? 'hall')
+    return () => stopAmbience()
+  }, [])
+
+  // The score flies up the screen: bigger, brighter and wilder the higher it is.
+  function showPop(scored, who) {
+    if (scored < 100) return
+    const tier = scored === 180 ? 3 : scored >= 140 ? 2 : 1
+    const label = scored === 180 ? '180' : scored >= 140 ? `${scored}` : scored === 100 ? 'TON' : `${scored}`
+    const sub = who ?? (scored === 180 ? 'MAXIMUM' : scored >= 140 ? 'TON-PLUS' : 'TON')
+    setPop({ tier, label, sub, key: Date.now() })
+    setTimeout(() => setPop(null), tier === 3 ? 2400 : tier === 2 ? 1500 : 1100)
+    if (tier === 3) {
+      setShake(true)
+      setTimeout(() => setShake(false), 600)
+    }
+  }
+
+  function celebrate(text, big = false) {
+    setCelebration({ text, big })
+    setTimeout(() => setCelebration(null), big ? 4500 : 1800)
+  }
+
+  // Crowd and on-screen reaction to a visit. side 0 = you (or your team).
+  function react(prev, next, side, scored, checkout) {
+    const mine = side === 0 || two
+    if (checkout) {
+      const legDarts = next.stats[side].legDarts.at(-1)
+      if (mine && legDarts === 9) {
+        celebrate('NINE-DART FINISH!', true)
+        if (crowdOn) roar(1, 6)
+        say('Nine darts! Perfection!', callerOn, 'big')
+      } else if (scored === 170) {
+        if (mine) celebrate('THE BIG FISH! 170', true)
+        if (crowdOn) roar(0.95, 4)
+      } else if (scored >= 100) {
+        if (mine) celebrate(`TON-PLUS FINISH: ${scored}`)
+        if (crowdOn) roar(0.7, 3)
+      } else if (crowdOn) applause(next.winner !== null ? 3.5 : 2)
+      if (next.winner !== null && crowdOn) roar(0.85, 4.5)
+      return
+    }
+    showPop(scored, side === 0 ? null : opp.name)
+    if (scored === 180) {
+      if (crowdOn) roar(mine ? 1 : 0.8, 3.5)
+    } else if (scored >= 140) {
+      if (crowdOn) roar(mine ? 0.55 : 0.4, 2)
+    } else if (scored >= 100) {
+      if (crowdOn) roar(0.25, 1.4)
+    }
+  }
+  const oppSigma = sigmaForAverage(setup.actualAvg)
+  const partnerSigma = setup.partner ? sigmaForAverage(setup.partner.avg) : null
+
+  useEffect(() => {
+    if (match && match !== initialMatch) onPersist?.(match)
+  }, [match])
+
+  // Whose darts are these? Side 1 is always virtual; in pairs, side 0 alternates you / your partner.
+  const cur = two && match ? match.turn : 0 // whose score the keypad enters
+  const aiTurn = !two && match && match.winner === null && (match.turn === 1 || (pairs && pairsThrower(match, 0) === 1))
+  const throwerName = !match ? '' : match.turn === 1 ? (pairs ? setup.oppNames[pairsThrower(match, 1)] : opp.name) : pairs && pairsThrower(match, 0) === 1 ? setup.partner.name : me.name
+
+  useEffect(() => {
+    if (!aiTurn) return
+    const side = match.turn
+    const sigma = side === 1 ? oppSigma : partnerSigma
+    const visit = playVisit(match.scores[side], sigma, Math.random, { needIn: !!format.doubleIn && !match.opened[side] })
+    const timers = []
+    setAiThrowing(true)
+    setAiDarts([])
+    visit.darts.forEach((d, i) => timers.push(setTimeout(() => setAiDarts((prev) => [...prev, d]), DART_DELAY * (i + 1))))
+    timers.push(setTimeout(() => {
+      const next = applyVisit(match, { scored: visit.scored, bust: visit.bust, checkout: visit.checkout, dartsThrown: visit.darts.length, darts: visit.darts.map((d) => d.label), thrower: pairs ? pairsThrower(match, side) : 0 })
+      if (visit.bust) { say('Bust.', callerOn, 'flat'); if (crowdOn) groan() }
+      else if (visit.checkout) announceLegEnd(match, next, side)
+      else callScore(visit.scored, callerOn)
+      react(match, next, side, visit.scored, visit.checkout)
+      const mine = next.winner === null && next.turn === 0 && !(pairs && pairsThrower(next, 0) === 1)
+      if (mine && !visit.checkout && next.scores[0] <= 170 && minDartsToFinish(next.scores[0])) {
+        setTimeout(() => callRequire(me.name.split(' ')[0], next.scores[0], callerOn), 1500)
+      }
+      setAiThrowing(false)
+      setMatch(next)
+    }, DART_DELAY * (visit.darts.length + 1) + 300))
+    return () => timers.forEach(clearTimeout)
+  }, [match])
+
+  function announceLegEnd(prev, next, side) {
+    const name = side === 0 ? (pairs ? 'your team' : me.name) : opp.name
+    const checkout = next.lastVisit[side]?.scored ?? 0
+    if (next.winner !== null) {
+      setBanner(`Game shot and the match — ${name}!`)
+      callGameShot('match', name, callerOn, checkout)
+    } else {
+      const setWon = !!next.format.sets && next.sets[0] + next.sets[1] > prev.sets[0] + prev.sets[1]
+      setBanner(`Game shot and the ${setWon ? 'set' : 'leg'} — ${name}`)
+      callGameShot(setWon ? 'set' : 'leg', name, callerOn, checkout)
+      setTimeout(() => setBanner(''), 3000)
+    }
+  }
+
+  // ---- bull-up: the virtual opponent throws at the bull, you throw at your board ----
+  const bullRank = (d) => (d.label === 'DB' ? 2 : d.label === 'SB' ? 1 : 0)
+  function throwForBull() {
+    // First time on this screen: explain how the bull-up works.
+    try {
+      if (!localStorage.getItem('pdt-seen-bullup')) {
+        setBullHelp(true)
+        localStorage.setItem('pdt-seen-bullup', '1')
+      }
+    } catch { /* storage blocked: skip the explainer */ }
+    const d = throwDart('DB', oppSigma * 1.15)
+    const mm = Math.round(Math.hypot(d.x, d.y))
+    const rank = bullRank(d)
+    setBullUp({ oppDart: d, oppMm: mm, oppRank: rank, outcome: null, mine: null, view: mm > 50 ? 200 : 70 })
+    speakParts([{ text: `${opp.name.split(' ')[0]}, for the bull.`, pitch: 0.95, rate: 0.95 }, { text: rank === 2 ? 'Bullseye!' : rank === 1 ? 'Twenty-five.' : `${mm} millimetres.`, pitch: rank === 2 ? 1.25 : 1, rate: 0.85 }], callerOn)
+  }
+  // You tap the board where your bull-up dart landed (tap again to move it).
+  function placeMyBull(x, y) {
+    if (!bullUp || (bullUp.outcome && bullUp.outcome !== 'placing')) return
+    const mm = Math.round(Math.hypot(x, y))
+    setBullUp({ ...bullUp, mine: { x, y, mm, rank: mm <= 6.35 ? 2 : mm <= 15.9 ? 1 : 0 }, outcome: 'placing' })
+  }
+
+  // Closest to the centre throws first; both in the bullseye means throw again.
+  function confirmBull() {
+    const me1 = bullUp.mine
+    if (me1.rank === 2 && bullUp.oppRank === 2) {
+      setBullUp({ ...bullUp, outcome: 'again' })
+      say('Both in the bull. Throw again!', callerOn, 'excited')
+      return
+    }
+    const winner = me1.mm < bullUp.oppMm || (me1.mm === bullUp.oppMm && me1.rank > bullUp.oppRank) ? 0 : 1
+    setBullUp({ ...bullUp, outcome: winner === 0 ? 'you' : 'them', winner })
+    say(winner === 0 ? `${me.name.split(' ')[0]} wins the bull.` : `${opp.name} wins the bull.`, callerOn)
+  }
+
+  function requestStart(startingPlayer) {
+    setBullUp(null)
+    if (settings.walkOns !== false && setup.walkOnShow) {
+      setWalkOn({ startingPlayer })
+      if (crowdOn) roar(0.55, 6)
+      const song = setup.walkOnSong ? `, walking on to ${setup.walkOnSong},` : ''
+      speakParts([
+        { text: `Ladies and gentlemen, welcome to the ${setup.eventName ?? setup.stage}.`, pitch: 0.85, rate: 0.92 },
+        { text: `It's the ${setup.stage.replace(/,.*/, '')}. Walking on first${song}`, pitch: 0.9, rate: 0.9 },
+        ...(me.nickname ? [{ text: `it's... ${me.nickname}...`, pitch: 1.05, rate: 0.72 }] : []),
+        { text: `${me.name}!`, pitch: 1.2, rate: 0.62 },
+        { text: `And the opponent${opp.nickname ? `, ${opp.nickname}` : ''}...`, pitch: 0.95, rate: 0.85 },
+        { text: `${opp.name}!`, pitch: 1.1, rate: 0.7 },
+      ], callerOn)
+      return
+    }
+    startMatch(startingPlayer)
+  }
+
+  function startMatch(startingPlayer) {
+    setWalkOn(null)
+    if (!walkOn) callIntro(callerOn)
+    speakParts([
+      { text: `${startingPlayer === 0 ? me.name : opp.name} to throw first.`, pitch: 0.95, rate: 0.95 },
+      { text: 'Game on!', pitch: 1.2, rate: 0.7 },
+    ], callerOn)
+    setMatch(createMatch({ format, startingPlayer }))
+  }
+
+  const myTurnNow = match && !aiTurn && match.winner === null && (two || match.turn === 0) && !pendingCheckout
+
+  const listener = useRef(null)
+  const voiceFailures = useRef(0)
+  const [handsFree, setHandsFree] = useState(!!settings.voice)
+
+  function stopListening() {
+    listener.current?.cancel()
+    listener.current = null
+    setListening(false)
+  }
+
+  // Tap 🎤 to listen; tap again (or type anything) to stop.
+  async function voice() {
+    if (listening) {
+      stopListening()
+      return
+    }
+    const l = listen()
+    listener.current = l
+    setListening(true)
+    setHeardText('')
+    try {
+      const h = heard(await l.promise)
+      if (listener.current !== l) return
+      if (!h) {
+        flash("Didn't catch a score. Tap 🎤 to try again, or use the keypad.")
+        return
+      }
+      voiceFailures.current = 0
+      setHeardText(`Heard: “${h.text}”`)
+      if (h.bust) bust()
+      else if (h.checkout) submit(match.scores[cur])
+      else submit(h.score)
+    } catch (e) {
+      if (e.message === 'cancelled') return
+      flash(e.message)
+      // Hands-free gives up after two misses in a row so it never traps you.
+      if (++voiceFailures.current >= 2 && handsFree) {
+        setHandsFree(false)
+        setTimeout(() => flash('Hands-free voice paused for this match. Tap 🎤 to speak, or use the keypad.'), 2600)
+      }
+    } finally {
+      if (listener.current === l) {
+        listener.current = null
+        setListening(false)
+      }
+    }
+  }
+
+  // Any typing or tapping a score stops the microphone.
+  function keyTap(fn) {
+    return (...args) => {
+      if (listening) stopListening()
+      return fn(...args)
+    }
+  }
+
+  // Hands-free: start listening shortly after your turn begins (once the caller has spoken).
+  useEffect(() => {
+    if (!handsFree || !myTurnNow) return
+    const t = setTimeout(() => { if (!listener.current) voice() }, 1800)
+    return () => clearTimeout(t)
+  }, [handsFree, myTurnNow, match?.visits.length, match?.legNumber])
+
+  // Keep the whole match on one screen: no scrolling between visits.
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
+  }, [match?.turn, aiTurn])
+
+  // Never leave the microphone open when the screen goes away.
+  useEffect(() => () => listener.current?.cancel(), [])
+
+  function typed(value) {
+    if (entryMode === 'left') {
+      const left = Number(value || 0)
+      if (left >= match.scores[cur]) return flash('That leaves more than you had')
+      return submit(match.scores[cur] - left)
+    }
+    submit(Number(value || 0))
+  }
+
+  const canTrack = settings.trackDoubles && match && match.scores[cur] <= 170 && !!minDartsToFinish(match.scores[cur])
+
+  function submit(score, dartsUsed, double) {
+    if (!match || aiTurn || match.winner !== null) return
+    const remaining = match.scores[cur]
+    if (score === remaining && dartsUsed === undefined) {
+      const res = interpretEnteredScore(remaining, score, 3)
+      if (res.error) return flash(res.error)
+      const route = checkoutRoute(remaining)
+      return setPendingCheckout({ score, min: minDartsToFinish(remaining), darts: null, double: route ? route[route.length - 1] : 'D20' })
+    }
+    const res = interpretEnteredScore(remaining, score, dartsUsed ?? 3)
+    if (res.error) return flash(res.error)
+    history.current.push(match)
+    entered.current.push(res.scored || (res.bust ? '' : 0))
+    const tracked = canTrack ? (res.checkout ? Math.max(1, atDouble) : atDouble) : 0
+    const next = applyVisit(match, { ...res, double, dartsAtDouble: tracked })
+    if (res.bust) { say('Bust.', callerOn, 'flat'); if (crowdOn) groan() }
+    else if (res.checkout) announceLegEnd(match, next, cur)
+    else callScore(res.scored, callerOn)
+    react(match, next, cur, res.scored, res.checkout)
+    if (two && next.winner === null && !res.checkout && next.scores[next.turn] <= 170 && minDartsToFinish(next.scores[next.turn])) {
+      setTimeout(() => callRequire((next.turn === 0 ? me : opp).name.split(' ')[0], next.scores[next.turn], callerOn), 1500)
+    }
+    setPendingCheckout(null)
+    setEntry('')
+    setError('')
+    setAtDouble(0)
+    setMatch(next)
+  }
+
+  function bust() {
+    if (!match || aiTurn || match.winner !== null) return
+    history.current.push(match)
+    entered.current.push('')
+    say('Bust.', callerOn, 'flat')
+    setEntry('')
+    setMatch(applyVisit(match, { scored: 0, bust: true, checkout: false, dartsThrown: 3, dartsAtDouble: canTrack ? atDouble : 0 }))
+    setAtDouble(0)
+  }
+
+  function flash(msg) {
+    setError(msg)
+    setTimeout(() => setError(''), 2500)
+  }
+
+  // Takes back your last score (and anything the opponent has thrown since), even while
+  // they're mid-throw, and puts the score back in the box so you can fix it.
+  function undo() {
+    if (!history.current.length) return
+    stopSpeech()
+    const prev = history.current.pop()
+    const was = entered.current.pop()
+    setAiThrowing(false)
+    setAiDarts([])
+    setBanner('')
+    setPendingCheckout(null)
+    setEntryMode('score')
+    setEntry(was ? String(was) : '')
+    setMatch(prev)
+  }
+
+  function result(conceded = false) {
+    const s = match?.stats
+    const legs = s ? [s[0].checkouts, s[1].checkouts] : [0, 0]
+    return {
+      userWon: !conceded && match.winner === 0,
+      score: conceded ? (format.sets ? [match?.sets[0] ?? 0, format.sets] : [match?.legs[0] ?? 0, format.legs]) : format.sets ? match.sets : match.legs,
+      legs,
+      userAvg: s ? threeDartAverage(s[0]) : 0,
+      oppAvg: s ? threeDartAverage(s[1]) : 0,
+      userStats: s?.[0] ?? { darts: 0, points: 0, s180: 0, s140: 0, s100: 0, checkouts: 0, highCheckout: 0, legDarts: [], dartsAtDouble: 0, doubles: {} },
+      simulated: !match,
+    }
+  }
+
+  function concede() {
+    if (!window.confirm('Concede this match?')) return
+    onExit(result(true))
+  }
+
+  if (!match && walkOn) {
+    return (
+      <div className="screen walk-on" onClick={() => startMatch(walkOn.startingPlayer)}>
+        <div className="spot spot-a" /><div className="spot spot-b" />
+        <div className="walk-stage">{setup.eventName ? `${setup.eventName} · ` : ''}{setup.stage}</div>
+        <div className="walk-face"><Face face={setup.face} shirt={setup.shirt} size={170} ring /></div>
+        {setup.shirt && <Shirt shirt={setup.shirt} sponsors={setup.sponsors} nation={me.nation} side="back" size={90} />}
+        <div className="walk-name">{me.name}</div>
+        {me.nickname && <div className="walk-nick">“{me.nickname}”</div>}
+        {setup.walkOnSong && <div className="walk-song">♪ {setup.walkOnSong} ♪</div>}
+        <div className="walk-vs">v {opp.name}{opp.nickname ? ` “${opp.nickname}”` : ''}</div>
+        <div className="walk-mc">🎙 MC: {announcer.name}</div>
+        <button className="btn primary big" onClick={(e) => { e.stopPropagation(); startMatch(walkOn.startingPlayer) }}>Game on!</button>
+      </div>
+    )
+  }
+
+  if (!match) {
+    return (
+      <div className="screen match-pre">
+        <div className="stage-tag">{setup.eventName ? `${setup.eventName} · ` : ''}{setup.stage}</div>
+        <div className="versus">
+          <div className="vs-player">
+            <Face face={setup.face} shirt={setup.shirt} size={84} ring />
+            <div className="vs-name">{flag(me.nation)} {me.name}</div>
+            {setup.partner && <div className="vs-nick">with {setup.partner.name}</div>}
+            {me.nickname && <div className="vs-nick">“{me.nickname}”</div>}
+          </div>
+          <div className="vs-mid">VS</div>
+          <div className="vs-player">
+            {setup.oppFace && <Face face={setup.oppFace} shirt={{ primary: '#2b2b30', secondary: '#111' }} size={84} ring />}
+            <div className="vs-name">{flag(opp.nation)} {opp.name}</div>
+            {opp.nickname && <div className="vs-nick">“{opp.nickname}”</div>}
+            {!two && <div className="vs-meta">Expected average ≈ {setup.expectedAvg}</div>}
+            {setup.h2h && <div className="vs-meta">Head to head: {setup.h2h.w}–{setup.h2h.l}</div>}
+          </div>
+        </div>
+        <p className="format">{formatLabel(format)} · 501 {format.doubleIn ? 'double in, ' : ''}double out</p>
+        {format.doubleIn && <p className="hint">Double in: your score only starts counting from the first double you hit each leg.</p>}
+        {pairs && <p className="hint">Pairs: you and {setup.partner.name} take alternate visits for your team.</p>}
+        <p className="hint">🎙 Your MC tonight: <b>{announcer.name}</b> · {announcer.blurb.toLowerCase()}</p>
+        {two ? (
+          <>
+            <p className="hint">Two players, one board. Bull up for real, then pick who throws first. The keypad shows whose turn it is.</p>
+            <div className="btn-row">
+              <button className="btn primary" onClick={() => requestStart(0)}>{me.name.split(' ')[0]} first</button>
+              <button className="btn primary" onClick={() => requestStart(1)}>{opp.name.split(' ')[0]} first</button>
+              <button className="btn ghost" onClick={() => requestStart(Math.random() < 0.5 ? 0 : 1)}>Random</button>
+            </div>
+          </>
+        ) : !bullUp ? (
+          <>
+            <button className="btn primary big" onClick={throwForBull}>🎯 Bull up to see who starts</button>
+            <p className="hint small-text">Or skip the bull-up:</p>
+            <div className="btn-row">
+              <button className="btn" onClick={() => requestStart(0)}>{pairs ? 'We throw first' : 'I throw first'}</button>
+              <button className="btn" onClick={() => requestStart(1)}>{opp.name.split(' ')[0]} throw{pairs ? '' : 's'} first</button>
+              <button className="btn ghost" onClick={() => requestStart(Math.random() < 0.5 ? 0 : 1)}>Random</button>
+            </div>
+          </>
+        ) : (
+          <div className="card bull-up">
+            <div className="bull-head">
+              <div className="card-label">Bull-up</div>
+              <button className="help-btn" aria-label="How the bull-up works" onClick={() => setBullHelp(true)}>?</button>
+            </div>
+            {bullHelp && (
+              <div className="tutorial-backdrop" onClick={() => setBullHelp(false)}>
+                <div className="card tutorial bull-help" onClick={(e) => e.stopPropagation()}>
+                  <h2>🎯 How the bull-up works</h2>
+                  <ol>
+                    <li><span className="dot red" /> The <b>red dot</b> is where {opp.name}'s dart landed.</li>
+                    <li>Throw <b>one dart at the bull</b> on your real board.</li>
+                    <li><b>Tap the screen</b> where your dart landed. A <span className="dot white" /> <b>white dot</b> appears. Tap again to move it.</li>
+                    <li>The board starts <b>zoomed in on the bull</b>. If your dart is further out, tap <b>Show the whole board</b>.</li>
+                    <li>Tap <b>Confirm my dart</b>. Closest to the centre throws first. Both in the bullseye? Throw again!</li>
+                  </ol>
+                  <button className="btn primary big" onClick={() => setBullHelp(false)}>Got it</button>
+                </div>
+              </div>
+            )}
+            <div className="bull-board">
+              <Dartboard
+                darts={[{ ...bullUp.oppDart, color: '#ff3b30', tag: '' }, ...(bullUp.mine ? [{ ...bullUp.mine, color: '#ffffff', tag: '' }] : [])]}
+                size={Math.min(330, typeof window !== 'undefined' ? window.innerWidth - 64 : 300)}
+                view={bullUp.view}
+                onTap={!bullUp.outcome || bullUp.outcome === 'placing' ? placeMyBull : null}
+              />
+            </div>
+            <div className="bull-legend">
+              <span><i style={{ background: '#ff3b30' }} /> {opp.name}: {bullUp.oppRank === 2 ? 'BULLSEYE' : bullUp.oppRank === 1 ? `25 (${bullUp.oppMm}mm)` : `${bullUp.oppMm}mm`}</span>
+              <span><i style={{ background: '#fff' }} /> You: {bullUp.mine ? (bullUp.mine.rank === 2 ? 'BULLSEYE' : bullUp.mine.rank === 1 ? `25 (${bullUp.mine.mm}mm)` : `${bullUp.mine.mm}mm`) : '—'}</span>
+            </div>
+            <button className="btn ghost small" onClick={() => setBullUp({ ...bullUp, view: bullUp.view === 200 ? 70 : 200 })}>{bullUp.view === 200 ? '🔍 Zoom in on the bull' : 'Show the whole board'}</button>
+            {bullUp.outcome === 'you' || bullUp.outcome === 'them' ? (
+              <>
+                <p className="bull-win">{bullUp.outcome === 'you' ? 'You win the bull! You throw first.' : `${opp.name} wins the bull and throws first.`}</p>
+                <button className="btn primary big" onClick={() => requestStart(bullUp.winner)}>Game on!</button>
+              </>
+            ) : bullUp.outcome === 'again' ? (
+              <>
+                <p className="hint">Both in the bullseye: throw again!</p>
+                <button className="btn primary" onClick={throwForBull}>Throw again</button>
+              </>
+            ) : (
+              <>
+                <p className="hint">{bullUp.mine ? 'Tap again to move it, or confirm.' : 'Throw one dart at the bull on your board, then tap where it landed.'}</p>
+                {bullUp.mine && <button className="btn primary big" onClick={confirmBull}>Confirm my dart</button>}
+              </>
+            )}
+          </div>
+        )}
+        <button className="btn ghost small" onClick={() => onExit(null)}>Back</button>
+      </div>
+    )
+  }
+
+  const myTurn = !aiTurn && match.winner === null && (two || match.turn === 0)
+  const route = myTurn && match.scores[cur] <= 170 && (!format.doubleIn || match.opened[cur]) ? checkoutRoute(match.scores[cur]) : null
+  const lastOther = two ? [...match.visits].reverse().find((v) => v.player !== match.turn) : null
+  const curName = (cur === 0 ? me : opp).name
+
+  const lastAi = [...match.visits].reverse().find((v) => v.player === 1 || (pairs && v.player === 0 && v.thrower === 1))
+  const canUndo = history.current.length > 0
+
+  return (
+    <div className={`screen match compact ${shake ? 'shake' : ''}`}>
+      {pop && <div key={pop.key} className={`score-pop t${pop.tier}`}>{pop.label}<span className="sub">{pop.sub}</span></div>}
+      {pop?.tier === 3 && <div key={`f${pop.key}`} className="flash-180" />}
+      <div className="match-head">
+        <span className="mh-stage">{setup.stage} · {formatLabel(match.format)}</span>
+        <span className="mh-actions">
+          <button className="icon-btn" onClick={() => onExit('pause')} aria-label="Pause">❚❚</button>
+          <button className="icon-btn danger" onClick={concede} aria-label="Concede">🏳</button>
+        </span>
+      </div>
+      <div className="scoreboard">
+        {[0, 1].map((p) => {
+          const st = match.stats[p]
+          const name = p === 0 ? (pairs ? `${me.name.split(' ')[0]} & ${setup.partner.name.split(' ')[0]}` : me.name) : opp.name
+          return (
+            <div key={p} className={`sb-side ${match.turn === p && match.winner === null ? 'active' : ''}`}>
+              <div className="sb-name">
+                {!pairs && <Face face={p === 0 ? setup.face : setup.oppFace} shirt={p === 0 ? setup.shirt : { primary: '#2b2b30', secondary: '#111' }} size={22} />}
+                {match.legStarter === p && <span className="throw-dot" title="Started this leg">●</span>} {name}
+              </div>
+              <div className="sb-rem">{match.scores[p]}</div>
+              <div className="sb-legs">
+                {match.format.sets ? <span>Sets {match.sets[p]} · </span> : null}
+                Legs {match.legs[p]}
+                {format.doubleIn && !match.opened[p] ? <span className="muted"> · not in</span> : null}
+                <span className="muted"> · Avg {threeDartAverage(st).toFixed(1)}</span>
+              </div>
+              {p === cur && route && <div className="sb-route">{route.join(' · ')}</div>}
+            </div>
+          )
+        })}
+      </div>
+
+      {banner && <div className="banner">{banner}</div>}
+      {celebration && <div className={`celebration ${celebration.big ? 'big' : ''}`}>{celebration.text}</div>}
+
+      {match.winner !== null ? (
+        <MatchSummary match={match} names={[pairs ? 'Your team' : me.name, opp.name]} onContinue={() => onExit(result())} />
+      ) : aiTurn ? (
+        // Their throw: the board takes the space the keypad uses on your turn.
+        <div className="ai-panel">
+          <div className="ai-panel-head">
+            <span>{throwerName} is at the oche</span>
+            <span className="bot-darts">{aiDarts.map((d) => d.label).join(' · ') || '…'}</span>
+          </div>
+          <Dartboard darts={aiDarts} size={Math.min(300, typeof window !== 'undefined' ? window.innerWidth - 80 : 280)} />
+          {canUndo && (
+            <button className="btn undo-big" onClick={undo}>↩ Undo my last score</button>
+          )}
+        </div>
+      ) : pendingCheckout ? (
+        <div className="input-area">
+          <p className="hint">Checked out {pendingCheckout.score}! Which double, and how many darts?</p>
+          <div className="doubles-grid">
+            {DOUBLES.map((d) => (
+              <button key={d} className={`chip small ${pendingCheckout.double === d ? 'on' : ''}`} onClick={() => setPendingCheckout({ ...pendingCheckout, double: d })}>{d === 'DB' ? 'Bull' : d}</button>
+            ))}
+          </div>
+          <div className="btn-row">
+            {[1, 2, 3].filter((d) => d >= pendingCheckout.min).map((d) => (
+              <button key={d} className="btn primary" onClick={() => submit(pendingCheckout.score, d, pendingCheckout.double)}>{d} dart{d > 1 ? 's' : ''}</button>
+            ))}
+            <button className="btn ghost" onClick={() => setPendingCheckout(null)}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <div className="input-area">
+          <div className="last-visit">
+            {two ? <><b className="gold">{curName === 'You' ? 'Your' : curName}</b> {curName === 'You' ? 'throw' : 'to throw'}{lastOther ? <span className="muted"> · {(lastOther.player === 0 ? me : opp).name.split(' ')[0]} {lastOther.bust ? 'bust' : `scored ${lastOther.scored}`}</span> : null}</> : lastAi?.darts ? <>{lastAi.player === 1 ? opp.name.split(' ')[0] : setup.partner?.name.split(' ')[0]}: {lastAi.darts.join(' · ')} = <b>{lastAi.bust ? 'BUST' : lastAi.scored}</b></> : <span className="muted">Your throw</span>}
+          </div>
+          <div className="entry-row">
+            <div className="entry-display">
+              <span className={entry ? '' : 'muted'}>{entry || (entryMode === 'left' ? `Left from ${match.scores[cur]}` : two && curName !== 'You' ? `${curName.split(' ')[0]}'s score` : 'Your score')}</span>
+              {error ? <span className="error">{error}</span> : heardText ? <span className="muted small-text">{heardText}</span> : null}
+            </div>
+            {voiceAvailable() && <button className={`btn mic ${listening ? 'live' : ''}`} onClick={voice} aria-label="Say score">{listening ? '🎙 Stop' : '🎤'}</button>}
+          </div>
+          <div className="entry-tools">
+            <div className="seg">
+              <button className={`chip small ${entryMode === 'score' ? 'on' : ''}`} onClick={() => setEntryMode('score')}>Score</button>
+              <button className={`chip small ${entryMode === 'left' ? 'on' : ''}`} onClick={() => setEntryMode('left')}>What's left</button>
+            </div>
+            {canTrack && (
+              <div className="at-double">
+                <span>At double:</span>
+                {[0, 1, 2, 3].map((n) => (
+                  <button key={n} className={`chip small ${atDouble === n ? 'on' : ''}`} onClick={() => setAtDouble(n)}>{n}</button>
+                ))}
+              </div>
+            )}
+          </div>
+          {entryMode === 'score' && (
+            <div className="quick-row">
+              {QUICK.map((q) => (
+                <button key={q} className="chip" onClick={keyTap(() => submit(q))}>{q}</button>
+              ))}
+            </div>
+          )}
+          <div className={`keypad ${settings.bigKeys ? 'big' : ''} ${settings.leftHanded ? 'lefty' : ''}`}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <button key={n} className="key" onClick={keyTap(() => setEntry((e) => (e + n).slice(0, 3)))}>{n}</button>
+            ))}
+            {(() => {
+              const del = <button key="del" className="key alt" onClick={keyTap(() => setEntry((e) => e.slice(0, -1)))} aria-label="Delete">⌫</button>
+              const zero = <button key="zero" className="key" onClick={keyTap(() => setEntry((e) => (e + '0').slice(0, 3)))}>0</button>
+              const ok = <button key="ok" className="key ok" onClick={keyTap(() => typed(entry))}>{entry ? 'Enter' : entryMode === 'left' ? 'Checkout' : 'No score'}</button>
+              return settings.leftHanded ? [ok, zero, del] : [del, zero, ok]
+            })()}
+          </div>
+          <div className={`action-row ${settings.leftHanded ? 'lefty' : ''}`}>
+            <button className="btn small" onClick={undo} disabled={!canUndo}>↩ Undo</button>
+            <button className="btn small" onClick={keyTap(bust)}>Bust</button>
+            <button className="btn small" onClick={keyTap(() => submit(match.scores[cur]))} disabled={!minDartsToFinish(match.scores[cur])}>Checkout</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MatchSummary({ match, names, onContinue }) {
+  const s = match.stats
+  const score = match.format.sets ? match.sets : match.legs
+  const best = (st) => (st.legDarts.length ? Math.min(...st.legDarts) : '–')
+  const rows = [
+    ['3-dart average', (i) => threeDartAverage(s[i]).toFixed(2)],
+    ['180s', (i) => s[i].s180],
+    ['140+', (i) => s[i].s140],
+    ['100+', (i) => s[i].s100],
+    ['Highest checkout', (i) => s[i].highCheckout || '–'],
+    ['Best leg (darts)', (i) => best(s[i])],
+    ['Legs won', (i) => s[i].checkouts],
+  ]
+  if (s[0].dartsAtDouble) rows.push(['Checkout %', (i) => (i === 0 ? `${Math.round((s[0].checkouts / s[0].dartsAtDouble) * 100)}%` : '–')])
+  return (
+    <div className="summary">
+      <h2>{match.winner === 0 ? 'You win!' : `${names[1]} wins`}</h2>
+      <div className="final-score">{score[0]} – {score[1]}</div>
+      <table className="stat-table">
+        <thead><tr><th>{names[0]}</th><th></th><th>{names[1]}</th></tr></thead>
+        <tbody>{rows.map(([label, f]) => <tr key={label}><td>{f(0)}</td><th>{label}</th><td>{f(1)}</td></tr>)}</tbody>
+      </table>
+      <button className="btn primary" onClick={onContinue}>Continue</button>
+    </div>
+  )
+}
