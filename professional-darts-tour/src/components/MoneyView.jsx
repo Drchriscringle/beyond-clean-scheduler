@@ -1,5 +1,6 @@
 import { marketValue, SLOTS } from '../career/finance.js'
 import { money } from './common.jsx'
+import { profileFactor, profileLabel, profileOf } from '../career/media.js'
 
 export default function MoneyView({ career, onAction }) {
   const f = career.finance
@@ -19,6 +20,7 @@ export default function MoneyView({ career, onAction }) {
       <div className="card">
         <div className="card-label">Your market value</div>
         <p>A main shirt deal is worth about <b>{money(marketValue(career))}</b> a month to you right now ({Object.entries(SLOTS).filter(([k]) => k !== 'shirt').map(([k, sl]) => `${sl.label.toLowerCase()} ~${money(marketValue(career) * SLOTS[k].factor)}`).join(', ')}). It rises as you climb the Order of Merit and win titles, and sponsors come to you with better offers.</p>
+        <p className="small-text">Media profile <b>{profileOf(career)}/100</b> · {profileLabel(profileOf(career))} (offers ×{profileFactor(career).toFixed(2)}). Press conferences and beating your rival raise it.</p>
       </div>
       {Object.values(career.offers).length > 0 && (
         <div className="card">

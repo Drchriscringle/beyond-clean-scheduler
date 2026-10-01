@@ -1,5 +1,6 @@
 import { threeDartAverage } from '../engine/match.js'
 import { money, playerLabel } from './common.jsx'
+import ProgressCharts from './ProgressCharts.jsx'
 
 export default function StatsView({ career }) {
   const s = career.stats
@@ -27,6 +28,7 @@ export default function StatsView({ career }) {
   return (
     <div className="tab-body">
       <div className="card"><div className="stats-grid">{items.map(([k, v]) => <div key={k}><b>{v}</b><span>{k}</span></div>)}</div></div>
+      <ProgressCharts career={career} />
       <div className="card">
         <div className="card-label">Favourite doubles (checkouts)</div>
         {doubles.length ? doubles.map(([d, n]) => (
@@ -35,7 +37,10 @@ export default function StatsView({ career }) {
       </div>
       <div className="card">
         <div className="card-label">Rivals & head to head</div>
-        {rivals.length > 0 && <p className="small-text">Rivalries: {rivals.map(([id]) => career.players[id]?.name).join(', ')}</p>}
+        {career.rival && career.players[career.rival.id] && (
+          <p className="rival-tag">🔥 Your rival: {playerLabel(career, career.rival.id)} · {career.h2h[career.rival.id]?.w ?? 0}–{career.h2h[career.rival.id]?.l ?? 0} (since {career.rival.since})</p>
+        )}
+        {rivals.length > 0 && <p className="small-text">Close head-to-heads: {rivals.map(([id]) => career.players[id]?.name).join(', ')}</p>}
         {h2h.length ? (
           <table className="rank-table"><tbody>
             {h2h.map(([id, r]) => <tr key={id}><td>{playerLabel(career, id)}</td><td className="num">{r.w}–{r.l}</td><td className="muted small-text">{r.meetings[0]?.event}</td></tr>)}

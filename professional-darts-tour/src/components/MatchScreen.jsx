@@ -36,6 +36,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   useWakeLock()
   const { me, opp, format } = setup
   const pairs = !!format.pairs
+  const two = !!setup.twoPlayer // a friend at the same board: both sides typed in
   const callerOn = settings.caller
   const [match, setMatch] = useState(initialMatch ?? null)
   const [entry, setEntry] = useState('')
@@ -91,7 +92,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
 
   // Crowd and on-screen reaction to a visit. side 0 = you (or your team).
   function react(prev, next, side, scored, checkout) {
-    const mine = side === 0
+    const mine = side === 0 || two
     if (checkout) {
       const legDarts = next.stats[side].legDarts.at(-1)
       if (mine && legDarts === 9) {
@@ -108,7 +109,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       if (next.winner !== null && crowdOn) roar(0.85, 4.5)
       return
     }
-    showPop(scored, mine ? null : opp.name)
+    showPop(scored, side === 0 ? null : opp.name)
     if (scored === 180) {
       if (crowdOn) roar(mine ? 1 : 0.8, 3.5)
     } else if (scored >= 140) {
@@ -125,7 +126,8 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   }, [match])
 
   // Whose darts are these? Side 1 is always virtual; in pairs, side 0 alternates you / your partner.
-  const aiTurn = match && match.winner === null && (match.turn === 1 || (pairs && pairsThrower(match, 0) === 1))
+  const cur = two && match ? match.turn : 0 // whose score the keypad enters
+  const aiTurn = !two && match && match.winner === null && (match.turn === 1 || (pairs && pairsThrower(match, 0) === 1))
   const throwerName = !match ? '' : match.turn === 1 ? (pairs ? setup.oppNames[pairsThrower(match, 1)] : opp.name) : pairs && pairsThrower(match, 0) === 1 ? setup.partner.name : me.name
 
   useEffect(() => {
@@ -232,7 +234,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     setMatch(createMatch({ format, startingPlayer }))
   }
 
-  const myTurnNow = match && !aiTurn && match.winner === null && match.turn === 0 && !pendingCheckout
+  const myTurnNow = match && !aiTurn && match.winner === null && (two || match.turn === 0) && !pendingCheckout
 
   const listener = useRef(null)
   const voiceFailures = useRef(0)
@@ -264,7 +266,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       voiceFailures.current = 0
       setHeardText(`Heard: “${h.text}”`)
       if (h.bust) bust()
-      else if (h.checkout) submit(match.scores[0])
+      else if (h.checkout) submit(match.scores[cur])
       else submit(h.score)
     } catch (e) {
       if (e.message === 'cancelled') return
@@ -308,17 +310,17 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   function typed(value) {
     if (entryMode === 'left') {
       const left = Number(value || 0)
-      if (left >= match.scores[0]) return flash('That leaves more than you had')
-      return submit(match.scores[0] - left)
+      if (left >= match.scores[cur]) return flash('That leaves more than you had')
+      return submit(match.scores[cur] - left)
     }
     submit(Number(value || 0))
   }
 
-  const canTrack = settings.trackDoubles && match && match.scores[0] <= 170 && !!minDartsToFinish(match.scores[0])
+  const canTrack = settings.trackDoubles && match && match.scores[cur] <= 170 && !!minDartsToFinish(match.scores[cur])
 
   function submit(score, dartsUsed, double) {
     if (!match || aiTurn || match.winner !== null) return
-    const remaining = match.scores[0]
+    const remaining = match.scores[cur]
     if (score === remaining && dartsUsed === undefined) {
       const res = interpretEnteredScore(remaining, score, 3)
       if (res.error) return flash(res.error)
@@ -332,9 +334,12 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     const tracked = canTrack ? (res.checkout ? Math.max(1, atDouble) : atDouble) : 0
     const next = applyVisit(match, { ...res, double, dartsAtDouble: tracked })
     if (res.bust) { say('Bust.', callerOn, 'flat'); if (crowdOn) groan() }
-    else if (res.checkout) announceLegEnd(match, next, 0)
+    else if (res.checkout) announceLegEnd(match, next, cur)
     else callScore(res.scored, callerOn)
-    react(match, next, 0, res.scored, res.checkout)
+    react(match, next, cur, res.scored, res.checkout)
+    if (two && next.winner === null && !res.checkout && next.scores[next.turn] <= 170 && minDartsToFinish(next.scores[next.turn])) {
+      setTimeout(() => callRequire((next.turn === 0 ? me : opp).name.split(' ')[0], next.scores[next.turn], callerOn), 1500)
+    }
     setPendingCheckout(null)
     setEntry('')
     setError('')
@@ -425,7 +430,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
             {setup.oppFace && <Face face={setup.oppFace} shirt={{ primary: '#2b2b30', secondary: '#111' }} size={84} ring />}
             <div className="vs-name">{flag(opp.nation)} {opp.name}</div>
             {opp.nickname && <div className="vs-nick">“{opp.nickname}”</div>}
-            <div className="vs-meta">Expected average ≈ {setup.expectedAvg}</div>
+            {!two && <div className="vs-meta">Expected average ≈ {setup.expectedAvg}</div>}
             {setup.h2h && <div className="vs-meta">Head to head: {setup.h2h.w}–{setup.h2h.l}</div>}
           </div>
         </div>
@@ -433,7 +438,16 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
         {format.doubleIn && <p className="hint">Double in: your score only starts counting from the first double you hit each leg.</p>}
         {pairs && <p className="hint">Pairs: you and {setup.partner.name} take alternate visits for your team.</p>}
         <p className="hint">🎙 Your MC tonight: <b>{announcer.name}</b> · {announcer.blurb.toLowerCase()}</p>
-        {!bullUp ? (
+        {two ? (
+          <>
+            <p className="hint">Two players, one board. Bull up for real, then pick who throws first. The keypad shows whose turn it is.</p>
+            <div className="btn-row">
+              <button className="btn primary" onClick={() => requestStart(0)}>{me.name.split(' ')[0]} first</button>
+              <button className="btn primary" onClick={() => requestStart(1)}>{opp.name.split(' ')[0]} first</button>
+              <button className="btn ghost" onClick={() => requestStart(Math.random() < 0.5 ? 0 : 1)}>Random</button>
+            </div>
+          </>
+        ) : !bullUp ? (
           <>
             <button className="btn primary big" onClick={throwForBull}>🎯 Bull up to see who starts</button>
             <p className="hint small-text">Or skip the bull-up:</p>
@@ -500,8 +514,10 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     )
   }
 
-  const myTurn = !aiTurn && match.winner === null && match.turn === 0
-  const route = myTurn && match.scores[0] <= 170 && (!format.doubleIn || match.opened[0]) ? checkoutRoute(match.scores[0]) : null
+  const myTurn = !aiTurn && match.winner === null && (two || match.turn === 0)
+  const route = myTurn && match.scores[cur] <= 170 && (!format.doubleIn || match.opened[cur]) ? checkoutRoute(match.scores[cur]) : null
+  const lastOther = two ? [...match.visits].reverse().find((v) => v.player !== match.turn) : null
+  const curName = (cur === 0 ? me : opp).name
 
   const lastAi = [...match.visits].reverse().find((v) => v.player === 1 || (pairs && v.player === 0 && v.thrower === 1))
   const canUndo = history.current.length > 0
@@ -534,7 +550,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
                 {format.doubleIn && !match.opened[p] ? <span className="muted"> · not in</span> : null}
                 <span className="muted"> · Avg {threeDartAverage(st).toFixed(1)}</span>
               </div>
-              {p === 0 && route && <div className="sb-route">{route.join(' · ')}</div>}
+              {p === cur && route && <div className="sb-route">{route.join(' · ')}</div>}
             </div>
           )
         })}
@@ -575,11 +591,11 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       ) : (
         <div className="input-area">
           <div className="last-visit">
-            {lastAi?.darts ? <>{lastAi.player === 1 ? opp.name.split(' ')[0] : setup.partner?.name.split(' ')[0]}: {lastAi.darts.join(' · ')} = <b>{lastAi.bust ? 'BUST' : lastAi.scored}</b></> : <span className="muted">Your throw</span>}
+            {two ? <><b className="gold">{curName === 'You' ? 'Your' : curName}</b> {curName === 'You' ? 'throw' : 'to throw'}{lastOther ? <span className="muted"> · {(lastOther.player === 0 ? me : opp).name.split(' ')[0]} {lastOther.bust ? 'bust' : `scored ${lastOther.scored}`}</span> : null}</> : lastAi?.darts ? <>{lastAi.player === 1 ? opp.name.split(' ')[0] : setup.partner?.name.split(' ')[0]}: {lastAi.darts.join(' · ')} = <b>{lastAi.bust ? 'BUST' : lastAi.scored}</b></> : <span className="muted">Your throw</span>}
           </div>
           <div className="entry-row">
             <div className="entry-display">
-              <span className={entry ? '' : 'muted'}>{entry || (entryMode === 'left' ? `Left from ${match.scores[0]}` : 'Your score')}</span>
+              <span className={entry ? '' : 'muted'}>{entry || (entryMode === 'left' ? `Left from ${match.scores[cur]}` : two && curName !== 'You' ? `${curName.split(' ')[0]}'s score` : 'Your score')}</span>
               {error ? <span className="error">{error}</span> : heardText ? <span className="muted small-text">{heardText}</span> : null}
             </div>
             {voiceAvailable() && <button className={`btn mic ${listening ? 'live' : ''}`} onClick={voice} aria-label="Say score">{listening ? '🎙 Stop' : '🎤'}</button>}
@@ -619,7 +635,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
           <div className={`action-row ${settings.leftHanded ? 'lefty' : ''}`}>
             <button className="btn small" onClick={undo} disabled={!canUndo}>↩ Undo</button>
             <button className="btn small" onClick={keyTap(bust)}>Bust</button>
-            <button className="btn small" onClick={keyTap(() => submit(match.scores[0]))} disabled={!minDartsToFinish(match.scores[0])}>Checkout</button>
+            <button className="btn small" onClick={keyTap(() => submit(match.scores[cur]))} disabled={!minDartsToFinish(match.scores[cur])}>Checkout</button>
           </div>
         </div>
       )}

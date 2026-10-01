@@ -7,6 +7,8 @@ import { acceptSponsor, ledger, milestone, monthlySponsorship, negotiateSponsor,
 import { formatLabel, prizeFund, qualifierFormat, roundFormat, roundName, scaledPrizes } from './formats.js'
 import { dateStr, news, resolveMail, sendMail } from './inbox.js'
 import { buildArticle, PAPER } from './newspaper.js'
+import { checkAchievements } from './achievements.js'
+import { afterMatch, maybePress } from './media.js'
 import { agePlayers, generatePools, nationName, TOUR_CARDS, UK_QSCHOOL_NATIONS } from './players.js'
 import { addEarnings, prune, ranking, rankOf } from './rankings.js'
 import { createGroups, createKnockout, createStaged, findPair, resolveRound, roundsWon, stageFor } from './tournament.js'
@@ -382,6 +384,8 @@ export function handleAction(career, mailId, action, payload, rng = Math.random)
     }
     case 'acceptSponsor':
       acceptSponsor(career, payload)
+      ;(career.flags ??= {}).signedSponsor = true
+      checkAchievements(career)
       break
     case 'negotiateSponsor':
       negotiateSponsor(career, payload, rng)
@@ -566,6 +570,11 @@ function recordUserStats(career, result, opponent, stage) {
     else h.l++
     h.meetings.unshift({ year: career.year, event: currentEvent(career).name, stage, won: result.userWon, score: result.score })
     h.meetings.length = Math.min(h.meetings.length, 12)
+    afterMatch(career, { opponent, won: result.userWon, stage, event: currentEvent(career), played: !result.simulated })
+  }
+  if (result.userWon && opponent && !opponent.startsWith?.('T:')) {
+    const r = rankOf(ranking(career, 'oom'), opponent)
+    if (r && r <= 16) (career.flags ??= {}).beatTop16 = true
   }
   if (result.simulated) {
     s.simulated++
@@ -593,6 +602,14 @@ function recordUserStats(career, result, opponent, stage) {
   if (best && best < (rec.lowestLeg?.value ?? Infinity)) rec.lowestLeg = { value: best, ...where }
   if (st.highCheckout && st.highCheckout > (rec.highestCheckout?.value ?? 0)) rec.highestCheckout = { value: st.highCheckout, ...where }
   if (result.userAvg > (rec.bestAverage?.value ?? 0) && st.darts >= 15) rec.bestAverage = { value: Math.round(result.userAvg * 100) / 100, ...where }
+  // Progress diary for the charts on the Stats tab.
+  career.progress ??= []
+  career.progress.push({
+    date: dateStr(career), event: currentEvent(career).name, avg: Math.round(result.userAvg * 100) / 100,
+    s180: st.s180, high: st.highCheckout, legs: st.checkouts, darts: st.darts,
+    atDouble: st.dartsAtDouble ?? 0, won: result.userWon,
+  })
+  if (career.progress.length > 600) career.progress.splice(0, career.progress.length - 600)
   if (career.user.autoAdjust && st.darts >= 24) career.user.avg = Math.round((career.user.avg * 0.8 + result.userAvg * 0.2) * 10) / 10
 }
 
@@ -604,6 +621,8 @@ export function submitUserResult(career, result, rng = Math.random) {
   const stage = taskStage(career, task)
   recordUserStats(career, result, task.opponent, stage)
   if (!result.simulated && result.userStats) payBonuses(career, event, result.userStats)
+  checkAchievements(career)
+  if (!result.simulated && !result.pairs) maybePress(career, { opponent: task.opponent, won: result.userWon, stage, event, avg: result.userAvg, title: result.userWon && stage === 'Final' && event.key !== 'premier', rng })
   a.userLog.push({ stage, opponent: task.opponent, userWon: result.userWon, score: result.score, userAvg: result.userAvg, oppAvg: result.oppAvg, simulated: !!result.simulated, sets: !!a.live?.format?.sets || !!taskFormat(career, task).sets })
   a.live = null
   if (task.kind === 'qualifier') {
@@ -793,6 +812,7 @@ export function finishEvent(career, rng = Math.random) {
   career.active = null
   career.eventIndex++
   checkRankMilestones(career, rng)
+  checkAchievements(career)
   if (career.eventIndex >= career.calendar.length) endSeason(career, rng)
 }
 

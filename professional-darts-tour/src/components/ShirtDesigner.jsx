@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import ShareButton from './ShareButton.jsx'
 import Shirt, { defaultShirt, FONTS, PATTERNS, THEMES } from './Shirt.jsx'
 
 export default function ShirtDesigner({ career, update }) {
@@ -9,14 +10,16 @@ export default function ShirtDesigner({ career, update }) {
     setSaved(false)
   }
   const sponsors = career.sponsors
+  const shirtRef = useRef(null)
   return (
     <div className="tab-body">
       <div className="card shirt-preview">
-        <div className="shirt-pair">
+        <div className="shirt-pair" ref={shirtRef}>
           <div><Shirt shirt={draft} sponsors={sponsors} nation={career.players.user.nation} side="front" size={150} /><span className="muted small-text">Front</span></div>
           <div><Shirt shirt={draft} sponsors={sponsors} nation={career.players.user.nation} side="back" size={150} /><span className="muted small-text">Back</span></div>
         </div>
         {!sponsors.length && <p className="small-text muted">Sponsor logos appear here once you sign deals.</p>}
+        <ShareButton target={shirtRef} name={`${draft.name || 'my'}-shirt`} text="My Professional Darts Tour shirt" label="Share my shirt" />
       </div>
       <div className="card form">
         <label>Name on the back<input value={draft.name} maxLength={14} onChange={(e) => set({ name: e.target.value.toUpperCase() })} /></label>

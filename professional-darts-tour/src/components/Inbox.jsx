@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Newspaper from './Newspaper.jsx'
+import ShareButton from './ShareButton.jsx'
 
 export default function Inbox({ career, update, onAction, initialOpen = null }) {
   const [openId, setOpenId] = useState(initialOpen)
   const open = career.inbox.find((m) => m.id === openId)
+  const paperRef = useRef(null)
 
   function view(m) {
     setOpenId(m.id)
@@ -14,7 +16,12 @@ export default function Inbox({ career, update, onAction, initialOpen = null }) 
     return (
       <div className="tab-body">
         <button className="btn ghost small back" onClick={() => setOpenId(null)}>‹ Inbox</button>
-        {open.article ? <Newspaper article={open.article} career={career} /> : (
+        {open.article ? (
+          <>
+            <div ref={paperRef}><Newspaper article={open.article} career={career} /></div>
+            <ShareButton target={paperRef} name={`${open.article.paper}-${open.date}`} text={open.article.headline} label="Share this front page" />
+          </>
+        ) : (
         <div className="card mail">
           <div className="mail-from">{open.from}</div>
           <h2>{open.subject}</h2>

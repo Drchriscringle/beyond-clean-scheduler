@@ -1,5 +1,6 @@
 // Bank balance, expenses and sponsorship.
 import { news, sendMail } from './inbox.js'
+import { profileFactor } from './media.js'
 import { pick } from '../engine/rng.js'
 import { ranking, rankOf } from './rankings.js'
 
@@ -50,6 +51,7 @@ export function marketValue(career) {
   }
   const titles = user.titles.filter((t) => t.startsWith(`${y} `) || t.startsWith(`${y - 1} `)).length
   value *= 1 + Math.min(1, titles * 0.08)
+  value *= profileFactor(career)
   return Math.round(value / 50) * 50
 }
 
@@ -94,7 +96,8 @@ export function negotiateSponsor(career, payload, rng = Math.random) {
     o.monthly = ask
     o.titleBonus = Math.round((ask * 1.5) / 50) * 50
     acceptSponsor(career, id)
-    sendMail(career, { from: `${o.brand} (sponsorship)`, subject: `Deal agreed with ${o.brand}`, body: `You drive a hard bargain. We agree to £${ask.toLocaleString()} a month for ${o.months} months, plus £${o.titleBonus.toLocaleString()} per title. Welcome aboard.` })
+    ;(career.flags ??= {}).signedSponsor = true
+  sendMail(career, { from: `${o.brand} (sponsorship)`, subject: `Deal agreed with ${o.brand}`, body: `You drive a hard bargain. We agree to £${ask.toLocaleString()} a month for ${o.months} months, plus £${o.titleBonus.toLocaleString()} per title. Welcome aboard.` })
   } else if (roll < chance + (1 - chance) * 0.55 && o.rounds < 3) {
     o.monthly = Math.round((o.monthly + (ask - o.monthly) * 0.45) / 50) * 50
     o.titleBonus = Math.round((o.monthly * 1.5) / 50) * 50

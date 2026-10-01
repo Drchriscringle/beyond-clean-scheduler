@@ -33,7 +33,7 @@ export default function Practice({ onPlay, initialMode = null }) {
   if (mode === 'pub') return <PubMode onPlay={onPlay} onBack={() => setMode(null)} />
   const games = [
     ['pub', 'Down the Pub 🍺', 'Your local: beat the regulars on the ladder one by one, or enter the pub knockout. Averages from 25 to 64.', loadPub().ladder ? `Ladder: ${loadPub().ladder}/10` : null],
-    ['friendly', 'Friendly match', 'Play 501 against a virtual opponent at any average. Nothing counts towards your career.', null],
+    ['friendly', 'Friendly match', 'Play 501 against a virtual opponent at any average, or a friend at the same board. Nothing counts towards your career.', null],
     ['bobs', "Bob's 27", 'Three darts at each double from 1 to bull. Hit to add, miss them all to lose the double. Start on 27.', records.bobs27 !== undefined ? `Best: ${records.bobs27}` : null],
     ['atc', 'Round the Clock (doubles)', 'Double 1 to double 20, then the bull, in as few darts as possible.', records.atc !== undefined ? `Best: ${records.atc} darts` : null],
     ['121', '121 Checkout', 'Nine darts to check out 121. Succeed and the target goes up one; fail and it comes down.', records.t121 !== undefined ? `Highest: ${records.t121}` : null],
@@ -55,14 +55,23 @@ function FriendlySetup({ onPlay, onBack }) {
   const [avg, setAvg] = useState(60)
   const [legs, setLegs] = useState(3)
   const [doubleIn, setDoubleIn] = useState(false)
+  const [friend, setFriend] = useState(false)
+  const [friendName, setFriendName] = useState('')
   return (
     <div className="tab-body">
       <button className="btn ghost small back" onClick={onBack}>‹ Practice</button>
       <div className="card form">
-        <label>Opponent average: <b>{avg}</b><input type="range" min="20" max="110" value={avg} onChange={(e) => setAvg(Number(e.target.value))} /></label>
+        <div className="seg">
+          <button type="button" className={`chip ${!friend ? 'on' : ''}`} onClick={() => setFriend(false)}>🤖 Virtual opponent</button>
+          <button type="button" className={`chip ${friend ? 'on' : ''}`} onClick={() => setFriend(true)}>🧑‍🤝‍🧑 Play a friend</button>
+        </div>
+        {friend
+          ? <label>Friend's name<input value={friendName} maxLength={20} placeholder="e.g. Dave" onChange={(e) => setFriendName(e.target.value)} /></label>
+          : <label>Opponent average: <b>{avg}</b><input type="range" min="20" max="110" value={avg} onChange={(e) => setAvg(Number(e.target.value))} /></label>}
+        {friend && <p className="hint small-text">Two players at one board. Take turns throwing and type in each visit; the screen shows whose turn it is.</p>}
         <label>First to <b>{legs}</b> legs<input type="range" min="1" max="11" value={legs} onChange={(e) => setLegs(Number(e.target.value))} /></label>
         <label className="check"><input type="checkbox" checked={doubleIn} onChange={(e) => setDoubleIn(e.target.checked)} /> Double in (World Grand Prix rules)</label>
-        <button className="btn primary big" onClick={() => onPlay({ avg, format: { legs, sets: 0, doubleIn } })}>Game on</button>
+        <button className="btn primary big" onClick={() => onPlay(friend ? { avg: 0, twoPlayer: true, opp: { name: friendName.trim() || 'Player 2', nation: null }, format: { legs, sets: 0, doubleIn } } : { avg, format: { legs, sets: 0, doubleIn } })}>Game on</button>
       </div>
     </div>
   )

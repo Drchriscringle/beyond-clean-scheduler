@@ -21,6 +21,8 @@ import { defaultShirt } from './Shirt.jsx'
 import Face from './Face.jsx'
 import FaceBuilder from './FaceBuilder.jsx'
 import SimulatePanel, { SimSummary } from './SimulatePanel.jsx'
+import { ACHIEVEMENTS } from '../career/achievements.js'
+import PressConference from './PressConference.jsx'
 
 const TABS = ['Home', 'Inbox', 'Calendar', 'Rankings', 'News', 'Honours', 'Stats', 'Money', 'Look', 'Practice', 'Settings']
 
@@ -49,6 +51,9 @@ export default function Hub(props) {
     props.update((c) => { const m = c.inbox.find((x) => x.id === id); if (m) m.read = true })
   }
   const unread = unreadCount(career)
+  const [honoursView, setHonoursView] = useState('me')
+  const fresh = (career.newAchievements ?? []).map((id) => ACHIEVEMENTS.find((a) => a.id === id)).filter(Boolean)
+  const clearFresh = () => props.update((c) => { c.newAchievements = [] })
   return (
     <div className="screen hub">
       <header className="hub-head">
@@ -57,7 +62,7 @@ export default function Hub(props) {
       </header>
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t} className={t === tab ? 'tab active' : 'tab'} onClick={() => { setOpenMail(null); setTab(t) }}>
+          <button key={t} className={t === tab ? 'tab active' : 'tab'} onClick={() => { setOpenMail(null); setHonoursView('me'); setTab(t) }}>
             {t}{t === 'Inbox' && unread ? <span className="badge">{unread}</span> : null}
           </button>
         ))}
@@ -69,10 +74,20 @@ export default function Hub(props) {
       {tab === 'News' && <News career={career} />}
       {tab === 'Stats' && <StatsView career={career} />}
       {tab === 'Money' && <MoneyView career={career} onAction={props.onAction} />}
-      {tab === 'Honours' && <Honours career={career} />}
+      {tab === 'Honours' && <Honours key={honoursView} career={career} initialView={honoursView} />}
       {tab === 'Look' && <><div className="tab-body"><FaceBuilder career={career} update={props.update} /></div><ShirtDesigner career={career} update={props.update} /></>}
       {tab === 'Practice' && <Practice onPlay={props.onPractice} />}
       {tab === 'Settings' && <SettingsView career={career} update={props.update} onDelete={props.onDelete} onRestore={props.onRestore} />}
+      {fresh.length > 0 && career.seenTutorial && (
+        <div className="ach-toast" role="status">
+          <button className="ach-toast-body" onClick={() => { setHonoursView('ach'); setTab('Honours'); clearFresh() }}>
+            <span className="ach-icon">{fresh[0].icon}</span>
+            <span><b>Achievement unlocked{fresh.length > 1 ? ` (+${fresh.length - 1} more)` : ''}</b><br />{fresh[0].name}: {fresh[0].desc}</span>
+          </button>
+          <button className="ach-toast-x" aria-label="Dismiss" onClick={clearFresh}>✕</button>
+        </div>
+      )}
+      <PressConference career={career} onAnswer={props.onPress} />
       {!career.seenTutorial && <Tutorial onDone={() => props.update((c) => { c.seenTutorial = true })} />}
     </div>
   )

@@ -4,6 +4,7 @@ import EventScreen from './components/EventScreen.jsx'
 import MatchScreen from './components/MatchScreen.jsx'
 import NewCareer from './components/NewCareer.jsx'
 import Practice from './components/Practice.jsx'
+import { answerPress } from './career/media.js'
 import { advance, autoPlayEvent, currentEvent, finishEvent, handleAction, newCareer, prepareLiveMatch, simulatePeriod, setEntry, simulateUntilUserMatch, simulateUserMatch, submitUserResult } from './career/career.js'
 import { loadCareer, saveCareer } from './persistence.js'
 import { defaultShirt } from './components/Shirt.jsx'
@@ -85,7 +86,7 @@ export default function App() {
     if (p.playing) {
       return (
         <MatchScreen
-          setup={{ me: { name: career?.players.user.name ?? 'You', nation: career?.players.user.nation }, opp: p.opp ?? { name: 'Practice partner', nation: null, nickname: `${p.avg} average` }, format: p.format, expectedAvg: p.avg, actualAvg: p.avg, stage: p.stage ?? 'Friendly', ambience: p.pub ? 'pub' : 'hall', face: career?.face, oppFace: faceFor({ id: p.pub?.id ?? 'practice', name: p.opp?.name ?? 'Practice', age: 40 }), shirt: career ? career.shirt ?? defaultShirt(career) : null, sponsors: career?.sponsors ?? [] }}
+          setup={{ me: { name: career?.players.user.name ?? 'You', nation: career?.players.user.nation }, opp: p.opp ?? { name: 'Practice partner', nation: null, nickname: `${p.avg} average` }, format: p.format, expectedAvg: p.avg, actualAvg: p.avg || 50, twoPlayer: !!p.twoPlayer, stage: p.stage ?? (p.twoPlayer ? 'Friendly · two players' : 'Friendly'), ambience: p.pub ? 'pub' : 'hall', face: career?.face, oppFace: faceFor({ id: p.pub?.id ?? 'practice', name: p.opp?.name ?? 'Practice', age: 40 }), shirt: career ? career.shirt ?? defaultShirt(career) : null, sponsors: career?.sponsors ?? [] }}
           settings={{ ...matchSettings(career), trackDoubles: false }}
           onExit={(result) => {
             if (p.pub) {
@@ -121,6 +122,12 @@ export default function App() {
     )
   }
 
+  const pressAnswer = (key) => {
+    let out = null
+    update((c) => { out = answerPress(c, key) })
+    return out
+  }
+
   if (screen === 'match' && career.active?.live) {
     return (
       <MatchScreen
@@ -150,6 +157,7 @@ export default function App() {
     return (
       <EventScreen
         career={career}
+        onPress={pressAnswer}
         onBack={() => setScreen('hub')}
         onPlay={() => {
           if (!career.active.live) update((c) => { prepareLiveMatch(c) })
@@ -187,6 +195,7 @@ export default function App() {
   return (
     <Hub
       career={career}
+      onPress={pressAnswer}
       update={update}
       onOpenEvent={() => setScreen('event')}
       simSummary={simSummary}

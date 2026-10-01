@@ -6,8 +6,10 @@ import { ranking, rankOf } from '../career/rankings.js'
 import { standings } from '../career/tournament.js'
 import { dateLabel, money, playerLabel, TIER_LABELS } from './common.jsx'
 import Face, { faceFor } from './Face.jsx'
+import PressConference from './PressConference.jsx'
+import { isRival } from '../career/media.js'
 
-export default function EventScreen({ career, onPlay, onSimMatch, onSimRest, onSimEvent, onFinish, onBack }) {
+export default function EventScreen({ career, onPlay, onSimMatch, onSimRest, onSimEvent, onFinish, onBack, onPress }) {
   const event = currentEvent(career)
   const comp = COMPETITIONS[event.key]
   const a = career.active
@@ -24,6 +26,7 @@ export default function EventScreen({ career, onPlay, onSimMatch, onSimRest, onS
 
   return (
     <div className="screen event">
+      <PressConference career={career} onAnswer={onPress} />
       <button className="btn ghost small back" onClick={onBack}>‹ Tour</button>
       <div className="event-head">
         <div className="event-tier">{TIER_LABELS[event.tier]} · {dateLabel(event)}</div>
@@ -45,7 +48,8 @@ export default function EventScreen({ career, onPlay, onSimMatch, onSimRest, onS
           <div className="opp-meta">
             {career.players[task.opponent] ? (rankOf(oom, task.opponent) ? `Order of Merit #${rankOf(oom, task.opponent)} · ` : 'Unranked · ') : ''}Expected average ≈ {preview.expected}
           </div>
-          {h2h && <div className="opp-meta">Head to head: {h2h.w}–{h2h.l}{h2h.w + h2h.l >= 3 && Math.abs(h2h.w - h2h.l) <= 1 ? ' · Rivalry!' : ''}</div>}
+          {isRival(career, task.opponent) && <div className="rival-tag">🔥 YOUR RIVAL · the crowd and the press are watching</div>}
+          {h2h && <div className="opp-meta">Head to head: {h2h.w}–{h2h.l}</div>}
           <div className="opp-meta">{formatLabel(taskFormat(career, task))}</div>
           {a.live?.match ? (
             <button className="btn primary big" onClick={onPlay}>Resume match</button>

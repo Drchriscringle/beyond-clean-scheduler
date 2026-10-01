@@ -116,3 +116,39 @@ test('store-safe names replace every trademarked event name', async () => {
   assert.deepEqual(leaks, [])
   setStoreNamePreview(false)
 })
+
+test('achievements unlock once, toast and email', async () => {
+  const { checkAchievements } = await import('../src/career/achievements.js')
+  const { newCareer } = await import('../src/career/career.js')
+  const { seededRng } = await import('../src/engine/rng.js')
+  const c = newCareer({ name: 'Tester', nation: 'ENG', age: 30, avg: 70 }, seededRng(9))
+  c.stats.s180 = 1
+  c.stats.won = 1
+  const first = checkAchievements(c).map((a) => a.id)
+  assert.ok(first.includes('first180') && first.includes('firstWin'))
+  assert.ok(!first.includes('ten180'))
+  assert.deepEqual(c.newAchievements, first)
+  assert.ok(c.inbox.some((m) => m.from === 'Achievements'))
+  assert.equal(checkAchievements(c).length, 0)
+})
+
+test('rivalries form from close head-to-heads and press answers move your profile', async () => {
+  const { afterMatch, maybePress, answerPress, profileOf } = await import('../src/career/media.js')
+  const { marketValue } = await import('../src/career/finance.js')
+  const c = fresh()
+  const opp = Object.keys(c.players).find((id) => id !== 'user' && !id.startsWith('w') && !id.startsWith('s'))
+  const event = { key: 'pc', name: 'Players Championship 1', tier: 1 }
+  c.h2h[opp] = { w: 2, l: 1, meetings: [] }
+  afterMatch(c, { opponent: opp, won: false, stage: 'Last 64', event, played: true })
+  assert.equal(c.rival?.id, opp)
+  assert.ok(c.inbox.some((m) => m.subject.includes('rivalry')))
+  const before = marketValue(c)
+  maybePress(c, { opponent: opp, won: true, stage: 'Last 32', event, avg: 80, title: false, rng: () => 0.9 })
+  assert.ok(c.pressPending, 'the media want to talk after a rival match')
+  assert.equal(c.pressPending.answers.length, 3)
+  const out = answerPress(c, 'fiery')
+  assert.equal(out.profile, 4)
+  assert.equal(profileOf(c), 54)
+  assert.equal(c.pressPending, null)
+  assert.ok(marketValue(c) >= before)
+})

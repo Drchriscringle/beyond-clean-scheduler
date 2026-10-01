@@ -18,6 +18,10 @@ export function migrate(c) {
   c.prizeScale ??= 1
   c.shirt ??= null
   c.face ??= null
+  c.achievements ??= {}
+  c.profile ??= 50
+  c.progress ??= []
+  c.flags ??= {}
   c.players.user.gender ??= 'm'
   c.players.user.walkOn ??= ''
   c.settings.crowd ??= true
