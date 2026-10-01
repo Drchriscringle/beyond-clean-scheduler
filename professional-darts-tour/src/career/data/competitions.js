@@ -107,7 +107,38 @@ export const COMPETITIONS = {
     prizes: [80000, 40000, 25000, 17500, 10000, 5000], cats: [], entry: 'wsFinals',
     blurb: 'Top 8 on the World Series Order of Merit (seeded, bye to round two) and 16 more from the Order of Merit. Non-ranking.',
   },
+  women: {
+    name: "Women's Series", kind: 'knockout', tier: 0, level: 'dev', size: 64, legs: Array(6).fill(5),
+    prizes: [2500, 1000, 750, 500, 300, 200, 75], cats: ['wo'], entry: 'women',
+    blurb: "Best of 9 legs for female players outside the top 64. Top 3 on the Order of Merit go to the World Championship, #1 goes to the Grand Slam, the top 8 get free Q-School entry and qualify for the Women's World Matchplay.",
+  },
+  womensMatchplay: {
+    name: "Women's World Matchplay", kind: 'knockout', tier: 3, level: 'major', size: 8, seeded: true, legs: [4, 5, 6],
+    prizes: [10000, 5000, 2500, 1250], cats: [], entry: 'womensMatchplay',
+    blurb: "The top 8 on the Women's Series Order of Merit at the Winter Gardens during World Matchplay week. The winner qualifies for the Grand Slam and the World Championship.",
+  },
+  // Seniors: not a PDC tour. Modelled on the last World Seniors Darts Tour events (the 2026
+  // World Seniors Championship was cancelled). Open to players aged 45+ without a Tour Card.
+  seniorsWorlds: {
+    name: 'World Seniors Championship', kind: 'knockout', tier: 3, level: 'pro', size: 32, seeded: true, sets: [3, 3, 4, 4, 5], setLegs: 3,
+    prizes: [30000, 12500, 4000, 2000, 1000, 500], cats: ['sn'], entry: 'seniors', seniorsField: 28,
+    blurb: 'Seniors Tour (not PDC): 28 players aged 45+ without a Tour Card, four seeds straight into round two. Set play, final first to 5 sets.',
+  },
+  seniorsMasters: {
+    name: 'World Seniors Masters', kind: 'knockout', tier: 3, level: 'pro', size: 16, seeded: true, sets: [4, 4, 5, 6], setLegs: 2,
+    prizes: [10000, 5000, 2500, 1250, 750], cats: ['sn'], entry: 'seniors',
+    blurb: 'Seniors Tour (not PDC): 16 players, sets of first to 2 legs.',
+  },
+  seniorsMatchplay: {
+    name: 'World Seniors Matchplay', kind: 'knockout', tier: 3, level: 'pro', size: 16, seeded: true, legs: [8, 8, 9, 9],
+    prizes: [10000, 5000, 2500, 1250, 750], cats: ['sn'], entry: 'seniors',
+    blurb: 'Seniors Tour (not PDC): 16 players, best of 15 legs, semi-finals and final best of 17.',
+  },
 }
+
+// Nine-dart bonuses (paid on top of prize money when you hit one on your board).
+export const NINE_DART_BONUS = { 4: 60000, 3: 25000, 2: 10000, 1: 5000, 0: 2500 }
+export const BIG_FISH_BONUS = 1000 // a 170 checkout (game feature, not a real PDC prize)
 
 // Everything that counts as a televised final for Grand Slam qualification.
 export const TV_EVENTS = ['worlds', 'plPlayoffs', 'matchplay', 'grandprix', 'masters', 'ukopen', 'eurochamp', 'pcfinals', 'wsfinals']

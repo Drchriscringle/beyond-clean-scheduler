@@ -9,6 +9,8 @@ import { applyVisit, createMatch, interpretEnteredScore, pairsThrower, threeDart
 import { formatLabel } from '../career/formats.js'
 import { flag } from '../career/players.js'
 import { callScore, numberWords, say } from '../caller.js'
+import { applause, roar, startAmbience, stopAmbience } from '../crowd.js'
+import { heard, listen, voiceAvailable } from '../voice.js'
 
 const QUICK = [26, 41, 45, 60, 81, 85, 100, 140, 180]
 const DART_DELAY = 650
@@ -42,7 +44,50 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   const [aiDarts, setAiDarts] = useState([])
   const [aiThrowing, setAiThrowing] = useState(false)
   const [banner, setBanner] = useState('')
+  const [celebration, setCelebration] = useState(null)
+  const [walkOn, setWalkOn] = useState(null)
+  const [entryMode, setEntryMode] = useState('score') // 'score' | 'left'
+  const [listening, setListening] = useState(false)
+  const [heardText, setHeardText] = useState('')
   const history = useRef([])
+  const crowdOn = settings.crowd !== false
+
+  // Background crowd for the whole match.
+  useEffect(() => {
+    if (crowdOn) startAmbience(setup.ambience ?? 'hall')
+    return () => stopAmbience()
+  }, [])
+
+  function celebrate(text, big = false) {
+    setCelebration({ text, big })
+    setTimeout(() => setCelebration(null), big ? 4500 : 1800)
+  }
+
+  // Crowd and on-screen reaction to a visit. side 0 = you (or your team).
+  function react(prev, next, side, scored, checkout) {
+    if (!crowdOn && side !== 0) return
+    const mine = side === 0
+    if (checkout) {
+      const legDarts = next.stats[side].legDarts.at(-1)
+      if (mine && legDarts === 9) {
+        celebrate('NINE-DART FINISH!', true)
+        if (crowdOn) roar(1, 6)
+        say('Nine darts! Perfection!', callerOn)
+      } else if (scored === 170) {
+        if (mine) celebrate('THE BIG FISH! 170', true)
+        if (crowdOn) roar(0.95, 4)
+      } else if (scored >= 100) {
+        if (mine) celebrate(`TON-PLUS FINISH: ${scored}`)
+        if (crowdOn) roar(0.7, 3)
+      } else if (crowdOn) applause(next.winner !== null ? 3.5 : 2)
+      if (next.winner !== null && crowdOn) roar(0.85, 4.5)
+      return
+    }
+    if (scored === 180) {
+      if (mine) celebrate('180!')
+      if (crowdOn) roar(0.85, 3)
+    } else if (scored >= 140 && crowdOn) roar(0.4, 1.8)
+  }
   const oppSigma = sigmaForAverage(setup.actualAvg)
   const partnerSigma = setup.partner ? sigmaForAverage(setup.partner.avg) : null
 
@@ -68,6 +113,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       if (visit.bust) say('Bust', callerOn)
       else if (visit.checkout) announceLegEnd(match, next, side)
       else callScore(visit.scored, callerOn)
+      react(match, next, side, visit.scored, visit.checkout)
       const mine = next.winner === null && next.turn === 0 && !(pairs && pairsThrower(next, 0) === 1)
       if (mine && !visit.checkout && next.scores[0] <= 170 && minDartsToFinish(next.scores[0])) {
         setTimeout(() => say(`${me.name.split(' ')[0]}, you require ${numberWords(next.scores[0])}`, callerOn), 1300)
@@ -91,9 +137,60 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     }
   }
 
+  function requestStart(startingPlayer) {
+    if (settings.walkOns !== false && setup.walkOnShow) {
+      setWalkOn({ startingPlayer })
+      if (crowdOn) roar(0.55, 6)
+      const song = setup.walkOnSong ? `, walking on to ${setup.walkOnSong},` : ''
+      say(`Ladies and gentlemen, welcome to the ${setup.eventName ?? setup.stage}. It's the ${setup.stage.replace(/,.*/, '')}. Walking on first${song} ${me.nickname ? `it's ${me.nickname}, ` : ''}${me.name}! And the opponent, ${opp.nickname ? `${opp.nickname}, ` : ''}${opp.name}!`, callerOn)
+      return
+    }
+    startMatch(startingPlayer)
+  }
+
   function startMatch(startingPlayer) {
+    setWalkOn(null)
     say(`${setup.stage}. ${startingPlayer === 0 ? me.name : opp.name} to throw first. Game on!`, callerOn)
     setMatch(createMatch({ format, startingPlayer }))
+  }
+
+  const myTurnNow = match && !aiTurn && match.winner === null && match.turn === 0 && !pendingCheckout
+
+  async function voice() {
+    if (listening) return
+    setListening(true)
+    setHeardText('')
+    try {
+      const h = heard(await listen())
+      if (!h) {
+        flash("Didn't catch a score. Try again or use the keypad.")
+        return
+      }
+      setHeardText(`Heard: “${h.text}”`)
+      if (h.bust) bust()
+      else if (h.checkout) submit(match.scores[0])
+      else submit(h.score)
+    } catch (e) {
+      flash(e.message)
+    } finally {
+      setListening(false)
+    }
+  }
+
+  // Hands-free: start listening shortly after your turn begins (once the caller has spoken).
+  useEffect(() => {
+    if (!settings.voice || !myTurnNow) return
+    const t = setTimeout(() => voice(), 1800)
+    return () => clearTimeout(t)
+  }, [settings.voice, myTurnNow, match?.visits.length, match?.legNumber])
+
+  function typed(value) {
+    if (entryMode === 'left') {
+      const left = Number(value || 0)
+      if (left >= match.scores[0]) return flash('That leaves more than you had')
+      return submit(match.scores[0] - left)
+    }
+    submit(Number(value || 0))
   }
 
   const canTrack = settings.trackDoubles && match && match.scores[0] <= 170 && !!minDartsToFinish(match.scores[0])
@@ -115,6 +212,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     if (res.bust) say('Bust', callerOn)
     else if (res.checkout) announceLegEnd(match, next, 0)
     else callScore(res.scored, callerOn)
+    react(match, next, 0, res.scored, res.checkout)
     setPendingCheckout(null)
     setEntry('')
     setError('')
@@ -162,6 +260,21 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     onExit(result(true))
   }
 
+  if (!match && walkOn) {
+    return (
+      <div className="screen walk-on" onClick={() => startMatch(walkOn.startingPlayer)}>
+        <div className="spot spot-a" /><div className="spot spot-b" />
+        <div className="walk-stage">{setup.eventName ? `${setup.eventName} · ` : ''}{setup.stage}</div>
+        {setup.shirt && <Shirt shirt={setup.shirt} sponsors={setup.sponsors} nation={me.nation} side="back" size={170} />}
+        <div className="walk-name">{me.name}</div>
+        {me.nickname && <div className="walk-nick">“{me.nickname}”</div>}
+        {setup.walkOnSong && <div className="walk-song">♪ {setup.walkOnSong} ♪</div>}
+        <div className="walk-vs">v {opp.name}{opp.nickname ? ` “${opp.nickname}”` : ''}</div>
+        <button className="btn primary big" onClick={(e) => { e.stopPropagation(); startMatch(walkOn.startingPlayer) }}>Game on!</button>
+      </div>
+    )
+  }
+
   if (!match) {
     return (
       <div className="screen match-pre">
@@ -186,9 +299,9 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
         {pairs && <p className="hint">Pairs: you and {setup.partner.name} take alternate visits for your team.</p>}
         <p className="hint">Throw for the bull on your board, then pick who throws first.</p>
         <div className="btn-row">
-          <button className="btn primary" onClick={() => startMatch(0)}>{pairs ? 'We throw first' : 'I throw first'}</button>
-          <button className="btn" onClick={() => startMatch(1)}>{opp.name.split(' ')[0]} throw{pairs ? '' : 's'} first</button>
-          <button className="btn ghost" onClick={() => startMatch(Math.random() < 0.5 ? 0 : 1)}>Random</button>
+          <button className="btn primary" onClick={() => requestStart(0)}>{pairs ? 'We throw first' : 'I throw first'}</button>
+          <button className="btn" onClick={() => requestStart(1)}>{opp.name.split(' ')[0]} throw{pairs ? '' : 's'} first</button>
+          <button className="btn ghost" onClick={() => requestStart(Math.random() < 0.5 ? 0 : 1)}>Random</button>
         </div>
         <button className="btn ghost small" onClick={() => onExit(null)}>Back</button>
       </div>
@@ -231,6 +344,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       </div>
 
       {banner && <div className="banner">{banner}</div>}
+      {celebration && <div className={`celebration ${celebration.big ? 'big' : ''}`}>{celebration.text}</div>}
 
       {match.winner !== null ? (
         <MatchSummary match={match} names={[pairs ? 'Your team' : me.name, opp.name]} onContinue={() => onExit(result())} />
@@ -252,9 +366,16 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
 
           {myTurn && !pendingCheckout && (
             <div className="input-area">
+              <div className="entry-tools">
+                <div className="seg">
+                  <button className={`chip small ${entryMode === 'score' ? 'on' : ''}`} onClick={() => setEntryMode('score')}>Score</button>
+                  <button className={`chip small ${entryMode === 'left' ? 'on' : ''}`} onClick={() => setEntryMode('left')}>What's left</button>
+                </div>
+                {voiceAvailable() && <button className={`btn small mic ${listening ? 'live' : ''}`} onClick={voice}>{listening ? '🎙 Listening…' : '🎤 Say score'}</button>}
+              </div>
               <div className="entry-display">
-                <span className={entry ? '' : 'muted'}>{entry || `${pairs ? 'Your' : 'Your'} score`}</span>
-                {error && <span className="error">{error}</span>}
+                <span className={entry ? '' : 'muted'}>{entry || (entryMode === 'left' ? `Left from ${match.scores[0]}` : 'Your score')}</span>
+                {error ? <span className="error">{error}</span> : heardText ? <span className="muted small-text">{heardText}</span> : null}
               </div>
               {canTrack && (
                 <div className="at-double">
@@ -265,19 +386,22 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
                 </div>
               )}
               <div className="quick-row">
-                {QUICK.map((q) => (
+                {entryMode === 'score' && QUICK.map((q) => (
                   <button key={q} className="chip" onClick={() => submit(q)}>{q}</button>
                 ))}
               </div>
-              <div className="keypad">
+              <div className={`keypad ${settings.bigKeys ? 'big' : ''} ${settings.leftHanded ? 'lefty' : ''}`}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
                   <button key={n} className="key" onClick={() => setEntry((e) => (e + n).slice(0, 3))}>{n}</button>
                 ))}
-                <button className="key alt" onClick={() => setEntry((e) => e.slice(0, -1))}>⌫</button>
-                <button className="key" onClick={() => setEntry((e) => (e + '0').slice(0, 3))}>0</button>
-                <button className="key ok" onClick={() => submit(Number(entry || 0))}>{entry ? 'Enter' : 'No score'}</button>
+                {(() => {
+                  const del = <button key="del" className="key alt" onClick={() => setEntry((e) => e.slice(0, -1))}>⌫</button>
+                  const zero = <button key="zero" className="key" onClick={() => setEntry((e) => (e + '0').slice(0, 3))}>0</button>
+                  const ok = <button key="ok" className="key ok" onClick={() => typed(entry)}>{entry ? 'Enter' : entryMode === 'left' ? 'Checkout' : 'No score'}</button>
+                  return settings.leftHanded ? [ok, zero, del] : [del, zero, ok]
+                })()}
               </div>
-              <div className="btn-row tight">
+              <div className={`btn-row tight ${settings.leftHanded ? '' : 'righty'}`}>
                 <button className="btn small" onClick={() => submit(match.scores[0])} disabled={!minDartsToFinish(match.scores[0])}>Checkout</button>
                 <button className="btn small" onClick={bust}>Bust</button>
                 <button className="btn small ghost" onClick={undo} disabled={!history.current.length}>Undo</button>

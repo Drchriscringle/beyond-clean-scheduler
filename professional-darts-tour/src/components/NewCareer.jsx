@@ -2,14 +2,17 @@ import { useState } from 'react'
 import titleArt from '../assets-title.jpg'
 import { SKILL_PRESETS, suggestedRange } from '../career/difficulty.js'
 import DifficultyPicker from './DifficultyPicker.jsx'
+import { LoadSaveButton } from './BackupPanel.jsx'
 import { MATCH_LENGTHS } from '../career/formats.js'
 import { NATIONS } from '../career/players.js'
 
-export default function NewCareer({ onStart, onPractice }) {
+export default function NewCareer({ onStart, onPractice, onRestore }) {
   const [name, setName] = useState('')
   const [nickname, setNickname] = useState('')
   const [nation, setNation] = useState('ENG')
   const [age, setAge] = useState(25)
+  const [gender, setGender] = useState('m')
+  const [walkOn, setWalkOn] = useState('')
   const [avg, setAvg] = useState(52)
   const [difficulty, setDifficulty] = useState({ mode: 'range', fixedAvg: 52, rangeMin: suggestedRange(52)[0], rangeMax: suggestedRange(52)[1] })
   const [rangeTouched, setRangeTouched] = useState(false)
@@ -39,7 +42,15 @@ export default function NewCareer({ onStart, onPractice }) {
           </label>
           <label>Age<input type="number" min="16" max="70" value={age} onChange={(e) => setAge(Number(e.target.value))} /></label>
         </div>
-        <small>Nation decides UK or European Q-School and your World Cup team. Aged 16–24 you can also play the Development Tour.</small>
+        <label>
+          Player
+          <select value={gender} onChange={(e) => setGender(e.target.value)}>
+            <option value="m">Men's player</option>
+            <option value="f">Women's player (also plays the PDC Women's Series)</option>
+          </select>
+        </label>
+        <small>Nation decides UK or European Q-School and your World Cup team. Aged 16–24 you can also play the Development Tour, and from 45 without a Tour Card, the Seniors Tour.</small>
+        <label>Walk-on song (optional)<input value={walkOn} onChange={(e) => setWalkOn(e.target.value)} placeholder="Announced when you walk on at TV events" maxLength={40} /></label>
         <label>
           Your standard (3-dart average)
           <div className="preset-row">
@@ -59,10 +70,11 @@ export default function NewCareer({ onStart, onPractice }) {
           </select>
         </label>
       </div>
-      <button className="btn primary big" onClick={() => onStart({ name: name.trim() || 'Player One', nickname: nickname.trim(), nation, age, avg, difficultyMode: difficulty.mode, fixedAvg: difficulty.fixedAvg, rangeMin: difficulty.rangeMin, rangeMax: difficulty.rangeMax, matchLength })}>
+      <button className="btn primary big" onClick={() => onStart({ name: name.trim() || 'Player One', nickname: nickname.trim(), nation, age, gender, walkOn: walkOn.trim(), avg, difficultyMode: difficulty.mode, fixedAvg: difficulty.fixedAvg, rangeMin: difficulty.rangeMin, rangeMax: difficulty.rangeMax, matchLength })}>
         Start career
       </button>
       <button className="btn ghost" onClick={onPractice}>Practice without a career</button>
+      <LoadSaveButton onRestore={onRestore} />
       <details className="card how">
         <summary className="card-label">How the career works</summary>
         <ul className="plain">

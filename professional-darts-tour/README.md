@@ -120,6 +120,24 @@ in your inbox and the news each January.
   in every competition and a season-by-season table), plus a roll of honour for every
   competition with winners, runners-up, final scores and a most-titles list.
 - **Stats**: checkout %, darts at a double, favourite doubles, head-to-head records and rivalries.
+- **At the board**: say your score ("one hundred and forty", "ton eighty", "no score", "bust",
+  "game shot") or turn on hands-free listening; enter your score or what you've got left; big
+  keypad and left-handed layouts.
+- **Atmosphere**: walk-ons at televised events (your shirt, nickname and walk-on song, announced
+  by the caller), synthesised crowd noise (arena, floor events, the pub), roars for 180s and big
+  finishes, applause after legs, and celebrations for ton-plus finishes, the 170 "Big Fish" and
+  nine-darters.
+- **Bonuses**: a nine-dart finish on your board pays a bonus (£60,000 at the Worlds down to
+  £2,500 on the secondary tours) and makes the front page; a 170 checkout pays a £1,000 "Big
+  Fish" bonus (a game feature, not a real PDC prize).
+- **Women's Series**: for women's players, the 24-event PDC Women's Series (best of 9, £15,000 per
+  event) and the Women's World Matchplay; the top 3 go to the Worlds and the #1 to the Grand Slam.
+- **Seniors Tour**: aged 45+ without a Tour Card: World Seniors Championship, Masters and
+  Matchplay, modelled on the last World Seniors Darts Tour events (not a PDC tour; the 2026
+  championship was cancelled in real life).
+- **Save backup**: automatic backups after each event, plus export/import of a save file
+  (shared via the phone's share sheet in the app) so a career survives changing phone.
+- **Tutorial**: a short first-run guide, replayable from Settings.
 - **Practice**: friendly 501 at any average (with optional double in), Bob's 27, Round the Clock
   on doubles and the 121 checkout challenge, with personal bests.
 - **Down the Pub**: your own (renameable) local. Climb a ladder of ten regulars from Young Kieran

@@ -8,12 +8,14 @@ import { advance, autoPlayEvent, currentEvent, finishEvent, handleAction, newCar
 import { loadCareer, saveCareer } from './persistence.js'
 import { defaultShirt } from './components/Shirt.jsx'
 import { recordPubResult } from './pub.js'
+import { snapshot } from './backup.js'
 
 function liveSetup(career) {
   const live = career.active.live
   const user = career.players.user
   const opp = live.opponent.startsWith('T:') ? null : career.players[live.opponent]
   const team = live.oppPlayers?.map((id) => career.players[id].name)
+  const event = currentEvent(career)
   return {
     me: { name: user.name, nation: user.nation, nickname: user.nickname },
     opp: opp ? { name: opp.name, nickname: opp.nickname, nation: opp.nation } : { name: team.join(' & '), nation: live.opponent.slice(2) },
@@ -26,7 +28,16 @@ function liveSetup(career) {
     h2h: career.h2h[live.opponent],
     shirt: career.shirt ?? defaultShirt(career),
     sponsors: career.sponsors,
+    walkOnShow: (event?.tier ?? 0) >= 2,
+    eventName: event?.name,
+    walkOnSong: user.walkOn,
+    ambience: (event?.tier ?? 0) >= 2 ? 'arena' : 'hall',
   }
+}
+
+function matchSettings(career) {
+  const st = career?.settings ?? {}
+  return { caller: st.caller ?? true, crowd: st.crowd ?? true, walkOns: st.walkOns ?? true, voice: !!st.voice, bigKeys: !!st.bigKeys, leftHanded: !!st.leftHanded }
 }
 
 export default function App() {
@@ -42,12 +53,23 @@ export default function App() {
 
   // Always build on the latest career, even if two updates land before a re-render.
   function update(fn) {
-    const next = structuredClone(latest.current)
+    const prev = latest.current
+    const next = structuredClone(prev)
     fn(next)
     latest.current = next
     saveCareer(next)
+    // Keep a rolling backup whenever an event finishes.
+    if (prev && (prev.eventIndex !== next.eventIndex || prev.year !== next.year)) snapshot(next)
     setCareer(next)
     return next
+  }
+
+  function restore(c) {
+    latest.current = c
+    saveCareer(c)
+    setCareer(c)
+    setPractice(null)
+    setScreen(c.active?.live?.match ? 'match' : c.active ? 'event' : 'hub')
   }
 
   function goNext(next) {
@@ -59,8 +81,8 @@ export default function App() {
     if (p.playing) {
       return (
         <MatchScreen
-          setup={{ me: { name: career?.players.user.name ?? 'You', nation: career?.players.user.nation }, opp: p.opp ?? { name: 'Practice partner', nation: null, nickname: `${p.avg} average` }, format: p.format, expectedAvg: p.avg, actualAvg: p.avg, stage: p.stage ?? 'Friendly', shirt: career ? career.shirt ?? defaultShirt(career) : null, sponsors: career?.sponsors ?? [] }}
-          settings={{ caller: career?.settings.caller ?? true, trackDoubles: false }}
+          setup={{ me: { name: career?.players.user.name ?? 'You', nation: career?.players.user.nation }, opp: p.opp ?? { name: 'Practice partner', nation: null, nickname: `${p.avg} average` }, format: p.format, expectedAvg: p.avg, actualAvg: p.avg, stage: p.stage ?? 'Friendly', ambience: p.pub ? 'pub' : 'hall', shirt: career ? career.shirt ?? defaultShirt(career) : null, sponsors: career?.sponsors ?? [] }}
+          settings={{ ...matchSettings(career), trackDoubles: false }}
           onExit={(result) => {
             if (p.pub) {
               if (result && result !== 'pause') recordPubResult(p.pub, result)
@@ -83,6 +105,7 @@ export default function App() {
     return (
       <NewCareer
         onPractice={() => setPractice({})}
+        onRestore={restore}
         onStart={(opts) => {
           const c = newCareer(opts)
           latest.current = c
@@ -100,7 +123,7 @@ export default function App() {
         key={career.active.live.stage + career.active.eventId}
         setup={liveSetup(career)}
         initialMatch={career.active.live.match}
-        settings={{ caller: career.settings.caller, trackDoubles: career.user.trackDoubles && !career.active.live.partner }}
+        settings={{ ...matchSettings(career), trackDoubles: career.user.trackDoubles && !career.active.live.partner }}
         onPersist={(match) => update((c) => { if (c.active?.live) c.active.live.match = match })}
         onExit={(result) => {
           if (result === 'pause') return setScreen('event')
@@ -191,6 +214,7 @@ export default function App() {
         if (go) goNext(next)
       }}
       onPractice={(cfg) => setPractice({ ...cfg, playing: true })}
+      onRestore={restore}
       onDelete={() => {
         if (!window.confirm('Delete this career? This cannot be undone.')) return
         saveCareer(null)

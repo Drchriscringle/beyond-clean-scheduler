@@ -14,6 +14,8 @@ export const RANKING_LABELS = {
   ct: 'Challenge Tour',
   dt: 'Development Tour',
   ws: 'World Series',
+  wo: "Women's Series",
+  sn: 'Seniors Tour',
 }
 
 export function earned(p, year, cat) {
@@ -36,6 +38,8 @@ export function rankingValue(p, year, key) {
 function eligible(p, key, year) {
   if (key === 'ct') return p.tour !== 'pro'
   if (key === 'dt') return p.tour !== 'pro' || p.age <= 24
+  if (key === 'wo') return p.gender === 'f'
+  if (key === 'sn') return p.age >= 45 && p.tour !== 'pro'
   if (key === 'oom') return rankingValue(p, year, 'oom') > 0 || p.tour === 'pro'
   return true
 }

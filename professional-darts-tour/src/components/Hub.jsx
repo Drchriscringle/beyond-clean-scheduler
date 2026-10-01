@@ -14,6 +14,7 @@ import StatsView from './StatsView.jsx'
 import MoneyView from './MoneyView.jsx'
 import SettingsView from './SettingsView.jsx'
 import Practice from './Practice.jsx'
+import Tutorial from './Tutorial.jsx'
 import Honours from './Honours.jsx'
 import ShirtDesigner from './ShirtDesigner.jsx'
 import Shirt, { defaultShirt } from './Shirt.jsx'
@@ -69,7 +70,8 @@ export default function Hub(props) {
       {tab === 'Honours' && <Honours career={career} />}
       {tab === 'Shirt' && <ShirtDesigner career={career} update={props.update} />}
       {tab === 'Practice' && <Practice onPlay={props.onPractice} />}
-      {tab === 'Settings' && <SettingsView career={career} update={props.update} onDelete={props.onDelete} />}
+      {tab === 'Settings' && <SettingsView career={career} update={props.update} onDelete={props.onDelete} onRestore={props.onRestore} />}
+      {!career.seenTutorial && <Tutorial onDone={() => props.update((c) => { c.seenTutorial = true })} />}
     </div>
   )
 }

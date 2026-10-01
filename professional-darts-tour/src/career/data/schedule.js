@@ -46,6 +46,9 @@ const CT_WEEKENDS = [[1, 16, 'MK', 5], [3, 27, 'LEICESTER', 5], [5, 1, 'HILDESHE
 // ~ Development Tour weekends
 const DT_WEEKENDS = [[2, 20, 'HILDESHEIM', 5], [4, 24, 'MK', 5], [6, 26, 'LEICESTER', 5], [8, 7, 'LEICESTER', 5], [10, 30, 'WIGAN', 4]]
 
+// ~ Women's Series: six weekends of four events
+const WO_WEEKENDS = [[2, 28, 'HILDESHEIM', 4], [4, 11, 'LEICESTER', 4], [5, 23, 'WIGAN', 4], [6, 13, 'MK', 4], [8, 29, 'LEICESTER', 4], [10, 24, 'WIGAN', 4]]
+
 // ~ Premier League venues (2026 visited the UK, Ireland, Germany, the Netherlands and Belgium)
 const PL_NIGHTS = [
   'Utilita Arena, Newcastle', 'OVO Hydro, Glasgow', '3Arena, Dublin', 'Westpoint, Exeter', 'Motorpoint Arena, Nottingham',
@@ -88,6 +91,13 @@ export function seasonSchedule() {
   for (const [m, d, v, n] of CT_WEEKENDS) for (let i = 0; i < n; i++) add(s, m, d + Math.min(i, 2), 'ct', `Challenge Tour ${ct}`, ...V[v], { number: ct++ })
   let dt = 1
   for (const [m, d, v, n] of DT_WEEKENDS) for (let i = 0; i < n; i++) add(s, m, d + Math.min(i, 2), 'dt', `Development Tour ${dt}`, ...V[v], { number: dt++ })
+
+  let wo = 1
+  for (const [m, d, v, n] of WO_WEEKENDS) for (let i = 0; i < n; i++) add(s, m, d + Math.floor(i / 2), 'women', `Women's Series ${wo}`, ...V[v], { number: wo++ })
+  add(s, 7, 26, 'womensMatchplay', "Women's World Matchplay", 'Winter Gardens, Blackpool', 'ENG')
+  add(s, 2, 19, 'seniorsWorlds', 'World Seniors Championship', 'Circus Tavern, Purfleet', 'ENG')
+  add(s, 5, 29, 'seniorsMasters', 'World Seniors Masters', 'Lakeside Country Club, Frimley Green', 'ENG')
+  add(s, 9, 5, 'seniorsMatchplay', 'World Seniors Matchplay', 'York Barbican', 'ENG')
 
   // Premier League: Thursdays from 5 February, play-offs 28 May.
   const start = Date.UTC(2026, 1, 5)

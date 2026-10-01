@@ -103,6 +103,27 @@ export function eligibility(career, event) {
       if (pro) return q('PDPA Qualifier', 4)
       return q('Regional Qualifier', 4)
     }
+    case 'women': {
+      if (user.gender !== 'f') return { status: 'out', reason: 'Female players only' }
+      if (r && r <= 64 && pro) return { status: 'out', reason: 'Players inside the top 64 cannot enter' }
+      return { status: 'in', reason: "Women's Series player" }
+    }
+    case 'womensMatchplay': {
+      if (user.gender !== 'f') return { status: 'out', reason: "Top 8 on the Women's Series Order of Merit" }
+      const wr = rankOf(ranking(career, 'wo'), 'user')
+      if (wr && wr <= 8 && (user.earn[career.year]?.wo ?? 0) > 0) return { status: 'in', reason: `#${wr} on the Women's Series Order of Merit` }
+      return { status: 'out', reason: `Top 8 on the Women's Series Order of Merit${wr ? ` (you're #${wr})` : ''}` }
+    }
+    case 'seniorsWorlds':
+    case 'seniorsMasters':
+    case 'seniorsMatchplay': {
+      if (user.age < 45) return { status: 'out', reason: 'Players aged 45 and over only' }
+      if (pro) return { status: 'out', reason: 'Not open to Tour Card holders' }
+      const sr = rankOf(ranking(career, 'sn'), 'user')
+      const seeds = event.key === 'seniorsWorlds' ? 16 : 10
+      if (sr && sr <= seeds && (user.earn[career.year]?.sn ?? user.earn[career.year - 1]?.sn ?? 0) > 0) return { status: 'in', reason: `#${sr} on the Seniors Order of Merit` }
+      return q('Seniors Qualifier', 2)
+    }
     case 'premier':
     case 'plPlayoffs': {
       const pl = career.pl
@@ -144,6 +165,9 @@ export function grandSlamQualifiers(career) {
   const tv = window.filter((h) => TV_EVENTS.includes(h.key))
   for (const h of tv) add(h.winner, `${h.name} winner`)
   for (const h of tv) add(h.runnerUp, `${h.name} runner-up`)
+  const wwm = career.honours.find((h) => h.key === 'womensMatchplay' && h.year === y)
+  if (wwm) add(wwm.winner, "Women's World Matchplay winner")
+  add(ranking(career, 'wo').find((id) => (career.players[id].earn[y]?.wo ?? 0) > 0), "Women's Series Order of Merit winner")
   add(ranking(career, 'ct')[0], 'Challenge Tour Order of Merit winner')
   add(ranking(career, 'dt')[0], 'Development Tour Order of Merit winner')
   const winsBy = (key) => {
@@ -164,13 +188,15 @@ export function worldsQualifiers(career) {
   oom.slice(0, 40).forEach((id, i) => out.push({ id, why: `#${i + 1} on the Order of Merit`, seed: i < 32 ? i + 1 : null }))
   const pt = ranking(career, 'pt').filter((id) => !has(id)).slice(0, 40)
   pt.forEach((id, i) => out.push({ id, why: `Pro Tour Order of Merit qualifier`, ptSeed: i < 24 }))
-  for (const key of ['ct', 'dt']) {
+  const wwm = career.honours.find((h) => h.key === 'womensMatchplay' && h.year === career.year)
+  if (wwm && !has(wwm.winner)) out.push({ id: wwm.winner, why: "Women's World Matchplay winner" })
+  for (const key of ['ct', 'dt', 'wo']) {
     let n = 0
     for (const id of ranking(career, key)) {
       if (n >= 3) break
       if (has(id)) continue
       if ((career.players[id].earn[career.year]?.[key] ?? 0) <= 0) break
-      out.push({ id, why: `Top 3 on the ${key === 'ct' ? 'Challenge' : 'Development'} Tour` })
+      out.push({ id, why: `Top 3 on the ${{ ct: 'Challenge Tour', dt: 'Development Tour', wo: "Women's Series" }[key]}` })
       n++
     }
   }
@@ -314,6 +340,25 @@ export function buildField(career, event, userIn, rng = Math.random) {
       locals = [...locals, ...shuffle(ai(nonCard), rng)].filter((id, i, a) => a.indexOf(id) === i).slice(0, 8)
       if (userIn && !event.userSeed) locals = [...locals.slice(0, 7), 'user']
       return { entrants: [...invited, ...locals] }
+    }
+    case 'women': {
+      const pool = ai(ranking(career, 'wo')).filter((id) => !isPro(career, id) || (rankOf(oom, id) ?? 999) > 64)
+      const field = shuffle(pool, rng).slice(0, comp.size - (userIn ? 1 : 0))
+      return { entrants: userIn ? ['user', ...field] : field }
+    }
+    case 'womensMatchplay':
+      return { entrants: mine(ranking(career, 'wo')).slice(0, 8) }
+    case 'seniorsWorlds':
+    case 'seniorsMasters':
+    case 'seniorsMatchplay': {
+      const eligible = ranking(career, 'sn')
+      const n = comp.seniorsField ?? comp.size
+      // Ranked seniors first, then the best of the rest (by standard) as invitations and qualifiers.
+      const ranked = eligible.filter((id) => (career.players[id].earn[career.year]?.sn ?? career.players[id].earn[career.year - 1]?.sn ?? 0) > 0)
+      const rest = eligible.filter((id) => !ranked.includes(id)).sort((a, b) => (career.players[b].rating ?? 0) - (career.players[a].rating ?? 0))
+      let list = [...ranked, ...rest].filter((id) => id !== 'user').slice(0, n)
+      if (userIn) list = [...list.slice(0, n - 1), 'user']
+      return { entrants: list }
     }
     case 'wsfinals': {
       const f = wsFinalsField(career)

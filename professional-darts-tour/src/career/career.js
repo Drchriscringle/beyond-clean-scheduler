@@ -1,5 +1,5 @@
 // Career progression. Functions mutate the career passed in; the UI clones first.
-import { COMPETITIONS, QSCHOOL_CARDS, QSCHOOL_FEE } from './data/competitions.js'
+import { BIG_FISH_BONUS, COMPETITIONS, NINE_DART_BONUS, QSCHOOL_CARDS, QSCHOOL_FEE } from './data/competitions.js'
 import { seasonSchedule } from './data/schedule.js'
 import { opponentAverage, simAverage, suggestedRange } from './difficulty.js'
 import { buildField, eligibility, isPro, plTable } from './entry.js'
@@ -27,7 +27,7 @@ export function newCareer(opts, rng = Math.random) {
   const players = generatePools(year, rng)
   players.user = {
     id: 'user', name: opts.name || 'Player One', nickname: opts.nickname || '', nation: opts.nation || 'ENG',
-    age: Number(opts.age) || 25, rating: null, tour: 'challenge', cardExpiry: null, earn: {}, titles: [],
+    age: Number(opts.age) || 25, gender: opts.gender === 'f' ? 'f' : 'm', walkOn: opts.walkOn || '', rating: null, tour: 'challenge', cardExpiry: null, earn: {}, titles: [],
   }
   const career = {
     version: 2,
@@ -46,7 +46,8 @@ export function newCareer(opts, rng = Math.random) {
       },
       trackDoubles: opts.trackDoubles ?? true,
     },
-    settings: { matchLength: opts.matchLength ?? 'quick', caller: opts.caller ?? true, autoEnter: false },
+    settings: { matchLength: opts.matchLength ?? 'quick', caller: opts.caller ?? true, autoEnter: false, crowd: true, walkOns: true, voice: false, bigKeys: false, leftHanded: false },
+    seenTutorial: false,
     entries: {},
     reserveCalls: {},
     inbox: [],
@@ -94,7 +95,7 @@ function startSeason(career, rng) {
   const user = career.players.user
   const school = UK_QSCHOOL_NATIONS.includes(user.nation) ? 'UK' : 'EU'
   const exempt = (career.lastSeason.lostCards ?? []).includes('user') || (career.lastSeason.ct ?? []).slice(0, 16).includes('user') || (career.lastSeason.dt ?? []).slice(0, 16).includes('user')
-  const free = (career.lastSeason.ct ?? []).slice(0, 16).includes('user') || (career.lastSeason.dt ?? []).slice(0, 16).includes('user')
+  const free = (career.lastSeason.ct ?? []).slice(0, 16).includes('user') || (career.lastSeason.dt ?? []).slice(0, 16).includes('user') || (career.lastSeason.wo ?? []).includes('user')
   career.qschool = { year: y, school, registered: user.tour === 'pro' ? false : null, exempt, free, userStage: null, done: false, finalField: [], firstPoints: {}, finalPoints: {}, cardWinners: [], reserveList: career.qschool?.reserveList ?? [] }
   if (user.tour !== 'pro') {
     const fee = free ? 0 : QSCHOOL_FEE[school]
@@ -103,7 +104,7 @@ function startSeason(career, rng) {
       key: `qs-${y}`,
       date: `${y}-01-02`,
       subject: `${school === 'UK' ? 'UK' : 'European'} Q-School ${y}: registration`,
-      body: `${school === 'UK' ? 'UK Q-School is at Arena MK, Milton Keynes' : 'European Q-School is at Wunderland Kalkar'}: First Stage 5–7 January, Final Stage 8–11 January. Entry fee: ${fee ? money(fee) : 'free (top 16 on last season’s Challenge/Development Tour)'}. ${exempt ? 'You are exempt to the Final Stage.' : 'You start in the First Stage.'} Both finalists on each Final Stage day win a two-year Tour Card, and the rest of the ${QSCHOOL_CARDS[school]} cards go to the top of the Q-School Order of Merit. Entering Q-School also makes you a Challenge Tour member for the year.`,
+      body: `${school === 'UK' ? 'UK Q-School is at Arena MK, Milton Keynes' : 'European Q-School is at Wunderland Kalkar'}: First Stage 5–7 January, Final Stage 8–11 January. Entry fee: ${fee ? money(fee) : 'free (thanks to your ranking on last season’s Challenge, Development or Women’s Series tour)'}. ${exempt ? 'You are exempt to the Final Stage.' : 'You start in the First Stage.'} Both finalists on each Final Stage day win a two-year Tour Card, and the rest of the ${QSCHOOL_CARDS[school]} cards go to the top of the Q-School Order of Merit. Entering Q-School also makes you a Challenge Tour member for the year.`,
       actions: [{ label: `Register${fee ? ` (${money(fee)})` : ''}`, action: 'registerQschool' }, { label: 'Skip this year', action: 'skipQschool' }],
     })
   }
@@ -411,6 +412,7 @@ function qualifierOpponents(career, event, q, rng) {
   else if (q.name.includes('Tour Card') || q.name.includes('PDPA')) pool = cards.slice(30)
   else if (q.name.includes('Host')) pool = nonCard.filter((id) => career.players[id].nation === event.country)
   else if (q.name.includes('Local') || q.name.includes('Associate')) pool = nonCard.filter((id) => career.players[id].nation === career.players.user.nation)
+  else if (q.name.includes('Seniors')) pool = nonCard.filter((id) => career.players[id].age >= 45)
   else pool = nonCard
   if (pool.length < q.wins) pool = [...pool, ...shuffle(nonCard, rng)]
   // Opponents get a little stronger each match.
@@ -600,6 +602,7 @@ export function submitUserResult(career, result, rng = Math.random) {
   const task = nextUserTask(career)
   const stage = taskStage(career, task)
   recordUserStats(career, result, task.opponent, stage)
+  if (!result.simulated && result.userStats) payBonuses(career, event, result.userStats)
   a.userLog.push({ stage, opponent: task.opponent, userWon: result.userWon, score: result.score, userAvg: result.userAvg, oppAvg: result.oppAvg, simulated: !!result.simulated, sets: !!a.live?.format?.sets || !!taskFormat(career, task).sets })
   a.live = null
   if (task.kind === 'qualifier') {
@@ -637,6 +640,31 @@ export function simulateUntilUserMatch(career, rng = Math.random) {
     if (task.kind === 'round' || task.kind === 'qualifier') return
     resolveRound(a.tournament, playFn(career, event, null, rng), rng)
   }
+}
+
+// Nine-dart and 170 bonuses for what you hit on your own board.
+function payBonuses(career, event, st) {
+  const a = career.active
+  const date = dateStr(career, event)
+  const nines = (st.legDarts ?? []).filter((d) => d === 9).length
+  if (nines) {
+    const each = Math.round((NINE_DART_BONUS[event.tier] * (career.prizeScale ?? 1)) / 500) * 500
+    const amount = each * nines
+    addEarnings(career.players.user, career.year, [], amount)
+    ledger(career, amount, `Nine-dart bonus: ${event.name}`, date)
+    a.nineDarter = (a.nineDarter ?? 0) + nines
+    career.records.nineDarters = [...(career.records.nineDarters ?? []), { event: event.name, year: career.year }]
+    sendMail(career, { from: 'office', date, subject: 'PERFECTION! Nine-dart bonus', body: `Congratulations on your nine-dart finish at the ${event.name}. A bonus of ${money(amount)} has been paid into your account.` })
+    news(career, `NINE-DARTER! ${career.players.user.name} hits the perfect leg at the ${event.name}.`, event)
+  }
+  if (st.bigFish) {
+    const amount = Math.round((BIG_FISH_BONUS * (career.prizeScale ?? 1)) / 50) * 50 * st.bigFish
+    addEarnings(career.players.user, career.year, [], amount)
+    ledger(career, amount, `Big Fish (170) bonus: ${event.name}`, date)
+    a.bigFish = (a.bigFish ?? 0) + st.bigFish
+    sendMail(career, { from: 'office', date, subject: 'The Big Fish!', body: `You landed the 170 checkout at the ${event.name}: ${money(amount)} bonus paid.` })
+  }
+  if (nines || st.bigFish) touch(career)
 }
 
 // ---------- prizes and wrap-up ----------
@@ -795,6 +823,8 @@ function sendNewspaper(career, event, { t, inDraw, userSide, resultText, userPri
     best180s: played.length && a.statsBefore ? career.stats.s180 - a.statsBefore.s180 : 0,
     highCheckout: played.length && a.statsBefore && career.stats.highCheckout > a.statsBefore.high ? career.stats.highCheckout : 0,
     otherNews: others,
+    nineDarter: a.nineDarter ?? 0,
+    bigFish: a.bigFish ?? 0,
     date: dateStr(career, event),
   }, rng)
   sendMail(career, { from: PAPER, subject: `📰 ${article.headline}`, body: `${article.subhead}.\n\n${article.body.join('\n\n')}`, article, date: dateStr(career, event) })
@@ -1058,7 +1088,7 @@ export function endSeason(career, rng = Math.random) {
     sendMail(career, { from: 'office', date: `${y}-12-31`, subject: user.tour === 'pro' ? `Tour Card status for ${y + 1}` : 'Your Tour Card', body: summary.outcome })
   }
 
-  career.lastSeason = { ct: ct.filter((id) => career.players[id].tour !== 'pro').slice(0, 16), dt: dt.filter((id) => career.players[id].tour !== 'pro').slice(0, 16), lostCards }
+  career.lastSeason = { ct: ct.filter((id) => career.players[id].tour !== 'pro').slice(0, 16), dt: dt.filter((id) => career.players[id].tour !== 'pro').slice(0, 16), wo: ranking(career, 'wo').filter((id) => (career.players[id].earn[y]?.wo ?? 0) > 0).slice(0, 8), lostCards }
   const top = Object.values(career.players).map((p) => [p, p.earn[y]?.total ?? 0]).sort((a, b) => b[1] - a[1]).slice(0, 3)
   news(career, `Prize money ${y}: ${top.map(([p, v]) => `${p.name} ${money(v)}`).join(', ')} top the season's earnings.`)
   news(career, `SEASON ${y} REVIEW: ${summary.outcome}`)

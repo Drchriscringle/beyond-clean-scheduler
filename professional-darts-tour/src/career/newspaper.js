@@ -84,6 +84,15 @@ export function buildArticle(career, event, data, rng = Math.random) {
     headline = giant ? pick([`GIANT-KILLER ${SUR}!`, `${SUR} TOPPLES A TOP SEED`], rng) : pick([`${SUR} WINS ${wins.length}, THEN FALLS`, `MIXED DAY FOR ${SUR}`, `${SUR} RUN HALTED`], rng)
     subhead = `${data.resultText} at the ${event.name}`
   }
+  if (data.nineDarter) {
+    extra = true
+    kicker = 'NINE-DART FINISH'
+    headline = pick([`PERFECTION! ${SUR} HITS A NINE-DARTER`, `NINE-DART ${SUR} STUNS ${place.toUpperCase()}`, `PERFECT LEG FOR ${SUR}!`], rng)
+    subhead = `The rarest feat in darts at the ${event.name}. ${data.resultText}.`
+  } else if (data.bigFish && tone !== 'joy') {
+    kicker = 'THE BIG FISH'
+    headline = pick([`${SUR} LANDS THE BIG FISH`, `170! ${SUR} HOOKS THE MAXIMUM CHECKOUT`], rng)
+  }
   if (event.key === 'premier') {
     kicker = 'PREMIER LEAGUE'
     subhead = `${event.name}: ${data.resultText.toLowerCase()}`
@@ -101,6 +110,8 @@ export function buildArticle(career, event, data, rng = Math.random) {
   }[tone]
   body.push(lead)
 
+  if (data.nineDarter) body.push(`The crowd rose as ${name} completed a nine-dart leg${data.nineDarter > 1 ? ` — ${data.nineDarter} of them` : ''}: 180, 180 and a finish in three darts.`)
+  if (data.bigFish) body.push(`The highlight: a 170 checkout, T20, T20, bull, to a huge roar.`)
   if (log.length) {
     const path = log.map((m) => `${m.userWon ? 'beat' : 'lost to'} ${oppName(m.opponent)} ${scoreText(m)} (${m.stage.replace(/,.*/, '')})`)
     body.push(`The route: ${path.join('; ')}.`)

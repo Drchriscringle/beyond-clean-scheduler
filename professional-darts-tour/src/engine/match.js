@@ -73,6 +73,8 @@ export function applyVisit(state, visit) {
   if (visit.checkout && remaining === 0) {
     st.checkouts++
     st.highCheckout = Math.max(st.highCheckout, scored)
+    if (scored >= 100) st.tonPlusOuts = (st.tonPlusOuts ?? 0) + 1
+    if (scored === 170) st.bigFish = (st.bigFish ?? 0) + 1
     st.legDarts.push(s.legDarts[p])
     if (visit.double) st.doubles[visit.double] = (st.doubles[visit.double] ?? 0) + 1
     const score = { legs: s.legs, sets: s.sets }

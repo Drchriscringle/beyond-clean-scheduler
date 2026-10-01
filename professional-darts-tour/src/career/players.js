@@ -47,6 +47,17 @@ export const NATIONS = {
 }
 
 export const NATION_CODES = Object.keys(NATIONS)
+
+// First names for the women's pool (nations not listed borrow from a neighbour).
+const FEMALE_FIRST = {
+  ENG: 'Rachel Amy Jodie Natalie Laura Kirsty Sophie Emma Hannah Gemma Chloe Stacey Paige Leanne',
+  SCO: 'Kirsty Eilidh Morven Shona', WAL: 'Rhian Cerys Seren Bethan', NIR: 'Aoife Siobhan Niamh', IRL: 'Aoife Sinead Grainne Roisin',
+  NED: 'Lotte Anouk Sanne Fenna Iris', BEL: 'Marieke Lien Elke', GER: 'Irina Lena Svenja Katrin', AUS: 'Tori Kyla Jessica',
+  JPN: 'Yuki Haruka Sayaka Aoi', POL: 'Karolina Agata', SWE: 'Vicky Linnea Maja', DEN: 'Mette Freja', USA: 'Paula Jess Kelly',
+  CAN: 'Darlene Brianne', ESP: 'Lucia Marta', PHI: 'Lovely Mae', NZL: 'Wendy Tash', RSA: 'Charlene Mandy', HUN: 'Veronika Petra',
+}
+const FEMALE_FALLBACK = 'Anna Maria Sara Elena Nina Laura Julia Eva'.split(' ')
+const FEMALE_WEIGHT = { ENG: 30, NED: 10, GER: 6, SCO: 5, WAL: 4, IRL: 4, AUS: 5, JPN: 6, BEL: 3, POL: 2, SWE: 3, DEN: 2, USA: 3, CAN: 3, PHI: 2, NZL: 2, RSA: 2, HUN: 2, ESP: 2, NIR: 2 }
 export const UK_QSCHOOL_NATIONS = ['ENG', 'SCO', 'WAL', 'NIR', 'IRL']
 
 export function flag(nation) {
@@ -70,17 +81,25 @@ function pickNation(rng) {
   return 'ENG'
 }
 
-export function generatePlayer(id, { rating, tour, age, nation }, rng = Math.random, used = new Set()) {
+function pickFemaleNation(rng) {
+  const entries = Object.entries(FEMALE_WEIGHT)
+  let r = rng() * entries.reduce((t, [, w]) => t + w, 0)
+  for (const [code, w] of entries) if ((r -= w) < 0) return code
+  return 'ENG'
+}
+
+export function generatePlayer(id, { rating, tour, age, nation, gender = 'm' }, rng = Math.random, used = new Set()) {
   let name
-  const code = nation ?? pickNation(rng)
-  const [, , firsts, lasts] = NATIONS[code]
+  const code = nation ?? (gender === 'f' ? pickFemaleNation(rng) : pickNation(rng))
+  const [, , maleFirsts, lasts] = NATIONS[code]
+  const firsts = gender === 'f' ? (FEMALE_FIRST[code] ? words(FEMALE_FIRST[code]) : FEMALE_FALLBACK) : words(maleFirsts)
   for (let tries = 0; tries < 40; tries++) {
-    name = `${pick(words(firsts), rng)} ${pick(words(lasts), rng)}`
+    name = `${pick(firsts, rng)} ${pick(words(lasts), rng)}`
     if (!used.has(name)) break
   }
   used.add(name)
   const nickname = `${pick(NICK_A, rng)} ${pick(NICK_B, rng)}`
-  return { id, name, nickname, nation: code, age, rating: Math.round(rating * 10) / 10, tour, cardExpiry: null, earn: {}, titles: [] }
+  return { id, name, nickname, nation: code, age, gender, rating: Math.round(rating * 10) / 10, tour, cardExpiry: null, earn: {}, titles: [] }
 }
 
 export const TOUR_CARDS = 128
@@ -118,8 +137,22 @@ export function generatePools(startYear, rng = Math.random) {
     players[p.id] = p
     n++
   }
+  // The women's circuit: players who mostly play the Women's Series (and can enter Q-School
+  // and the Challenge Tour like anyone else).
+  for (let i = 0; i < WOMEN_POOL; i++) {
+    const p = generatePlayer(`w${i}`, { rating: 89 - i * 0.36 + gaussian(rng) * 2, tour: 'challenge', age: randomAge(rng, 0.25), gender: 'f' }, rng, used)
+    players[p.id] = p
+  }
+  // Veterans for the Seniors Tour.
+  for (let i = 0; i < SENIOR_POOL; i++) {
+    const p = generatePlayer(`s${i}`, { rating: 80 - i * 0.6 + gaussian(rng) * 2.5, tour: 'challenge', age: 46 + Math.floor(rng() * 16) }, rng, used)
+    players[p.id] = p
+  }
   return players
 }
+
+export const WOMEN_POOL = 96
+export const SENIOR_POOL = 24
 
 // Yearly aging: youngsters improve, veterans fade, and the oldest retire and are replaced.
 export function agePlayers(career, rng = Math.random) {
@@ -130,7 +163,7 @@ export function agePlayers(career, rng = Math.random) {
     const trend = p.age <= 24 ? 1.2 : p.age <= 33 ? 0.2 : p.age <= 40 ? -0.4 : -1
     p.rating = Math.round(Math.max(52, Math.min(106, p.rating + trend + gaussian(rng) * 1.6)) * 10) / 10
     if (p.tour !== 'pro' && (p.age > 58 || (p.age > 45 && p.rating < 58))) {
-      const fresh = generatePlayer(p.id, { rating: 60 + gaussian(rng) * 5, tour: 'challenge', age: 17 + Math.floor(rng() * 4), nation: p.nation }, rng, used)
+      const fresh = generatePlayer(p.id, { rating: (p.gender === 'f' ? 56 : 60) + gaussian(rng) * 5, tour: 'challenge', age: 17 + Math.floor(rng() * 4), nation: p.gender === 'f' ? null : p.nation, gender: p.gender ?? 'm' }, rng, used)
       career.players[p.id] = fresh
       career.retired = (career.retired ?? 0) + 1
     }
