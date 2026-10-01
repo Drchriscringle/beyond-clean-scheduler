@@ -1,5 +1,6 @@
 import DifficultyPicker from './DifficultyPicker.jsx'
 import BackupPanel from './BackupPanel.jsx'
+import NumberInput from './NumberInput.jsx'
 import { setStoreNamePreview, STORE_BUILD, storeNames } from '../brand.js'
 import { ANNOUNCERS, pickAnnouncer, speakParts } from '../caller.js'
 import { MATCH_LENGTHS } from '../career/formats.js'
@@ -22,7 +23,7 @@ export default function SettingsView({ career, update, onDelete, onRestore }) {
         </label>
         <label>
           Your 3-dart average (used when your matches are auto-simulated)
-          <input type="number" min="15" max="120" step="0.5" value={career.user.avg} onChange={(e) => set((c) => { c.user.avg = Number(e.target.value) || c.user.avg })} />
+          <NumberInput min={15} max={120} decimals value={career.user.avg} onChange={(v) => set((c) => { c.user.avg = v })} />
         </label>
         <label className="check"><input type="checkbox" checked={career.user.autoAdjust} onChange={(e) => set((c) => { c.user.autoAdjust = e.target.checked })} /> Update my average from matches I play</label>
         <label className="check"><input type="checkbox" checked={career.user.trackDoubles} onChange={(e) => set((c) => { c.user.trackDoubles = e.target.checked })} /> Ask for darts at a double (checkout %)</label>

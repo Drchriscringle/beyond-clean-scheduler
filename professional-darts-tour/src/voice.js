@@ -40,30 +40,68 @@ export function voiceAvailable() {
   return typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 }
 
-// Listen once; resolves with the list of things it might have heard.
-export async function listen() {
-  if (Capacitor.isNativePlatform()) {
-    const perm = await SpeechRecognition.requestPermissions()
-    if (perm.speechRecognition !== 'granted') throw new Error('Microphone permission is needed for voice scoring')
-    const res = await SpeechRecognition.start({ language: 'en-GB', maxResults: 5, partialResults: false, popup: false })
-    return res?.matches ?? []
-  }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-  if (!SR) throw new Error('Voice scoring is not supported in this browser')
-  return new Promise((resolve, reject) => {
-    const r = new SR()
+const LISTEN_TIMEOUT = 7000
+
+// Listen once. Returns { promise, cancel }: the promise resolves with what might have been
+// heard, or rejects with a readable message. It always settles: after a few seconds of
+// silence (or a browser that never answers) it gives up, and cancel() stops it straight away.
+export function listen() {
+  let settle = null
+  let stop = () => {}
+  const promise = new Promise((resolve, reject) => {
+    let done = false
+    const finish = (fn, value) => {
+      if (done) return
+      done = true
+      clearTimeout(timer)
+      try { stop() } catch { /* already stopped */ }
+      fn(value)
+    }
+    settle = { resolve: (v) => finish(resolve, v), reject: (e) => finish(reject, e) }
+    const timer = setTimeout(() => settle.reject(new Error("Didn't catch that. Tap 🎤 to try again, or use the keypad.")), LISTEN_TIMEOUT)
+
+    if (Capacitor.isNativePlatform()) {
+      stop = () => SpeechRecognition.stop().catch(() => {})
+      SpeechRecognition.requestPermissions()
+        .then((perm) => {
+          if (perm.speechRecognition !== 'granted') throw new Error('Microphone permission is needed for voice scoring')
+          return SpeechRecognition.start({ language: 'en-GB', maxResults: 5, partialResults: false, popup: false })
+        })
+        .then((res) => settle.resolve(res?.matches ?? []))
+        .catch((e) => settle.reject(new Error(e?.message || "Didn't catch that")))
+      return
+    }
+    const SR = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)
+    if (!SR) {
+      settle.reject(new Error('Voice scoring is not supported in this browser. Use the keypad.'))
+      return
+    }
+    let r
+    try {
+      r = new SR()
+    } catch {
+      settle.reject(new Error('Voice scoring is not available here. Try Safari or Chrome directly, or use the keypad.'))
+      return
+    }
+    stop = () => r.abort()
     r.lang = 'en-GB'
     r.maxAlternatives = 5
     r.interimResults = false
-    let done = false
-    r.onresult = (e) => {
-      done = true
-      resolve(Array.from(e.results[0]).map((x) => x.transcript))
+    r.continuous = false
+    r.onresult = (e) => settle.resolve(Array.from(e.results[0]).map((x) => x.transcript))
+    r.onerror = (e) => settle.reject(new Error(
+      e.error === 'not-allowed' || e.error === 'service-not-allowed'
+        ? 'Microphone or speech recognition is blocked. Allow it in your browser settings (on iPhone: Settings → Siri & Dictation), or use the keypad.'
+        : e.error === 'aborted' ? 'cancelled' : "Didn't catch that. Tap 🎤 to try again, or use the keypad.",
+    ))
+    r.onend = () => settle.reject(new Error("Didn't catch that. Tap 🎤 to try again, or use the keypad."))
+    try {
+      r.start()
+    } catch {
+      settle.reject(new Error('Voice scoring is not available here. Use the keypad.'))
     }
-    r.onerror = (e) => { if (!done) reject(new Error(e.error === 'not-allowed' ? 'Microphone permission is needed for voice scoring' : "Didn't catch that")) }
-    r.onend = () => { if (!done) reject(new Error("Didn't catch that")) }
-    r.start()
   })
+  return { promise, cancel: () => settle?.reject(new Error('cancelled')) }
 }
 
 export function heard(alternatives) {

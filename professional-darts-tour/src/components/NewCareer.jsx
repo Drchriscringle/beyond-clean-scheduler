@@ -3,6 +3,7 @@ import titleArt from '../assets-title.jpg'
 import { SKILL_PRESETS, suggestedRange } from '../career/difficulty.js'
 import DifficultyPicker from './DifficultyPicker.jsx'
 import { LoadSaveButton } from './BackupPanel.jsx'
+import NumberInput from './NumberInput.jsx'
 import { MATCH_LENGTHS } from '../career/formats.js'
 import { NATIONS } from '../career/players.js'
 
@@ -40,7 +41,7 @@ export default function NewCareer({ onStart, onPractice, onRestore }) {
               {Object.entries(NATIONS).sort((a, b) => a[1][0].localeCompare(b[1][0])).map(([code, n]) => <option key={code} value={code}>{n[1]} {n[0]}</option>)}
             </select>
           </label>
-          <label>Age<input type="number" min="16" max="70" value={age} onChange={(e) => setAge(Number(e.target.value))} /></label>
+          <label>Age<NumberInput min={16} max={80} value={age} onChange={setAge} /></label>
         </div>
         <label>
           Player
@@ -56,7 +57,7 @@ export default function NewCareer({ onStart, onPractice, onRestore }) {
           <div className="preset-row">
             {SKILL_PRESETS.map((p) => <button key={p.label} type="button" className={`chip ${avg === p.avg ? 'on' : ''}`} onClick={() => pickAvg(p.avg)}>{p.label} ~{p.avg}</button>)}
           </div>
-          <input type="number" min="15" max="120" value={avg} onChange={(e) => pickAvg(Number(e.target.value))} />
+          <NumberInput min={15} max={120} value={avg} onChange={pickAvg} />
           <small>Used when you auto-sim a match, and updated as you play.</small>
         </label>
         <div>

@@ -419,3 +419,9 @@ input:focus, select:focus { outline: none; border-color: var(--red); box-shadow:
 .status .player-name, .status .pill { margin-right: 84px; }
 .status .player-name { line-height: 1.2; }
 .walk-mc { color: var(--muted); font-size: 13px; margin: -8px 0 16px; letter-spacing: 0.05em; }
+.bull-up { text-align: left; }
+.bull-row { display: flex; align-items: center; gap: 12px; }
+.bull-result { font-family: Oswald, sans-serif; font-size: 22px; color: #fff; }
+.bull-win { font-family: Oswald, sans-serif; font-size: 22px; color: var(--gold); text-align: center; }
+.match { padding-bottom: 90px; }
+.match-pre { padding-bottom: 90px; }
