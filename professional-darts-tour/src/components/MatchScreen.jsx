@@ -171,25 +171,27 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     const d = throwDart('DB', oppSigma * 1.15)
     const mm = Math.round(Math.hypot(d.x, d.y))
     const rank = bullRank(d)
-    setBullUp({ oppDart: d, oppMm: mm, oppRank: rank, outcome: null })
+    setBullUp({ oppDart: d, oppMm: mm, oppRank: rank, outcome: null, mine: null, view: mm > 50 ? 200 : 70 })
     speakParts([{ text: `${opp.name.split(' ')[0]}, for the bull.`, pitch: 0.95, rate: 0.95 }, { text: rank === 2 ? 'Bullseye!' : rank === 1 ? 'Twenty-five.' : `${mm} millimetres.`, pitch: rank === 2 ? 1.25 : 1, rate: 0.85 }], callerOn)
   }
-  // you: 2 = bullseye, 1 = outer bull, 'closer' / 'further' when both are outside the 25
-  function myBull(you) {
-    const o = bullUp.oppRank
-    let winner
-    if (you === 'closer') winner = 0
-    else if (you === 'further' || you === 'miss') winner = 1
-    else if (you > o) winner = 0
-    else if (you < o) winner = 1
-    else winner = null // both in the same bull: throw again
-    if (winner === null) {
+  // You tap the board where your bull-up dart landed (tap again to move it).
+  function placeMyBull(x, y) {
+    if (!bullUp || (bullUp.outcome && bullUp.outcome !== 'placing')) return
+    const mm = Math.round(Math.hypot(x, y))
+    setBullUp({ ...bullUp, mine: { x, y, mm, rank: mm <= 6.35 ? 2 : mm <= 15.9 ? 1 : 0 }, outcome: 'placing' })
+  }
+
+  // Closest to the centre throws first; both in the bullseye means throw again.
+  function confirmBull() {
+    const me1 = bullUp.mine
+    if (me1.rank === 2 && bullUp.oppRank === 2) {
       setBullUp({ ...bullUp, outcome: 'again' })
       say('Both in the bull. Throw again!', callerOn, 'excited')
       return
     }
+    const winner = me1.mm < bullUp.oppMm || (me1.mm === bullUp.oppMm && me1.rank > bullUp.oppRank) ? 0 : 1
     setBullUp({ ...bullUp, outcome: winner === 0 ? 'you' : 'them', winner })
-    say(winner === 0 ? `${me.name.split(' ')[0]} wins the bull.` : `${opp.name.split(' ')[0]} wins the bull.`, callerOn)
+    say(winner === 0 ? `${me.name.split(' ')[0]} wins the bull.` : `${opp.name} wins the bull.`, callerOn)
   }
 
   function requestStart(startingPlayer) {
@@ -419,31 +421,33 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
         ) : (
           <div className="card bull-up">
             <div className="card-label">Bull-up</div>
-            <div className="bull-row">
-              <Dartboard darts={[bullUp.oppDart]} size={150} />
-              <div>
-                <div className="small-text muted">{opp.name}'s dart</div>
-                <div className="bull-result">{bullUp.oppRank === 2 ? 'BULLSEYE!' : bullUp.oppRank === 1 ? 'Outer bull (25)' : `${bullUp.oppMm}mm from the bull`}</div>
-              </div>
+            <div className="bull-board">
+              <Dartboard
+                darts={[{ ...bullUp.oppDart, color: '#ff3b30', tag: '' }, ...(bullUp.mine ? [{ ...bullUp.mine, color: '#ffffff', tag: '' }] : [])]}
+                size={Math.min(330, typeof window !== 'undefined' ? window.innerWidth - 64 : 300)}
+                view={bullUp.view}
+                onTap={!bullUp.outcome || bullUp.outcome === 'placing' ? placeMyBull : null}
+              />
             </div>
-            {!bullUp.outcome || bullUp.outcome === 'again' ? (
-              <>
-                <p className="hint">{bullUp.outcome === 'again' ? 'Both in the same bull: throw again!' : 'Now throw one dart at the bull on your board. Where did it land?'}</p>
-                {bullUp.outcome === 'again' ? (
-                  <button className="btn primary" onClick={throwForBull}>Throw again</button>
-                ) : (
-                  <div className="btn-row">
-                    <button className="btn" onClick={() => myBull(2)}>Bullseye</button>
-                    <button className="btn" onClick={() => myBull(1)}>Outer bull (25)</button>
-                    {bullUp.oppRank === 0 && <button className="btn" onClick={() => myBull('closer')}>Closer than {opp.name}</button>}
-                    {bullUp.oppRank === 0 ? <button className="btn" onClick={() => myBull('further')}>Further away</button> : <button className="btn" onClick={() => myBull(0)}>Outside the 25</button>}
-                  </div>
-                )}
-              </>
-            ) : (
+            <div className="bull-legend">
+              <span><i style={{ background: '#ff3b30' }} /> {opp.name}: {bullUp.oppRank === 2 ? 'BULLSEYE' : bullUp.oppRank === 1 ? `25 (${bullUp.oppMm}mm)` : `${bullUp.oppMm}mm`}</span>
+              <span><i style={{ background: '#fff' }} /> You: {bullUp.mine ? (bullUp.mine.rank === 2 ? 'BULLSEYE' : bullUp.mine.rank === 1 ? `25 (${bullUp.mine.mm}mm)` : `${bullUp.mine.mm}mm`) : '—'}</span>
+            </div>
+            <button className="btn ghost small" onClick={() => setBullUp({ ...bullUp, view: bullUp.view === 200 ? 70 : 200 })}>{bullUp.view === 200 ? '🔍 Zoom in on the bull' : 'Show the whole board'}</button>
+            {bullUp.outcome === 'you' || bullUp.outcome === 'them' ? (
               <>
                 <p className="bull-win">{bullUp.outcome === 'you' ? 'You win the bull! You throw first.' : `${opp.name} wins the bull and throws first.`}</p>
                 <button className="btn primary big" onClick={() => requestStart(bullUp.winner)}>Game on!</button>
+              </>
+            ) : bullUp.outcome === 'again' ? (
+              <>
+                <p className="hint">Both in the bullseye: throw again!</p>
+                <button className="btn primary" onClick={throwForBull}>Throw again</button>
+              </>
+            ) : (
+              <>
+                <p className="hint">{bullUp.mine ? 'Tap again to move it, or confirm.' : 'Throw one dart at the bull on your board, then tap where it landed.'}</p>
+                {bullUp.mine && <button className="btn primary big" onClick={confirmBull}>Confirm my dart</button>}
               </>
             )}
           </div>

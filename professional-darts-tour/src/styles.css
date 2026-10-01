@@ -425,3 +425,8 @@ input:focus, select:focus { outline: none; border-color: var(--red); box-shadow:
 .bull-win { font-family: Oswald, sans-serif; font-size: 22px; color: var(--gold); text-align: center; }
 .match { padding-bottom: 90px; }
 .match-pre { padding-bottom: 90px; }
+.board.tappable { cursor: crosshair; touch-action: manipulation; }
+.bull-board { display: flex; justify-content: center; }
+.bull-legend { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin: 6px 0; }
+.bull-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; border: 1px solid #000; vertical-align: middle; }
+.bull-board .board { max-width: 100%; height: auto; border-radius: 50%; box-shadow: 0 0 0 3px #000, 0 0 0 4px var(--line-2), 0 10px 30px rgba(0, 0, 0, 0.7); }
