@@ -21,3 +21,6 @@ ios/App/DerivedData
 ios/App/Podfile.lock
 **/xcuserdata/
 *.xcuserstate
+
+# Netlify local state
+.netlify
