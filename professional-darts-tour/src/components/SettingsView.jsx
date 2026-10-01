@@ -1,5 +1,6 @@
 import DifficultyPicker from './DifficultyPicker.jsx'
 import BackupPanel from './BackupPanel.jsx'
+import { ANNOUNCERS, pickAnnouncer, speakParts } from '../caller.js'
 import { MATCH_LENGTHS } from '../career/formats.js'
 
 export default function SettingsView({ career, update, onDelete, onRestore }) {
@@ -38,6 +39,14 @@ export default function SettingsView({ career, update, onDelete, onRestore }) {
         <label className="check"><input type="checkbox" checked={!!career.settings.voice} onChange={(e) => set((c) => { c.settings.voice = e.target.checked })} /> Hands-free voice scoring (listens automatically on your turn)</label>
         <label className="check"><input type="checkbox" checked={!!career.settings.bigKeys} onChange={(e) => set((c) => { c.settings.bigKeys = e.target.checked })} /> Big keypad</label>
         <label className="check"><input type="checkbox" checked={!!career.settings.leftHanded} onChange={(e) => set((c) => { c.settings.leftHanded = e.target.checked })} /> Left-handed layout</label>
+        <label>
+          Match MC (announcer)
+          <select value={career.settings.announcer ?? 'random'} onChange={(e) => set((c) => { c.settings.announcer = e.target.value })}>
+            <option value="random">Random each match</option>
+            {ANNOUNCERS.map((a) => <option key={a.id} value={a.id}>{a.name}: {a.blurb}</option>)}
+          </select>
+        </label>
+        <button className="btn small" type="button" onClick={() => { pickAnnouncer(career.settings.announcer ?? 'random'); speakParts([{ text: 'One hundred', pitch: 1, rate: 0.75 }, { text: 'and', pitch: 1.05, rate: 0.7 }, { text: 'eight-y!', pitch: 1.45, rate: 0.5 }]) }}>🔊 Hear a 180</button>
         <label className="check"><input type="checkbox" checked={career.settings.crowd !== false} onChange={(e) => set((c) => { c.settings.crowd = e.target.checked })} /> Crowd sounds</label>
         <label className="check"><input type="checkbox" checked={career.settings.walkOns !== false} onChange={(e) => set((c) => { c.settings.walkOns = e.target.checked })} /> Walk-ons at televised events</label>
       </div>

@@ -84,3 +84,15 @@ test('the caller gets more excited the bigger the score', async () => {
   assert.equal(scoreCall(0)[0].text, 'No score.')
 })
 
+
+test('five different MCs, picked at random unless a favourite is chosen', async () => {
+  const { ANNOUNCERS, pickAnnouncer } = await import('../src/caller.js')
+  assert.equal(ANNOUNCERS.length, 5)
+  const styles = new Set(ANNOUNCERS.map((a) => `${a.pitch}/${a.rate}/${a.excite}`))
+  assert.equal(styles.size, 5, 'every MC sounds different')
+  const rng = seededRng(3)
+  const seen = new Set()
+  for (let i = 0; i < 60; i++) seen.add(pickAnnouncer('random', rng).id)
+  assert.equal(seen.size, 5)
+  assert.equal(pickAnnouncer('kelly').name, 'Kelly Marsh')
+})

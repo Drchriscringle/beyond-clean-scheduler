@@ -418,3 +418,4 @@ input:focus, select:focus { outline: none; border-color: var(--red); box-shadow:
 .status-shirt .face { cursor: pointer; }
 .status .player-name, .status .pill { margin-right: 84px; }
 .status .player-name { line-height: 1.2; }
+.walk-mc { color: var(--muted); font-size: 13px; margin: -8px 0 16px; letter-spacing: 0.05em; }

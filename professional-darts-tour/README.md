@@ -124,7 +124,7 @@ in your inbox and the news each January.
 - **At the board**: say your score ("one hundred and forty", "ton eighty", "no score", "bust",
   "game shot") or turn on hands-free listening; enter your score or what you've got left; big
   keypad and left-handed layouts.
-- **The caller**: a British announcer voice where the phone has one, built from phrases so the excitement scales with the score: flat for a 26, lifted for a ton, rising for 140+, and a drawn-out "one hundred and… eighty!" for a maximum; "Game shot, and the leg…" for finishes.
+- **The caller**: five fictional MCs (Big Ron Bellamy, Johnny "The Voice" Kane, Steve Rowley, Bruce Dawson, Kelly Marsh), each with their own voice, pitch, pace, excitement and lines. A random one calls each match, or pick a favourite in Settings. Calls are built from phrases so the excitement scales with the score: flat for a 26, lifted for a ton, rising for 140+, and a drawn-out "one hundred and… eighty!" for a maximum; "Game shot, and the leg…" for finishes.
 - **Atmosphere**: walk-ons at televised events (your shirt, nickname and walk-on song, announced
   by the caller), synthesised crowd noise (arena, floor events, the pub), roars for 180s and big
   finishes, applause after legs, and celebrations for ton-plus finishes, the 170 "Big Fish" and

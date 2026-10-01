@@ -9,7 +9,7 @@ import { checkoutRoute, minDartsToFinish } from '../engine/checkout.js'
 import { applyVisit, createMatch, interpretEnteredScore, pairsThrower, threeDartAverage } from '../engine/match.js'
 import { formatLabel } from '../career/formats.js'
 import { flag } from '../career/players.js'
-import { callGameShot, callRequire, callScore, say, speakParts } from '../caller.js'
+import { callGameShot, callIntro, callRequire, callScore, pickAnnouncer, say, speakParts } from '../caller.js'
 import { applause, groan, roar, startAmbience, stopAmbience } from '../crowd.js'
 import { heard, listen, voiceAvailable } from '../voice.js'
 
@@ -32,7 +32,7 @@ function useWakeLock() {
 
 // setup: { me: {name, nation}, opp: {name, nickname, nation}, partner?: {name, avg}, oppNames?: [a, b],
 //          format, expectedAvg, actualAvg, stage }
-export default function MatchScreen({ setup, initialMatch, settings, onPersist, onExit }) {
+export default function MatchScreen({ setup, initialMatch, settings, onPersist, onExit, onAnnouncer }) {
   useWakeLock()
   const { me, opp, format } = setup
   const pairs = !!format.pairs
@@ -54,6 +54,12 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   const [heardText, setHeardText] = useState('')
   const history = useRef([])
   const crowdOn = settings.crowd !== false
+  // A different MC for each match (unless a favourite is chosen in Settings).
+  // A resumed match keeps its MC.
+  const [announcer] = useState(() => pickAnnouncer(setup.announcerId ?? settings.announcer ?? 'random'))
+  useEffect(() => {
+    if (announcer.id !== setup.announcerId) onAnnouncer?.(announcer.id)
+  }, [])
 
   // Background crowd for the whole match.
   useEffect(() => {
@@ -178,8 +184,9 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
 
   function startMatch(startingPlayer) {
     setWalkOn(null)
+    if (!walkOn) callIntro(callerOn)
     speakParts([
-      { text: `${startingPlayer === 0 ? me.name : opp.name} to throw first.`, pitch: 0.88, rate: 0.92 },
+      { text: `${startingPlayer === 0 ? me.name : opp.name} to throw first.`, pitch: 0.95, rate: 0.95 },
       { text: 'Game on!', pitch: 1.2, rate: 0.7 },
     ], callerOn)
     setMatch(createMatch({ format, startingPlayer }))
@@ -302,6 +309,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
         {me.nickname && <div className="walk-nick">“{me.nickname}”</div>}
         {setup.walkOnSong && <div className="walk-song">♪ {setup.walkOnSong} ♪</div>}
         <div className="walk-vs">v {opp.name}{opp.nickname ? ` “${opp.nickname}”` : ''}</div>
+        <div className="walk-mc">🎙 MC: {announcer.name}</div>
         <button className="btn primary big" onClick={(e) => { e.stopPropagation(); startMatch(walkOn.startingPlayer) }}>Game on!</button>
       </div>
     )
@@ -330,6 +338,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
         <p className="format">{formatLabel(format)} · 501 {format.doubleIn ? 'double in, ' : ''}double out</p>
         {format.doubleIn && <p className="hint">Double in: your score only starts counting from the first double you hit each leg.</p>}
         {pairs && <p className="hint">Pairs: you and {setup.partner.name} take alternate visits for your team.</p>}
+        <p className="hint">🎙 Your MC tonight: <b>{announcer.name}</b> · {announcer.blurb.toLowerCase()}</p>
         <p className="hint">Throw for the bull on your board, then pick who throws first.</p>
         <div className="btn-row">
           <button className="btn primary" onClick={() => requestStart(0)}>{pairs ? 'We throw first' : 'I throw first'}</button>
@@ -350,7 +359,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       {pop && <div key={pop.key} className={`score-pop t${pop.tier}`}>{pop.label}<span className="sub">{pop.sub}</span></div>}
       {pop?.tier === 3 && <div key={`f${pop.key}`} className="flash-180" />}
       <div className="match-head">
-        <span>{setup.stage}</span>
+        <span>{setup.stage} · 🎙 {announcer.name.replace(/ ".*" /, ' ')}</span>
         <span>{formatLabel(match.format)}</span>
       </div>
       <div className="scoreboard">

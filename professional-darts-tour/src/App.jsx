@@ -30,6 +30,7 @@ function liveSetup(career) {
     shirt: career.shirt ?? defaultShirt(career),
     sponsors: career.sponsors,
     face: career.face,
+    announcerId: live.announcer,
     oppFace: opp ? faceFor(opp) : null,
     walkOnShow: (event?.tier ?? 0) >= 2,
     eventName: event?.name,
@@ -40,7 +41,7 @@ function liveSetup(career) {
 
 function matchSettings(career) {
   const st = career?.settings ?? {}
-  return { caller: st.caller ?? true, crowd: st.crowd ?? true, walkOns: st.walkOns ?? true, voice: !!st.voice, bigKeys: !!st.bigKeys, leftHanded: !!st.leftHanded }
+  return { caller: st.caller ?? true, announcer: st.announcer ?? 'random', crowd: st.crowd ?? true, walkOns: st.walkOns ?? true, voice: !!st.voice, bigKeys: !!st.bigKeys, leftHanded: !!st.leftHanded }
 }
 
 export default function App() {
@@ -128,6 +129,7 @@ export default function App() {
         initialMatch={career.active.live.match}
         settings={{ ...matchSettings(career), trackDoubles: career.user.trackDoubles && !career.active.live.partner }}
         onPersist={(match) => update((c) => { if (c.active?.live) c.active.live.match = match })}
+        onAnnouncer={(id) => update((c) => { if (c.active?.live) c.active.live.announcer = id })}
         onExit={(result) => {
           if (result === 'pause') return setScreen('event')
           if (result === null) {
