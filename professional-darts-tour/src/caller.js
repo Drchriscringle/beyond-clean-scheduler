@@ -203,3 +203,11 @@ export function callRequire(firstName, remaining, enabled) {
 export function callIntro(enabled) {
   speakParts([{ text: current.intro, pitch: 1.1, rate: 0.85 }], enabled)
 }
+
+// Stop talking immediately (e.g. when a score is undone).
+export function stopSpeech() {
+  if (Capacitor.isNativePlatform()) {
+    nativeChain = Promise.resolve()
+    TextToSpeech.stop().catch(() => {})
+  } else if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
+}

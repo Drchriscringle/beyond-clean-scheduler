@@ -9,7 +9,7 @@ import { checkoutRoute, minDartsToFinish } from '../engine/checkout.js'
 import { applyVisit, createMatch, interpretEnteredScore, pairsThrower, threeDartAverage } from '../engine/match.js'
 import { formatLabel } from '../career/formats.js'
 import { flag } from '../career/players.js'
-import { callGameShot, callIntro, callRequire, callScore, pickAnnouncer, say, speakParts } from '../caller.js'
+import { callGameShot, callIntro, callRequire, callScore, pickAnnouncer, say, speakParts, stopSpeech } from '../caller.js'
 import { applause, groan, roar, startAmbience, stopAmbience } from '../crowd.js'
 import { heard, listen, voiceAvailable } from '../voice.js'
 
@@ -43,7 +43,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   const [pendingCheckout, setPendingCheckout] = useState(null)
   const [atDouble, setAtDouble] = useState(0)
   const [aiDarts, setAiDarts] = useState([])
-  const [aiThrowing, setAiThrowing] = useState(false)
+  const [, setAiThrowing] = useState(false)
   const [banner, setBanner] = useState('')
   const [celebration, setCelebration] = useState(null)
   const [pop, setPop] = useState(null)
@@ -55,6 +55,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   const [listening, setListening] = useState(false)
   const [heardText, setHeardText] = useState('')
   const history = useRef([])
+  const entered = useRef([]) // the score typed for each history step, for editing after Undo
   const crowdOn = settings.crowd !== false
   // A different MC for each match (unless a favourite is chosen in Settings).
   // A resumed match keeps its MC.
@@ -296,6 +297,11 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     return () => clearTimeout(t)
   }, [handsFree, myTurnNow, match?.visits.length, match?.legNumber])
 
+  // Keep the whole match on one screen: no scrolling between visits.
+  useEffect(() => {
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
+  }, [match?.turn, aiTurn])
+
   // Never leave the microphone open when the screen goes away.
   useEffect(() => () => listener.current?.cancel(), [])
 
@@ -322,6 +328,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     const res = interpretEnteredScore(remaining, score, dartsUsed ?? 3)
     if (res.error) return flash(res.error)
     history.current.push(match)
+    entered.current.push(res.scored || (res.bust ? '' : 0))
     const tracked = canTrack ? (res.checkout ? Math.max(1, atDouble) : atDouble) : 0
     const next = applyVisit(match, { ...res, double, dartsAtDouble: tracked })
     if (res.bust) { say('Bust.', callerOn, 'flat'); if (crowdOn) groan() }
@@ -338,6 +345,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   function bust() {
     if (!match || aiTurn || match.winner !== null) return
     history.current.push(match)
+    entered.current.push('')
     say('Bust.', callerOn, 'flat')
     setEntry('')
     setMatch(applyVisit(match, { scored: 0, bust: true, checkout: false, dartsThrown: 3, dartsAtDouble: canTrack ? atDouble : 0 }))
@@ -349,11 +357,20 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     setTimeout(() => setError(''), 2500)
   }
 
+  // Takes back your last score (and anything the opponent has thrown since), even while
+  // they're mid-throw, and puts the score back in the box so you can fix it.
   function undo() {
-    if (aiThrowing || !history.current.length) return
-    setMatch(history.current.pop())
+    if (!history.current.length) return
+    stopSpeech()
+    const prev = history.current.pop()
+    const was = entered.current.pop()
+    setAiThrowing(false)
     setAiDarts([])
     setBanner('')
+    setPendingCheckout(null)
+    setEntryMode('score')
+    setEntry(was ? String(was) : '')
+    setMatch(prev)
   }
 
   function result(conceded = false) {
@@ -485,15 +502,20 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
 
   const myTurn = !aiTurn && match.winner === null && match.turn === 0
   const route = myTurn && match.scores[0] <= 170 && (!format.doubleIn || match.opened[0]) ? checkoutRoute(match.scores[0]) : null
-  const last = match.visits.at(-1)
+
+  const lastAi = [...match.visits].reverse().find((v) => v.player === 1 || (pairs && v.player === 0 && v.thrower === 1))
+  const canUndo = history.current.length > 0
 
   return (
-    <div className={`screen match ${shake ? 'shake' : ''}`}>
+    <div className={`screen match compact ${shake ? 'shake' : ''}`}>
       {pop && <div key={pop.key} className={`score-pop t${pop.tier}`}>{pop.label}<span className="sub">{pop.sub}</span></div>}
       {pop?.tier === 3 && <div key={`f${pop.key}`} className="flash-180" />}
       <div className="match-head">
-        <span>{setup.stage} · 🎙 {announcer.name.replace(/ ".*" /, ' ')}</span>
-        <span>{formatLabel(match.format)}</span>
+        <span className="mh-stage">{setup.stage} · {formatLabel(match.format)}</span>
+        <span className="mh-actions">
+          <button className="icon-btn" onClick={() => onExit('pause')} aria-label="Pause">❚❚</button>
+          <button className="icon-btn danger" onClick={concede} aria-label="Concede">🏳</button>
+        </span>
       </div>
       <div className="scoreboard">
         {[0, 1].map((p) => {
@@ -502,7 +524,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
           return (
             <div key={p} className={`sb-side ${match.turn === p && match.winner === null ? 'active' : ''}`}>
               <div className="sb-name">
-                {!pairs && <Face face={p === 0 ? setup.face : setup.oppFace} shirt={p === 0 ? setup.shirt : { primary: '#2b2b30', secondary: '#111' }} size={26} />}
+                {!pairs && <Face face={p === 0 ? setup.face : setup.oppFace} shirt={p === 0 ? setup.shirt : { primary: '#2b2b30', secondary: '#111' }} size={22} />}
                 {match.legStarter === p && <span className="throw-dot" title="Started this leg">●</span>} {name}
               </div>
               <div className="sb-rem">{match.scores[p]}</div>
@@ -510,10 +532,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
                 {match.format.sets ? <span>Sets {match.sets[p]} · </span> : null}
                 Legs {match.legs[p]}
                 {format.doubleIn && !match.opened[p] ? <span className="muted"> · not in</span> : null}
-              </div>
-              <div className="sb-stats">
-                <span>Avg {threeDartAverage(st).toFixed(1)}</span>
-                <span>Last {match.lastVisit[p] ? (match.lastVisit[p].bust ? 'BUST' : match.lastVisit[p].scored) : '–'}</span>
+                <span className="muted"> · Avg {threeDartAverage(st).toFixed(1)}</span>
               </div>
               {p === 0 && route && <div className="sb-route">{route.join(' · ')}</div>}
             </div>
@@ -526,88 +545,83 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
 
       {match.winner !== null ? (
         <MatchSummary match={match} names={[pairs ? 'Your team' : me.name, opp.name]} onContinue={() => onExit(result())} />
+      ) : aiTurn ? (
+        // Their throw: the board takes the space the keypad uses on your turn.
+        <div className="ai-panel">
+          <div className="ai-panel-head">
+            <span>{throwerName} is at the oche</span>
+            <span className="bot-darts">{aiDarts.map((d) => d.label).join(' · ') || '…'}</span>
+          </div>
+          <Dartboard darts={aiDarts} size={Math.min(300, typeof window !== 'undefined' ? window.innerWidth - 80 : 280)} />
+          {canUndo && (
+            <button className="btn undo-big" onClick={undo}>↩ Undo my last score</button>
+          )}
+        </div>
+      ) : pendingCheckout ? (
+        <div className="input-area">
+          <p className="hint">Checked out {pendingCheckout.score}! Which double, and how many darts?</p>
+          <div className="doubles-grid">
+            {DOUBLES.map((d) => (
+              <button key={d} className={`chip small ${pendingCheckout.double === d ? 'on' : ''}`} onClick={() => setPendingCheckout({ ...pendingCheckout, double: d })}>{d === 'DB' ? 'Bull' : d}</button>
+            ))}
+          </div>
+          <div className="btn-row">
+            {[1, 2, 3].filter((d) => d >= pendingCheckout.min).map((d) => (
+              <button key={d} className="btn primary" onClick={() => submit(pendingCheckout.score, d, pendingCheckout.double)}>{d} dart{d > 1 ? 's' : ''}</button>
+            ))}
+            <button className="btn ghost" onClick={() => setPendingCheckout(null)}>Cancel</button>
+          </div>
+        </div>
       ) : (
-        <>
-          <div className="bot-area">
-            <Dartboard darts={aiDarts} size={210} />
-            <div className="bot-readout">
-              <div className="bot-label">{aiThrowing ? throwerName : last && (last.player === 1 || last.thrower === 1) ? (last.player === 1 ? (pairs ? setup.oppNames[last.thrower] : opp.name) : setup.partner?.name) : 'Virtual thrower'}</div>
-              {aiThrowing ? (
-                <div className="bot-darts">{aiDarts.map((d) => d.label).join(' · ') || 'Stepping up…'}</div>
-              ) : last?.darts ? (
-                <div className="bot-darts">{last.darts.join(' · ')} = <b>{last.bust ? 'BUST' : last.scored}</b></div>
-              ) : (
-                <div className="bot-darts muted">Waiting</div>
-              )}
-            </div>
+        <div className="input-area">
+          <div className="last-visit">
+            {lastAi?.darts ? <>{lastAi.player === 1 ? opp.name.split(' ')[0] : setup.partner?.name.split(' ')[0]}: {lastAi.darts.join(' · ')} = <b>{lastAi.bust ? 'BUST' : lastAi.scored}</b></> : <span className="muted">Your throw</span>}
           </div>
-
-          {myTurn && !pendingCheckout && (
-            <div className="input-area">
-              <div className="entry-tools">
-                <div className="seg">
-                  <button className={`chip small ${entryMode === 'score' ? 'on' : ''}`} onClick={() => setEntryMode('score')}>Score</button>
-                  <button className={`chip small ${entryMode === 'left' ? 'on' : ''}`} onClick={() => setEntryMode('left')}>What's left</button>
-                </div>
-                {voiceAvailable() && <button className={`btn small mic ${listening ? 'live' : ''}`} onClick={voice}>{listening ? '🎙 Listening… tap to stop' : '🎤 Say score'}</button>}
-              </div>
-              <div className="entry-display">
-                <span className={entry ? '' : 'muted'}>{entry || (entryMode === 'left' ? `Left from ${match.scores[0]}` : 'Your score')}</span>
-                {error ? <span className="error">{error}</span> : heardText ? <span className="muted small-text">{heardText}</span> : null}
-              </div>
-              {canTrack && (
-                <div className="at-double">
-                  <span>Darts at a double:</span>
-                  {[0, 1, 2, 3].map((n) => (
-                    <button key={n} className={`chip small ${atDouble === n ? 'on' : ''}`} onClick={() => setAtDouble(n)}>{n}</button>
-                  ))}
-                </div>
-              )}
-              <div className="quick-row">
-                {entryMode === 'score' && QUICK.map((q) => (
-                  <button key={q} className="chip" onClick={keyTap(() => submit(q))}>{q}</button>
+          <div className="entry-row">
+            <div className="entry-display">
+              <span className={entry ? '' : 'muted'}>{entry || (entryMode === 'left' ? `Left from ${match.scores[0]}` : 'Your score')}</span>
+              {error ? <span className="error">{error}</span> : heardText ? <span className="muted small-text">{heardText}</span> : null}
+            </div>
+            {voiceAvailable() && <button className={`btn mic ${listening ? 'live' : ''}`} onClick={voice} aria-label="Say score">{listening ? '🎙 Stop' : '🎤'}</button>}
+          </div>
+          <div className="entry-tools">
+            <div className="seg">
+              <button className={`chip small ${entryMode === 'score' ? 'on' : ''}`} onClick={() => setEntryMode('score')}>Score</button>
+              <button className={`chip small ${entryMode === 'left' ? 'on' : ''}`} onClick={() => setEntryMode('left')}>What's left</button>
+            </div>
+            {canTrack && (
+              <div className="at-double">
+                <span>At double:</span>
+                {[0, 1, 2, 3].map((n) => (
+                  <button key={n} className={`chip small ${atDouble === n ? 'on' : ''}`} onClick={() => setAtDouble(n)}>{n}</button>
                 ))}
               </div>
-              <div className={`keypad ${settings.bigKeys ? 'big' : ''} ${settings.leftHanded ? 'lefty' : ''}`}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-                  <button key={n} className="key" onClick={keyTap(() => setEntry((e) => (e + n).slice(0, 3)))}>{n}</button>
-                ))}
-                {(() => {
-                  const del = <button key="del" className="key alt" onClick={keyTap(() => setEntry((e) => e.slice(0, -1)))}>⌫</button>
-                  const zero = <button key="zero" className="key" onClick={keyTap(() => setEntry((e) => (e + '0').slice(0, 3)))}>0</button>
-                  const ok = <button key="ok" className="key ok" onClick={keyTap(() => typed(entry))}>{entry ? 'Enter' : entryMode === 'left' ? 'Checkout' : 'No score'}</button>
-                  return settings.leftHanded ? [ok, zero, del] : [del, zero, ok]
-                })()}
-              </div>
-              <div className={`btn-row tight ${settings.leftHanded ? '' : 'righty'}`}>
-                <button className="btn small" onClick={keyTap(() => submit(match.scores[0]))} disabled={!minDartsToFinish(match.scores[0])}>Checkout</button>
-                <button className="btn small" onClick={keyTap(bust)}>Bust</button>
-                <button className="btn small ghost" onClick={undo} disabled={!history.current.length}>Undo</button>
-              </div>
+            )}
+          </div>
+          {entryMode === 'score' && (
+            <div className="quick-row">
+              {QUICK.map((q) => (
+                <button key={q} className="chip" onClick={keyTap(() => submit(q))}>{q}</button>
+              ))}
             </div>
           )}
-          {pendingCheckout && (
-            <div className="input-area">
-              <p className="hint">Checked out {pendingCheckout.score}! Which double, and how many darts?</p>
-              <div className="doubles-grid">
-                {DOUBLES.map((d) => (
-                  <button key={d} className={`chip small ${pendingCheckout.double === d ? 'on' : ''}`} onClick={() => setPendingCheckout({ ...pendingCheckout, double: d })}>{d === 'DB' ? 'Bull' : d}</button>
-                ))}
-              </div>
-              <div className="btn-row">
-                {[1, 2, 3].filter((d) => d >= pendingCheckout.min).map((d) => (
-                  <button key={d} className="btn primary" onClick={() => submit(pendingCheckout.score, d, pendingCheckout.double)}>{d} dart{d > 1 ? 's' : ''}</button>
-                ))}
-                <button className="btn ghost" onClick={() => setPendingCheckout(null)}>Cancel</button>
-              </div>
-            </div>
-          )}
-          {aiTurn && <div className="waiting">{throwerName} is at the oche…</div>}
-          <div className="btn-row tight footer-actions">
-            <button className="btn ghost small" onClick={() => onExit('pause')}>Pause</button>
-            <button className="btn ghost small danger" onClick={concede}>Concede</button>
+          <div className={`keypad ${settings.bigKeys ? 'big' : ''} ${settings.leftHanded ? 'lefty' : ''}`}>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <button key={n} className="key" onClick={keyTap(() => setEntry((e) => (e + n).slice(0, 3)))}>{n}</button>
+            ))}
+            {(() => {
+              const del = <button key="del" className="key alt" onClick={keyTap(() => setEntry((e) => e.slice(0, -1)))} aria-label="Delete">⌫</button>
+              const zero = <button key="zero" className="key" onClick={keyTap(() => setEntry((e) => (e + '0').slice(0, 3)))}>0</button>
+              const ok = <button key="ok" className="key ok" onClick={keyTap(() => typed(entry))}>{entry ? 'Enter' : entryMode === 'left' ? 'Checkout' : 'No score'}</button>
+              return settings.leftHanded ? [ok, zero, del] : [del, zero, ok]
+            })()}
           </div>
-        </>
+          <div className={`action-row ${settings.leftHanded ? 'lefty' : ''}`}>
+            <button className="btn small" onClick={undo} disabled={!canUndo}>↩ Undo</button>
+            <button className="btn small" onClick={keyTap(bust)}>Bust</button>
+            <button className="btn small" onClick={keyTap(() => submit(match.scores[0]))} disabled={!minDartsToFinish(match.scores[0])}>Checkout</button>
+          </div>
+        </div>
       )}
     </div>
   )

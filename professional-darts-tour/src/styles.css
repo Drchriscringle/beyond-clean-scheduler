@@ -436,3 +436,35 @@ input:focus, select:focus { outline: none; border-color: var(--red); box-shadow:
 .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #000; vertical-align: middle; }
 .dot.red { background: #ff3b30; }
 .dot.white { background: #fff; }
+
+/* ---------- compact match screen: everything fits without scrolling ---------- */
+.match.compact { min-height: 100dvh; padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); gap: 8px; }
+.match.compact .match-head { align-items: center; }
+.mh-stage { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mh-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.icon-btn { width: 34px; height: 30px; border-radius: 9px; border: 1px solid var(--line-2); background: #141416; color: #fff; font-size: 14px; cursor: pointer; }
+.icon-btn.danger { border-color: #4a1210; }
+.match.compact .sb-side { padding: 6px 8px; }
+.match.compact .sb-name { font-size: 13px; }
+.match.compact .sb-rem { font-size: 46px; line-height: 1; margin: 2px 0; }
+.match.compact .sb-legs { font-size: 12px; }
+.match.compact .sb-route { margin-top: 3px; font-size: 12px; }
+.ai-panel { display: flex; flex-direction: column; align-items: center; gap: 8px; background: radial-gradient(circle at 50% 40%, #141416, #070708 70%); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+.ai-panel .board { max-width: 100%; height: auto; }
+.ai-panel-head { width: 100%; display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.ai-panel-head .bot-darts { font-size: 16px; color: #fff; }
+.undo-big { width: 100%; border-color: var(--gold); color: var(--gold); }
+.match.compact .input-area { gap: 6px; }
+.last-visit { font-size: 13px; color: var(--cream); text-align: center; min-height: 18px; }
+.entry-row { display: flex; gap: 8px; }
+.entry-row .entry-display { flex: 1; min-height: 48px; padding: 6px 12px; font-size: 28px; }
+.entry-row .mic { min-width: 56px; font-size: 20px; padding: 0 10px; }
+.entry-tools { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
+.entry-tools .at-double { font-size: 12px; gap: 4px; }
+.match.compact .quick-row .chip { padding: 6px 11px; font-size: 14px; }
+.match.compact .keypad { gap: 6px; }
+.match.compact .key { padding: 9px 0; font-size: 24px; border-radius: 12px; }
+.match.compact .keypad.big .key { padding: 15px 0; font-size: 30px; }
+.action-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.action-row.lefty { direction: rtl; }
+.action-row .btn { padding: 8px 0; }
