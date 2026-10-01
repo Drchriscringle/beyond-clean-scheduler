@@ -165,3 +165,20 @@ the dart engine (`src/engine/fastsim.js`, `scripts/fit-fastsim.js`).
 - `src/career/`: players, rankings, entry rules, brackets, difficulty, inbox, finance and the career loop
 - `src/components/`: React screens
 - `scripts/autocareer.js`: plays N seasons headless (`node scripts/autocareer.js 3 85`)
+
+## Before publishing to the App Store / Google Play
+
+- **Build the store version** with `npm run build:store` (or `npm run cap:sync:store` for the
+  native apps). It swaps trademarked PDC event names for the game's own names on screen and in
+  the caller's voice (World Matchplay → Blackpool Matchplay, Premier League → Super League,
+  Q-School → Tour School, "PDC" → "PDT", "Bahrain Darts Masters" → "Bahrain Masters" and so on;
+  see `src/brand.js`). The test build keeps the real names; Settings has a preview toggle.
+- **The app name** "Professional Darts Tour" is close to "PDC". Consider whether to take advice,
+  or to seek a licence from the PDC, before launch.
+- **Privacy policy**: `PRIVACY.md`, also served as `privacy.html` and linked from Settings. Fill
+  in the contact email, and host it at a public address for the store listings. In App Store
+  Connect the privacy label is "Data Not Collected"; in Google Play's Data safety form, no data
+  is collected or shared. The microphone is declared for voice scoring.
+- Fonts are bundled (no requests to Google), and the app works offline.
+- Developer accounts: Apple ($99/year), Google Play ($25 one-off). Building needs Xcode on a Mac
+  for iOS and Android Studio for Android.

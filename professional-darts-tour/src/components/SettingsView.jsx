@@ -1,5 +1,6 @@
 import DifficultyPicker from './DifficultyPicker.jsx'
 import BackupPanel from './BackupPanel.jsx'
+import { setStoreNamePreview, STORE_BUILD, storeNames } from '../brand.js'
 import { ANNOUNCERS, pickAnnouncer, speakParts } from '../caller.js'
 import { MATCH_LENGTHS } from '../career/formats.js'
 
@@ -52,6 +53,13 @@ export default function SettingsView({ career, update, onDelete, onRestore }) {
       </div>
       <BackupPanel career={career} onRestore={onRestore} />
       <button className="btn" onClick={() => set((c) => { c.seenTutorial = false })}>Show the tutorial again</button>
+      {!STORE_BUILD && (
+        <label className="check small-text">
+          <input type="checkbox" defaultChecked={storeNames()} onChange={(e) => { setStoreNamePreview(e.target.checked); window.location.reload() }} />
+          Preview the app-store names (renames trademarked event names, e.g. World Matchplay → Blackpool Matchplay)
+        </label>
+      )}
+      <a className="btn ghost small" href="privacy.html" target="_blank" rel="noreferrer">Privacy policy</a>
       <button className="btn danger" onClick={onDelete}>Delete career</button>
     </div>
   )

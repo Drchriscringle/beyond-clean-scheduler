@@ -5,6 +5,7 @@
 // in a browser, the Web Speech API. A British male voice is preferred when available.
 import { Capacitor } from '@capacitor/core'
 import { TextToSpeech } from '@capacitor-community/text-to-speech'
+import { brandText } from './brand.js'
 
 const ONES = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
 const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
@@ -122,7 +123,7 @@ function styled(p) {
 let nativeChain = Promise.resolve()
 export function speakParts(rawParts, enabled = true) {
   if (!enabled || !rawParts.length) return
-  const parts = rawParts.map(styled)
+  const parts = rawParts.map(styled).map((p) => ({ ...p, text: brandText(p.text) }))
   if (Capacitor.isNativePlatform()) {
     nativeChain = nativeChain.then(async () => {
       const v = await pickNativeVoice()

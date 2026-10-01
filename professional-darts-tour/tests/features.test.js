@@ -96,3 +96,23 @@ test('five different MCs, picked at random unless a favourite is chosen', async 
   assert.equal(seen.size, 5)
   assert.equal(pickAnnouncer('kelly').name, 'Kelly Marsh')
 })
+
+test('store-safe names replace every trademarked event name', async () => {
+  const store = {}
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v) }, removeItem: (k) => { delete store[k] } }
+  const { brandText, setStoreNamePreview } = await import('../src/brand.js')
+  const { seasonSchedule } = await import('../src/career/data/schedule.js')
+  const { COMPETITIONS } = await import('../src/career/data/competitions.js')
+  assert.equal(brandText('World Matchplay'), 'World Matchplay') // test build keeps real names
+  setStoreNamePreview(true)
+  assert.equal(brandText('Players Championship Finals'), 'Pro Tour Finals')
+  assert.equal(brandText("Women's World Matchplay winner"), "Women's Matchplay winner")
+  assert.equal(brandText('PDC Order of Merit'), 'PDT Order of Merit')
+  assert.equal(brandText('Bahrain Darts Masters'), 'Bahrain Masters')
+  assert.equal(brandText('European Darts Grand Prix'), 'European Grand Prix')
+  const banned = /PDC|PDPA|Premier League|World Matchplay|Grand Slam|World Grand Prix|Players Championship|World Masters|UK Open|World Series|World Cup of Darts|Q-School|Challenge Tour|Development Tour|European Tour|European Championship| Darts (Masters|Open|Trophy|Grand Prix|Championship)/
+  const all = [...seasonSchedule().map((e) => e.name), ...Object.values(COMPETITIONS).flatMap((c) => [c.name, c.blurb])]
+  const leaks = all.map(brandText).filter((t) => banned.test(t))
+  assert.deepEqual(leaks, [])
+  setStoreNamePreview(false)
+})
