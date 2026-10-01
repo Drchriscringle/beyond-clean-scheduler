@@ -430,3 +430,9 @@ input:focus, select:focus { outline: none; border-color: var(--red); box-shadow:
 .bull-legend { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin: 6px 0; }
 .bull-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; border: 1px solid #000; vertical-align: middle; }
 .bull-board .board { max-width: 100%; height: auto; border-radius: 50%; box-shadow: 0 0 0 3px #000, 0 0 0 4px var(--line-2), 0 10px 30px rgba(0, 0, 0, 0.7); }
+.bull-head { display: flex; justify-content: space-between; align-items: center; }
+.help-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-2); background: #141416; color: #fff; font: 700 16px Inter, sans-serif; cursor: pointer; }
+.bull-help ol { padding-left: 20px; margin: 8px 0 14px; display: flex; flex-direction: column; gap: 10px; line-height: 1.45; text-align: left; }
+.dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #000; vertical-align: middle; }
+.dot.red { background: #ff3b30; }
+.dot.white { background: #fff; }

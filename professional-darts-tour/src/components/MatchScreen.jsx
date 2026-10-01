@@ -50,6 +50,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   const [shake, setShake] = useState(false)
   const [walkOn, setWalkOn] = useState(null)
   const [bullUp, setBullUp] = useState(null) // { oppDart, oppRank, outcome, winner }
+  const [bullHelp, setBullHelp] = useState(false)
   const [entryMode, setEntryMode] = useState('score') // 'score' | 'left'
   const [listening, setListening] = useState(false)
   const [heardText, setHeardText] = useState('')
@@ -168,6 +169,13 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   // ---- bull-up: the virtual opponent throws at the bull, you throw at your board ----
   const bullRank = (d) => (d.label === 'DB' ? 2 : d.label === 'SB' ? 1 : 0)
   function throwForBull() {
+    // First time on this screen: explain how the bull-up works.
+    try {
+      if (!localStorage.getItem('pdt-seen-bullup')) {
+        setBullHelp(true)
+        localStorage.setItem('pdt-seen-bullup', '1')
+      }
+    } catch { /* storage blocked: skip the explainer */ }
     const d = throwDart('DB', oppSigma * 1.15)
     const mm = Math.round(Math.hypot(d.x, d.y))
     const rank = bullRank(d)
@@ -420,7 +428,25 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
           </>
         ) : (
           <div className="card bull-up">
-            <div className="card-label">Bull-up</div>
+            <div className="bull-head">
+              <div className="card-label">Bull-up</div>
+              <button className="help-btn" aria-label="How the bull-up works" onClick={() => setBullHelp(true)}>?</button>
+            </div>
+            {bullHelp && (
+              <div className="tutorial-backdrop" onClick={() => setBullHelp(false)}>
+                <div className="card tutorial bull-help" onClick={(e) => e.stopPropagation()}>
+                  <h2>🎯 How the bull-up works</h2>
+                  <ol>
+                    <li><span className="dot red" /> The <b>red dot</b> is where {opp.name}'s dart landed.</li>
+                    <li>Throw <b>one dart at the bull</b> on your real board.</li>
+                    <li><b>Tap the screen</b> where your dart landed. A <span className="dot white" /> <b>white dot</b> appears. Tap again to move it.</li>
+                    <li>The board starts <b>zoomed in on the bull</b>. If your dart is further out, tap <b>Show the whole board</b>.</li>
+                    <li>Tap <b>Confirm my dart</b>. Closest to the centre throws first. Both in the bullseye? Throw again!</li>
+                  </ol>
+                  <button className="btn primary big" onClick={() => setBullHelp(false)}>Got it</button>
+                </div>
+              </div>
+            )}
             <div className="bull-board">
               <Dartboard
                 darts={[{ ...bullUp.oppDart, color: '#ff3b30', tag: '' }, ...(bullUp.mine ? [{ ...bullUp.mine, color: '#ffffff', tag: '' }] : [])]}
