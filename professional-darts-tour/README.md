@@ -111,6 +111,7 @@ in your inbox and the news each January.
   titles. Offers arrive for three slots (main shirt, darts & equipment, sleeve) at milestones and
   each month, bigger the better you do. Accept, or ask for 10%, 25% or 50% more: sponsors agree,
   meet you partway, or walk away if you push too hard.
+- **Your face**: build your player's face (skin tone, face shape, 11 hairstyles, hair colour, facial hair, eyes, eyebrows, glasses, expression, earrings). It appears on your profile, the pre-match screen, the walk-on, the scoreboard and The Oche Times. Every AI player gets their own generated face.
 - **Shirt designer**: colours, eight patterns (stripes, hoops, sash, halves, flames, chevron,
   panels), name and nickname on the back, lettering style and your flag. Your real sponsors'
   names appear on the shirt, and it shows on your profile and at the oche.
@@ -123,6 +124,7 @@ in your inbox and the news each January.
 - **At the board**: say your score ("one hundred and forty", "ton eighty", "no score", "bust",
   "game shot") or turn on hands-free listening; enter your score or what you've got left; big
   keypad and left-handed layouts.
+- **The caller**: a British announcer voice where the phone has one, built from phrases so the excitement scales with the score: flat for a 26, lifted for a ton, rising for 140+, and a drawn-out "one hundred and… eighty!" for a maximum; "Game shot, and the leg…" for finishes.
 - **Atmosphere**: walk-ons at televised events (your shirt, nickname and walk-on song, announced
   by the caller), synthesised crowd noise (arena, floor events, the pub), roars for 180s and big
   finishes, applause after legs, and celebrations for ton-plus finishes, the 170 "Big Fish" and

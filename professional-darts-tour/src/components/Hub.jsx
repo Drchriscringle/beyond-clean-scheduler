@@ -17,10 +17,12 @@ import Practice from './Practice.jsx'
 import Tutorial from './Tutorial.jsx'
 import Honours from './Honours.jsx'
 import ShirtDesigner from './ShirtDesigner.jsx'
-import Shirt, { defaultShirt } from './Shirt.jsx'
+import { defaultShirt } from './Shirt.jsx'
+import Face from './Face.jsx'
+import FaceBuilder from './FaceBuilder.jsx'
 import SimulatePanel, { SimSummary } from './SimulatePanel.jsx'
 
-const TABS = ['Home', 'Inbox', 'Calendar', 'Rankings', 'News', 'Honours', 'Stats', 'Money', 'Shirt', 'Practice', 'Settings']
+const TABS = ['Home', 'Inbox', 'Calendar', 'Rankings', 'News', 'Honours', 'Stats', 'Money', 'Look', 'Practice', 'Settings']
 
 export function eventStatus(career, e) {
   const state = career.entries[e.id]
@@ -68,7 +70,7 @@ export default function Hub(props) {
       {tab === 'Stats' && <StatsView career={career} />}
       {tab === 'Money' && <MoneyView career={career} onAction={props.onAction} />}
       {tab === 'Honours' && <Honours career={career} />}
-      {tab === 'Shirt' && <ShirtDesigner career={career} update={props.update} />}
+      {tab === 'Look' && <><div className="tab-body"><FaceBuilder career={career} update={props.update} /></div><ShirtDesigner career={career} update={props.update} /></>}
       {tab === 'Practice' && <Practice onPlay={props.onPractice} />}
       {tab === 'Settings' && <SettingsView career={career} update={props.update} onDelete={props.onDelete} onRestore={props.onRestore} />}
       {!career.seenTutorial && <Tutorial onDone={() => props.update((c) => { c.seenTutorial = true })} />}
@@ -100,8 +102,8 @@ function Home({ career, onContinue, onOpenEvent, onAction, onEntry, onSimulate, 
         </div>
       )}
       <div className="card status">
-        <div className="status-shirt" onClick={() => goTab('Shirt')} title="Design your shirt">
-          <Shirt shirt={career.shirt ?? defaultShirt(career)} sponsors={career.sponsors} nation={user.nation} side="back" size={64} />
+        <div className="status-shirt" onClick={() => goTab('Look')} title="Change your look">
+          <Face face={career.face} shirt={career.shirt ?? defaultShirt(career)} size={68} ring />
         </div>
         <div className="player-name">{flag(user.nation)} {user.name}{user.nickname ? <span className="nick"> “{user.nickname}”</span> : null}</div>
         <div className="pill">{statusText(career)}</div>

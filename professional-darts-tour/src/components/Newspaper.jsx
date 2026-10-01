@@ -1,4 +1,5 @@
-import Shirt, { defaultShirt } from './Shirt.jsx'
+import { defaultShirt } from './Shirt.jsx'
+import Face from './Face.jsx'
 
 // A retro front page for a match report email.
 export default function Newspaper({ article, career }) {
@@ -21,7 +22,7 @@ export default function Newspaper({ article, career }) {
       <div className="paper-cols">
         <div className="paper-main">
           <figure className={`paper-photo mood-${a.photo.mood}`}>
-            <Shirt shirt={career.shirt ?? defaultShirt(career)} sponsors={career.sponsors} nation={career.players.user.nation} side="back" size={104} />
+            <Face face={career.face} shirt={career.shirt ?? defaultShirt(career)} size={104} />
             <figcaption>{a.photo.caption}</figcaption>
           </figure>
           {a.body.map((p, i) => <p key={i} className={i === 0 ? 'lead' : ''}>{p}</p>)}

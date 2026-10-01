@@ -7,6 +7,7 @@ import Practice from './components/Practice.jsx'
 import { advance, autoPlayEvent, currentEvent, finishEvent, handleAction, newCareer, prepareLiveMatch, simulatePeriod, setEntry, simulateUntilUserMatch, simulateUserMatch, submitUserResult } from './career/career.js'
 import { loadCareer, saveCareer } from './persistence.js'
 import { defaultShirt } from './components/Shirt.jsx'
+import { faceFor } from './components/Face.jsx'
 import { recordPubResult } from './pub.js'
 import { snapshot } from './backup.js'
 
@@ -28,6 +29,8 @@ function liveSetup(career) {
     h2h: career.h2h[live.opponent],
     shirt: career.shirt ?? defaultShirt(career),
     sponsors: career.sponsors,
+    face: career.face,
+    oppFace: opp ? faceFor(opp) : null,
     walkOnShow: (event?.tier ?? 0) >= 2,
     eventName: event?.name,
     walkOnSong: user.walkOn,
@@ -81,7 +84,7 @@ export default function App() {
     if (p.playing) {
       return (
         <MatchScreen
-          setup={{ me: { name: career?.players.user.name ?? 'You', nation: career?.players.user.nation }, opp: p.opp ?? { name: 'Practice partner', nation: null, nickname: `${p.avg} average` }, format: p.format, expectedAvg: p.avg, actualAvg: p.avg, stage: p.stage ?? 'Friendly', ambience: p.pub ? 'pub' : 'hall', shirt: career ? career.shirt ?? defaultShirt(career) : null, sponsors: career?.sponsors ?? [] }}
+          setup={{ me: { name: career?.players.user.name ?? 'You', nation: career?.players.user.nation }, opp: p.opp ?? { name: 'Practice partner', nation: null, nickname: `${p.avg} average` }, format: p.format, expectedAvg: p.avg, actualAvg: p.avg, stage: p.stage ?? 'Friendly', ambience: p.pub ? 'pub' : 'hall', face: career?.face, oppFace: faceFor({ id: p.pub?.id ?? 'practice', name: p.opp?.name ?? 'Practice', age: 40 }), shirt: career ? career.shirt ?? defaultShirt(career) : null, sponsors: career?.sponsors ?? [] }}
           settings={{ ...matchSettings(career), trackDoubles: false }}
           onExit={(result) => {
             if (p.pub) {

@@ -72,3 +72,15 @@ test('a save file round-trips', async () => {
   assert.equal(back.settings.crowd, true)
   assert.throws(() => parseSave('{"hello":1}'), /isn't a Professional Darts Tour save/)
 })
+
+test('the caller gets more excited the bigger the score', async () => {
+  const { scoreCall } = await import('../src/caller.js')
+  const peak = (s) => Math.max(...scoreCall(s).map((p) => p.pitch))
+  const slowest = (s) => Math.min(...scoreCall(s).map((p) => p.rate))
+  assert.ok(peak(45) < peak(100) && peak(100) < peak(140) && peak(140) < peak(180))
+  assert.ok(slowest(180) < slowest(140) && slowest(140) < slowest(45))
+  assert.equal(scoreCall(180).length, 3) // "One hundred" ... "and" ... "eight-y!"
+  assert.equal(scoreCall(45)[0].text, 'forty-five.')
+  assert.equal(scoreCall(0)[0].text, 'No score.')
+})
+

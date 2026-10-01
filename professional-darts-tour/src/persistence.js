@@ -17,6 +17,7 @@ export function migrate(c) {
   c.offers ??= {}
   c.prizeScale ??= 1
   c.shirt ??= null
+  c.face ??= null
   c.players.user.gender ??= 'm'
   c.players.user.walkOn ??= ''
   c.settings.crowd ??= true

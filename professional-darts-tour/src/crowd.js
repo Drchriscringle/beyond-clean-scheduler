@@ -120,3 +120,23 @@ export function stopAmbience() {
   } catch { /* already stopped */ }
   ambience = null
 }
+
+// The "ooooh" when someone busts or misses match darts: a falling, muffled murmur.
+export function groan(seconds = 1.6) {
+  const c = audio()
+  if (!c) return
+  const t = c.currentTime
+  const src = noiseSource(c)
+  const lp = c.createBiquadFilter()
+  lp.type = 'bandpass'
+  lp.Q.value = 3
+  lp.frequency.setValueAtTime(520, t)
+  lp.frequency.exponentialRampToValueAtTime(260, t + seconds)
+  const g = c.createGain()
+  g.gain.setValueAtTime(0.0001, t)
+  g.gain.exponentialRampToValueAtTime(0.18, t + 0.2)
+  g.gain.exponentialRampToValueAtTime(0.0001, t + seconds)
+  src.connect(lp).connect(g).connect(c.destination)
+  src.start(t)
+  src.stop(t + seconds + 0.1)
+}

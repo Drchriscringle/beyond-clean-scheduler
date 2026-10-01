@@ -5,6 +5,7 @@ import { formatLabel, prizeFund, scaledPrizes, roundName } from '../career/forma
 import { ranking, rankOf } from '../career/rankings.js'
 import { standings } from '../career/tournament.js'
 import { dateLabel, money, playerLabel, TIER_LABELS } from './common.jsx'
+import Face, { faceFor } from './Face.jsx'
 
 export default function EventScreen({ career, onPlay, onSimMatch, onSimRest, onSimEvent, onFinish, onBack }) {
   const event = currentEvent(career)
@@ -36,7 +37,10 @@ export default function EventScreen({ career, onPlay, onSimMatch, onSimRest, onS
       {playing && (
         <div className="card next-match">
           <div className="card-label">{taskStage(career, task)}</div>
-          <div className="opp-name">{playerLabel(career, task.opponent)}</div>
+          <div className="opp-row">
+            {career.players[task.opponent] && <Face face={faceFor(career.players[task.opponent])} shirt={{ primary: '#2b2b30', secondary: '#111' }} size={64} ring />}
+            <div className="opp-name">{playerLabel(career, task.opponent)}</div>
+          </div>
           {career.players[task.opponent] && <div className="opp-nick">“{career.players[task.opponent].nickname}”</div>}
           <div className="opp-meta">
             {career.players[task.opponent] ? (rankOf(oom, task.opponent) ? `Order of Merit #${rankOf(oom, task.opponent)} · ` : 'Unranked · ') : ''}Expected average ≈ {preview.expected}

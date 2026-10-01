@@ -71,6 +71,7 @@ export function newCareer(opts, rng = Math.random) {
     prizeScale: 1,
     records: { bestIn: {}, peakRank: null, most180s: null, lowestLeg: null, highestCheckout: null, bestAverage: null },
     shirt: null,
+    face: null,
   }
   sendMail(career, {
     from: 'pdpa',

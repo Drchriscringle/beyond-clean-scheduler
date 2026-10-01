@@ -3,13 +3,14 @@ import { Capacitor } from '@capacitor/core'
 import { KeepAwake } from '@capacitor-community/keep-awake'
 import Dartboard from './Dartboard.jsx'
 import Shirt from './Shirt.jsx'
+import Face from './Face.jsx'
 import { playVisit, sigmaForAverage } from '../engine/bot.js'
 import { checkoutRoute, minDartsToFinish } from '../engine/checkout.js'
 import { applyVisit, createMatch, interpretEnteredScore, pairsThrower, threeDartAverage } from '../engine/match.js'
 import { formatLabel } from '../career/formats.js'
 import { flag } from '../career/players.js'
-import { callScore, numberWords, say } from '../caller.js'
-import { applause, roar, startAmbience, stopAmbience } from '../crowd.js'
+import { callGameShot, callRequire, callScore, say, speakParts } from '../caller.js'
+import { applause, groan, roar, startAmbience, stopAmbience } from '../crowd.js'
 import { heard, listen, voiceAvailable } from '../voice.js'
 
 const QUICK = [26, 41, 45, 60, 81, 85, 100, 140, 180]
@@ -45,6 +46,8 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   const [aiThrowing, setAiThrowing] = useState(false)
   const [banner, setBanner] = useState('')
   const [celebration, setCelebration] = useState(null)
+  const [pop, setPop] = useState(null)
+  const [shake, setShake] = useState(false)
   const [walkOn, setWalkOn] = useState(null)
   const [entryMode, setEntryMode] = useState('score') // 'score' | 'left'
   const [listening, setListening] = useState(false)
@@ -58,6 +61,20 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     return () => stopAmbience()
   }, [])
 
+  // The score flies up the screen: bigger, brighter and wilder the higher it is.
+  function showPop(scored, who) {
+    if (scored < 100) return
+    const tier = scored === 180 ? 3 : scored >= 140 ? 2 : 1
+    const label = scored === 180 ? '180' : scored >= 140 ? `${scored}` : scored === 100 ? 'TON' : `${scored}`
+    const sub = who ?? (scored === 180 ? 'MAXIMUM' : scored >= 140 ? 'TON-PLUS' : 'TON')
+    setPop({ tier, label, sub, key: Date.now() })
+    setTimeout(() => setPop(null), tier === 3 ? 2400 : tier === 2 ? 1500 : 1100)
+    if (tier === 3) {
+      setShake(true)
+      setTimeout(() => setShake(false), 600)
+    }
+  }
+
   function celebrate(text, big = false) {
     setCelebration({ text, big })
     setTimeout(() => setCelebration(null), big ? 4500 : 1800)
@@ -65,14 +82,13 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
 
   // Crowd and on-screen reaction to a visit. side 0 = you (or your team).
   function react(prev, next, side, scored, checkout) {
-    if (!crowdOn && side !== 0) return
     const mine = side === 0
     if (checkout) {
       const legDarts = next.stats[side].legDarts.at(-1)
       if (mine && legDarts === 9) {
         celebrate('NINE-DART FINISH!', true)
         if (crowdOn) roar(1, 6)
-        say('Nine darts! Perfection!', callerOn)
+        say('Nine darts! Perfection!', callerOn, 'big')
       } else if (scored === 170) {
         if (mine) celebrate('THE BIG FISH! 170', true)
         if (crowdOn) roar(0.95, 4)
@@ -83,10 +99,14 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       if (next.winner !== null && crowdOn) roar(0.85, 4.5)
       return
     }
+    showPop(scored, mine ? null : opp.name)
     if (scored === 180) {
-      if (mine) celebrate('180!')
-      if (crowdOn) roar(0.85, 3)
-    } else if (scored >= 140 && crowdOn) roar(0.4, 1.8)
+      if (crowdOn) roar(mine ? 1 : 0.8, 3.5)
+    } else if (scored >= 140) {
+      if (crowdOn) roar(mine ? 0.55 : 0.4, 2)
+    } else if (scored >= 100) {
+      if (crowdOn) roar(0.25, 1.4)
+    }
   }
   const oppSigma = sigmaForAverage(setup.actualAvg)
   const partnerSigma = setup.partner ? sigmaForAverage(setup.partner.avg) : null
@@ -110,13 +130,13 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     visit.darts.forEach((d, i) => timers.push(setTimeout(() => setAiDarts((prev) => [...prev, d]), DART_DELAY * (i + 1))))
     timers.push(setTimeout(() => {
       const next = applyVisit(match, { scored: visit.scored, bust: visit.bust, checkout: visit.checkout, dartsThrown: visit.darts.length, darts: visit.darts.map((d) => d.label), thrower: pairs ? pairsThrower(match, side) : 0 })
-      if (visit.bust) say('Bust', callerOn)
+      if (visit.bust) { say('Bust.', callerOn, 'flat'); if (crowdOn) groan() }
       else if (visit.checkout) announceLegEnd(match, next, side)
       else callScore(visit.scored, callerOn)
       react(match, next, side, visit.scored, visit.checkout)
       const mine = next.winner === null && next.turn === 0 && !(pairs && pairsThrower(next, 0) === 1)
       if (mine && !visit.checkout && next.scores[0] <= 170 && minDartsToFinish(next.scores[0])) {
-        setTimeout(() => say(`${me.name.split(' ')[0]}, you require ${numberWords(next.scores[0])}`, callerOn), 1300)
+        setTimeout(() => callRequire(me.name.split(' ')[0], next.scores[0], callerOn), 1500)
       }
       setAiThrowing(false)
       setMatch(next)
@@ -126,13 +146,14 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
 
   function announceLegEnd(prev, next, side) {
     const name = side === 0 ? (pairs ? 'your team' : me.name) : opp.name
+    const checkout = next.lastVisit[side]?.scored ?? 0
     if (next.winner !== null) {
       setBanner(`Game shot and the match — ${name}!`)
-      say(`Game shot, and the match, ${name}`, callerOn)
+      callGameShot('match', name, callerOn, checkout)
     } else {
       const setWon = !!next.format.sets && next.sets[0] + next.sets[1] > prev.sets[0] + prev.sets[1]
       setBanner(`Game shot and the ${setWon ? 'set' : 'leg'} — ${name}`)
-      say(`Game shot, and the ${setWon ? 'set' : 'leg'}, ${name}`, callerOn)
+      callGameShot(setWon ? 'set' : 'leg', name, callerOn, checkout)
       setTimeout(() => setBanner(''), 3000)
     }
   }
@@ -142,7 +163,14 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       setWalkOn({ startingPlayer })
       if (crowdOn) roar(0.55, 6)
       const song = setup.walkOnSong ? `, walking on to ${setup.walkOnSong},` : ''
-      say(`Ladies and gentlemen, welcome to the ${setup.eventName ?? setup.stage}. It's the ${setup.stage.replace(/,.*/, '')}. Walking on first${song} ${me.nickname ? `it's ${me.nickname}, ` : ''}${me.name}! And the opponent, ${opp.nickname ? `${opp.nickname}, ` : ''}${opp.name}!`, callerOn)
+      speakParts([
+        { text: `Ladies and gentlemen, welcome to the ${setup.eventName ?? setup.stage}.`, pitch: 0.85, rate: 0.92 },
+        { text: `It's the ${setup.stage.replace(/,.*/, '')}. Walking on first${song}`, pitch: 0.9, rate: 0.9 },
+        ...(me.nickname ? [{ text: `it's... ${me.nickname}...`, pitch: 1.05, rate: 0.72 }] : []),
+        { text: `${me.name}!`, pitch: 1.2, rate: 0.62 },
+        { text: `And the opponent${opp.nickname ? `, ${opp.nickname}` : ''}...`, pitch: 0.95, rate: 0.85 },
+        { text: `${opp.name}!`, pitch: 1.1, rate: 0.7 },
+      ], callerOn)
       return
     }
     startMatch(startingPlayer)
@@ -150,7 +178,10 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
 
   function startMatch(startingPlayer) {
     setWalkOn(null)
-    say(`${setup.stage}. ${startingPlayer === 0 ? me.name : opp.name} to throw first. Game on!`, callerOn)
+    speakParts([
+      { text: `${startingPlayer === 0 ? me.name : opp.name} to throw first.`, pitch: 0.88, rate: 0.92 },
+      { text: 'Game on!', pitch: 1.2, rate: 0.7 },
+    ], callerOn)
     setMatch(createMatch({ format, startingPlayer }))
   }
 
@@ -209,7 +240,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
     history.current.push(match)
     const tracked = canTrack ? (res.checkout ? Math.max(1, atDouble) : atDouble) : 0
     const next = applyVisit(match, { ...res, double, dartsAtDouble: tracked })
-    if (res.bust) say('Bust', callerOn)
+    if (res.bust) { say('Bust.', callerOn, 'flat'); if (crowdOn) groan() }
     else if (res.checkout) announceLegEnd(match, next, 0)
     else callScore(res.scored, callerOn)
     react(match, next, 0, res.scored, res.checkout)
@@ -223,7 +254,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   function bust() {
     if (!match || aiTurn || match.winner !== null) return
     history.current.push(match)
-    say('Bust', callerOn)
+    say('Bust.', callerOn, 'flat')
     setEntry('')
     setMatch(applyVisit(match, { scored: 0, bust: true, checkout: false, dartsThrown: 3, dartsAtDouble: canTrack ? atDouble : 0 }))
     setAtDouble(0)
@@ -265,7 +296,8 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
       <div className="screen walk-on" onClick={() => startMatch(walkOn.startingPlayer)}>
         <div className="spot spot-a" /><div className="spot spot-b" />
         <div className="walk-stage">{setup.eventName ? `${setup.eventName} · ` : ''}{setup.stage}</div>
-        {setup.shirt && <Shirt shirt={setup.shirt} sponsors={setup.sponsors} nation={me.nation} side="back" size={170} />}
+        <div className="walk-face"><Face face={setup.face} shirt={setup.shirt} size={170} ring /></div>
+        {setup.shirt && <Shirt shirt={setup.shirt} sponsors={setup.sponsors} nation={me.nation} side="back" size={90} />}
         <div className="walk-name">{me.name}</div>
         {me.nickname && <div className="walk-nick">“{me.nickname}”</div>}
         {setup.walkOnSong && <div className="walk-song">♪ {setup.walkOnSong} ♪</div>}
@@ -278,16 +310,17 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   if (!match) {
     return (
       <div className="screen match-pre">
-        <div className="stage-tag">{setup.stage}</div>
+        <div className="stage-tag">{setup.eventName ? `${setup.eventName} · ` : ''}{setup.stage}</div>
         <div className="versus">
           <div className="vs-player">
-            {setup.shirt && <Shirt shirt={setup.shirt} sponsors={setup.sponsors} nation={me.nation} side="front" size={70} />}
+            <Face face={setup.face} shirt={setup.shirt} size={84} ring />
             <div className="vs-name">{flag(me.nation)} {me.name}</div>
             {setup.partner && <div className="vs-nick">with {setup.partner.name}</div>}
             {me.nickname && <div className="vs-nick">“{me.nickname}”</div>}
           </div>
           <div className="vs-mid">VS</div>
           <div className="vs-player">
+            {setup.oppFace && <Face face={setup.oppFace} shirt={{ primary: '#2b2b30', secondary: '#111' }} size={84} ring />}
             <div className="vs-name">{flag(opp.nation)} {opp.name}</div>
             {opp.nickname && <div className="vs-nick">“{opp.nickname}”</div>}
             <div className="vs-meta">Expected average ≈ {setup.expectedAvg}</div>
@@ -313,7 +346,9 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
   const last = match.visits.at(-1)
 
   return (
-    <div className="screen match">
+    <div className={`screen match ${shake ? 'shake' : ''}`}>
+      {pop && <div key={pop.key} className={`score-pop t${pop.tier}`}>{pop.label}<span className="sub">{pop.sub}</span></div>}
+      {pop?.tier === 3 && <div key={`f${pop.key}`} className="flash-180" />}
       <div className="match-head">
         <span>{setup.stage}</span>
         <span>{formatLabel(match.format)}</span>
@@ -325,6 +360,7 @@ export default function MatchScreen({ setup, initialMatch, settings, onPersist, 
           return (
             <div key={p} className={`sb-side ${match.turn === p && match.winner === null ? 'active' : ''}`}>
               <div className="sb-name">
+                {!pairs && <Face face={p === 0 ? setup.face : setup.oppFace} shirt={p === 0 ? setup.shirt : { primary: '#2b2b30', secondary: '#111' }} size={26} />}
                 {match.legStarter === p && <span className="throw-dot" title="Started this leg">●</span>} {name}
               </div>
               <div className="sb-rem">{match.scores[p]}</div>
