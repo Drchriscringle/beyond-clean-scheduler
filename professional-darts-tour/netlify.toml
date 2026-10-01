@@ -1,0 +1,7 @@
+# Test deploys of the web build (for trying the game on a phone before the app stores).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
