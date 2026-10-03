@@ -1,0 +1,430 @@
+[
+  {
+    "slug": "bd-mobile-mechanic",
+    "name": "BD Mobile Mechanic",
+    "owner": "Brian",
+    "theme": "mechanic",
+    "tagline": "Your car fixed on your driveway — no garage, no lift home",
+    "intro": "A fully mobile mechanic covering Ayrshire. Cars, vans and trailers repaired at your home or work, by a mechanic with over 18 years' experience on everything from small hatchbacks to high-performance vehicles.",
+    "phone": "07485 179957",
+    "whatsapp": "447485179957",
+    "email": "bdmobilemechanic@gmail.com",
+    "area": "Kilmarnock, Ayr, Prestwick, Troon, Irvine and across Ayrshire",
+    "hours": "Call or WhatsApp for availability",
+    "facts": [
+      "18+ years' experience",
+      "Cars, vans & trailers",
+      "Comes to you",
+      "Covers all Ayrshire"
+    ],
+    "services": [
+      [
+        "Servicing",
+        "Interim and full services at your door, with genuine-spec parts."
+      ],
+      [
+        "Brakes",
+        "Pads, discs and calipers checked and replaced on site."
+      ],
+      [
+        "Diagnostics",
+        "Warning light on? Fault codes read and fixed, not guessed."
+      ],
+      [
+        "Batteries & starting",
+        "Won't start in the morning? Batteries, starters and alternators."
+      ],
+      [
+        "Suspension",
+        "Springs, shocks and knocks sorted without a trip to the garage."
+      ],
+      [
+        "Vans & trailers",
+        "Trade vans and trailers kept on the road so you keep earning."
+      ]
+    ],
+    "why": [
+      "You don't lose a day sitting in a garage waiting room",
+      "Straight answers and a price before any work starts",
+      "Customers praise Brian for being punctual, polite and extremely knowledgeable"
+    ],
+    "cta": "Get a quote",
+    "facebook": "https://www.facebook.com/MobileMechanicBD/",
+    "contact_route": "phone/text/Facebook (sole trader — do not cold email)",
+    "kicker": "Mobile across all of Ayrshire"
+  },
+  {
+    "slug": "a-findlay-joinery",
+    "name": "A Findlay Joinery",
+    "owner": "Alan",
+    "theme": "joinery",
+    "tagline": "A Prestwick joiner with 20 years in the trade",
+    "intro": "Reliable, quality joinery at a reasonable cost. Alan Findlay has been a joiner for 20 years and takes on everything from a sticking door to a full kitchen.",
+    "phone": "07970 388687",
+    "whatsapp": "447970388687",
+    "email": "afindlayjoinery@outlook.com",
+    "area": "Prestwick, Ayr, Troon, Monkton and South Ayrshire",
+    "hours": "Call or WhatsApp for a free quote",
+    "facts": [
+      "20 years' experience",
+      "100% recommended on Facebook",
+      "Free quotes",
+      "Based in Prestwick"
+    ],
+    "services": [
+      [
+        "Doors & skirting",
+        "Internal doors hung, skirting and facings fitted cleanly."
+      ],
+      [
+        "Kitchens",
+        "Kitchen units, worktops and doors fitted."
+      ],
+      [
+        "Flooring",
+        "Laminate, engineered and solid wood flooring."
+      ],
+      [
+        "Stairs & bannisters",
+        "Repairs and replacements done properly."
+      ],
+      [
+        "Fencing & decking",
+        "Garden fences, gates and decking built to last."
+      ],
+      [
+        "Small jobs",
+        "No job too small — shelves, boxing-in, repairs."
+      ]
+    ],
+    "why": [
+      "One joiner from quote to finish — you deal with Alan",
+      "Tidy, on time and clear about cost",
+      "Recommended by every Facebook reviewer"
+    ],
+    "cta": "Get a free quote",
+    "facebook": "https://www.facebook.com/AFindlayJoinery/",
+    "contact_route": "phone/text/Facebook (sole trader — do not cold email)"
+  },
+  {
+    "slug": "cm-joinery-ayrshire",
+    "name": "CM Joinery Ayrshire",
+    "owner": "",
+    "theme": "joinery",
+    "tagline": "Media walls, kitchens and joinery across Ayrshire",
+    "intro": "Bespoke media walls, kitchen and bathroom fitting, decking and premium flooring — plus a reliable handyman service for the smaller jobs that still need a professional touch. No job too small.",
+    "phone": "07885 575044",
+    "whatsapp": "447885575044",
+    "email": "Cmjoineryayrshire@outlook.com",
+    "area": "Prestwick, Ayr, Troon, Kilmarnock and across Ayrshire",
+    "hours": "Call or WhatsApp for a free quote",
+    "facts": [
+      "5.0 rated",
+      "Bespoke media walls",
+      "No job too small",
+      "Based in Prestwick"
+    ],
+    "services": [
+      [
+        "Media walls",
+        "Designed and built around your TV, fire and storage."
+      ],
+      [
+        "Kitchens & bathrooms",
+        "Full fitting, from units to worktops to finishing."
+      ],
+      [
+        "Decking",
+        "Timber and composite decking, built to last."
+      ],
+      [
+        "Flooring",
+        "Premium flooring laid properly first time."
+      ],
+      [
+        "Doors",
+        "Internal and external doors hung and finished."
+      ],
+      [
+        "Handyman jobs",
+        "The small jobs other trades won't come out for."
+      ]
+    ],
+    "why": [
+      "Bespoke work, not off-the-shelf",
+      "5.0 rating and 92% recommended on MyBuilder",
+      "One trusted joiner for big and small jobs"
+    ],
+    "cta": "Get a free quote",
+    "facebook": "https://www.facebook.com/p/CM-Joinery-Ayrshire-100094428249143/",
+    "contact_route": "phone/text/Facebook (likely sole trader — do not cold email)"
+  },
+  {
+    "slug": "lennox-renovations",
+    "name": "Lennox Renovations",
+    "owner": "Chris",
+    "theme": "renovation",
+    "tagline": "Renovation, building and property maintenance in South Ayrshire",
+    "intro": "Commercial and domestic property renovation, design, build and maintenance from Prestwick. One firm for the whole job — from planning a renovation to fixing the small things that keep a property running.",
+    "phone": "07830 188998",
+    "whatsapp": "447830188998",
+    "email": "Chrislennox@talktalk.net",
+    "area": "Prestwick, Ayr, Troon and South Ayrshire",
+    "hours": "Call or WhatsApp to arrange a visit",
+    "facts": [
+      "Domestic & commercial",
+      "Design & build",
+      "Property maintenance",
+      "Based in Prestwick"
+    ],
+    "services": [
+      [
+        "Renovations",
+        "Full and partial home renovations, managed start to finish."
+      ],
+      [
+        "Design & build",
+        "From the first sketch to the final coat of paint."
+      ],
+      [
+        "Property maintenance",
+        "Ongoing upkeep for homeowners and landlords."
+      ],
+      [
+        "Commercial work",
+        "Shops, offices and rental units kept in shape."
+      ],
+      [
+        "Handyman services",
+        "Repairs and odd jobs handled properly."
+      ],
+      [
+        "Landlord turnarounds",
+        "Get a property ready to let again, fast."
+      ]
+    ],
+    "why": [
+      "One contact for the whole project",
+      "Domestic and commercial experience",
+      "Local to South Ayrshire"
+    ],
+    "cta": "Arrange a visit",
+    "facebook": "https://www.facebook.com/p/Lennox-Renovations-Property-Maintenance-and-Handyman-services-Ayrshire-100069575196103/",
+    "contact_route": "phone/text/Facebook (sole trader — do not cold email)"
+  },
+  {
+    "slug": "ka-local-handyman",
+    "name": "KA Local Handyman",
+    "owner": "",
+    "theme": "handyman",
+    "tagline": "A reliable South Ayrshire handyman with 30 years in construction",
+    "intro": "Serving the KA postcode area with a reliable, professional handyman service backed by over 30 years of construction experience. Fencing, roofing repairs and the jobs on your list that never get done.",
+    "phone": "",
+    "whatsapp": "",
+    "email": "",
+    "area": "Ayr, Prestwick, Troon and the KA postcode area",
+    "hours": "Message for availability",
+    "facts": [
+      "30+ years in construction",
+      "Fencing specialists",
+      "Shed & garage roofs",
+      "Covers the KA area"
+    ],
+    "services": [
+      [
+        "Fencing",
+        "New fences put up and storm-damaged panels replaced."
+      ],
+      [
+        "Fence repairs",
+        "Posts, panels and gates fixed fast."
+      ],
+      [
+        "Shed & garage roofs",
+        "Felt roofing replaced and leaks stopped."
+      ],
+      [
+        "Odd jobs",
+        "The to-do list sorted in one visit."
+      ],
+      [
+        "Garden structures",
+        "Gates, sheds and small garden builds."
+      ],
+      [
+        "Repairs",
+        "General property repairs inside and out."
+      ]
+    ],
+    "why": [
+      "30 years of construction experience on small jobs",
+      "Local, reliable and professional",
+      "Turns up when he says he will"
+    ],
+    "cta": "Message for a quote",
+    "facebook": "https://www.facebook.com/KALocalHandyman/",
+    "contact_route": "Facebook message only (no phone found)"
+  },
+  {
+    "slug": "tonis-barbers-ayr",
+    "name": "Toni's Barbers",
+    "owner": "",
+    "theme": "barber",
+    "tagline": "Ayr's early-opening barber — open from 6am",
+    "intro": "Quick, affordable, top-quality cuts on George Street. Open from 6am, so you can get a fresh cut before work and still be on time.",
+    "phone": "01292 284302",
+    "whatsapp": "",
+    "email": "",
+    "address": "14 George Street, Ayr KA8 0BL",
+    "booking": "https://tonisbarbers.setmore.com",
+    "area": "Ayr, Prestwick, Whitletts and Newton-on-Ayr",
+    "hours": "Mon–Fri 6am–5pm · Sat 6am–4pm · Sun closed",
+    "facts": [
+      "Open from 6am",
+      "Book online",
+      "Quick & affordable",
+      "George Street, Ayr"
+    ],
+    "services": [
+      [
+        "Gents' cut",
+        "Classic and modern cuts, done quickly and done right."
+      ],
+      [
+        "Skin fades",
+        "Sharp fades from a team that does them every day."
+      ],
+      [
+        "Beard trim",
+        "Shaped, lined up and tidied."
+      ],
+      [
+        "Kids' cuts",
+        "Patient, quick cuts for younger customers."
+      ],
+      [
+        "Clipper cut",
+        "All-over clipper cuts in minutes."
+      ],
+      [
+        "Before-work cuts",
+        "In and out from 6am — no time off needed."
+      ]
+    ],
+    "why": [
+      "Open from 6am — get a cut before work",
+      "Quick, affordable and friendly",
+      "Book online in seconds"
+    ],
+    "cta": "Book now",
+    "facebook": "https://www.facebook.com/profile.php?id=100063646118689",
+    "contact_route": "walk in / phone (shop on George Street)"
+  },
+  {
+    "slug": "petiquette-ayr",
+    "name": "Petiquette Ayr",
+    "owner": "",
+    "theme": "grooming",
+    "tagline": "Calm, one-to-one dog grooming in a real home",
+    "intro": "Dog grooming delivered in a welcoming home environment with a fully enclosed garden — no noisy salon, no cages full of strange dogs. Just a calm groom and a happy dog.",
+    "phone": "",
+    "whatsapp": "",
+    "email": "",
+    "area": "Ayr, Alloway, Prestwick and surrounding areas",
+    "hours": "By appointment",
+    "facts": [
+      "Home environment",
+      "Fully enclosed garden",
+      "Calm & relaxed",
+      "Ayr-based"
+    ],
+    "services": [
+      [
+        "Full groom",
+        "Bath, dry, cut and style, nails and ears."
+      ],
+      [
+        "Bath & tidy",
+        "A fresh bath and tidy-up between full grooms."
+      ],
+      [
+        "Puppy introduction",
+        "A gentle first groom so puppies learn to love it."
+      ],
+      [
+        "Nail trim",
+        "Quick nail clips by appointment."
+      ],
+      [
+        "Hand finishing",
+        "Feet, face and sanitary tidy."
+      ],
+      [
+        "Nervous dogs",
+        "Extra time and patience in a quiet home setting."
+      ]
+    ],
+    "why": [
+      "A quiet home, not a busy salon",
+      "Your dog's own time — never rushed",
+      "Secure, fully enclosed garden"
+    ],
+    "cta": "Book a groom",
+    "facebook": "https://www.facebook.com/PetiquetteAyr/",
+    "contact_route": "Facebook message only (no phone found)"
+  },
+  {
+    "slug": "the-remedy-cafe-ayr",
+    "name": "The Remedy Cafe",
+    "owner": "",
+    "theme": "cafe",
+    "tagline": "Ayr's beach-side cafe — Best Cafe in South Ayrshire 2025",
+    "intro": "A tiny cafe at the beach front on Seafield Road, built around wellbeing: homemade soup, freshly made sandwiches, great coffee, locally baked goods and ice cream. Beetroot, matcha and turmeric lattes too.",
+    "phone": "01292 260300",
+    "whatsapp": "",
+    "email": "",
+    "address": "10 Seafield Road, Ayr KA7 4AD",
+    "area": "Seafield beach front, Ayr",
+    "hours": "Open every day · 9am–5pm",
+    "facts": [
+      "Best Cafe in South Ayrshire 2025",
+      "Gluten & lactose friendly",
+      "Free parking",
+      "Free Wi-Fi"
+    ],
+    "services": [
+      [
+        "Coffee & lattes",
+        "Great coffee, plus beetroot, matcha and turmeric lattes."
+      ],
+      [
+        "Homemade soup",
+        "Made fresh in our kitchen every day."
+      ],
+      [
+        "Sandwiches",
+        "Freshly made to order."
+      ],
+      [
+        "Local bakes",
+        "Cakes and bakes from local producers."
+      ],
+      [
+        "Ice cream",
+        "The perfect excuse for a walk on the beach."
+      ],
+      [
+        "Free-from",
+        "Plenty for gluten- and lactose-intolerant guests."
+      ]
+    ],
+    "why": [
+      "Steps from Ayr beach with free parking outside",
+      "Winner, Best Cafe in South Ayrshire 2025 — Scotland's Business Awards",
+      "Food that's good for you and good for the planet"
+    ],
+    "cta": "Find us",
+    "facebook": "https://www.facebook.com/theremedycafe/",
+    "contact_route": "walk in / phone (cafe)"
+  }
+]
