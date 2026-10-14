@@ -12,14 +12,14 @@ vi.mock("../lib/api", () => ({
 describe("AuthGate", () => {
   it("renders the sign-in form by default", () => {
     renderWithProviders(<AuthGate />);
-    expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
   });
 
   it("switches to the signup form", async () => {
     renderWithProviders(<AuthGate />);
-    await userEvent.click(screen.getByText("New parent? Create an account"));
+    await userEvent.click(screen.getByText(/create a parent account/i));
     expect(screen.getByRole("button", { name: "Create account" })).toBeInTheDocument();
   });
 });

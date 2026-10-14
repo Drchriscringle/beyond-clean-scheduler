@@ -11,9 +11,9 @@ vi.mock("../lib/api", () => ({
 describe("CreateOrJoinFamily", () => {
   it("renders both the create-family and join-as-co-parent forms", () => {
     renderWithProviders(<CreateOrJoinFamily />);
-    expect(screen.getByPlaceholderText("Family name")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Invite code")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Join" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Family name")).toBeInTheDocument();
+    expect(screen.getByLabelText(/invite code/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create family" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Join as co-parent" })).toBeDisabled();
   });
 });

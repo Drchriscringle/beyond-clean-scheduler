@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useAddBill } from "../../hooks/useBills";
+import { Button, Input, Select, ErrorText } from "../ui";
 
 const BILL_ICONS = ["🏠", "💡", "🍽️", "🚌", "📱", "🛒", "💧", "🌐"];
 
@@ -14,7 +15,7 @@ export function AddBillForm({ familyId, childId }) {
   const addBill = useAddBill();
 
   const add = async () => {
-    const pence = parseInt(value, 10);
+    const pence = Math.round(parseFloat(value) * 100);
     if (!name.trim() || !pence) return;
     setErr("");
     try {
@@ -31,63 +32,47 @@ export function AddBillForm({ familyId, childId }) {
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-sky-600 border-2 border-dashed border-sky-200 hover:border-sky-400 hover:bg-sky-50 transition rounded-xl py-1.5"
-      >
-        <Plus size={14} /> Add a bill
-      </button>
+      <Button variant="ghost" size="sm" className="w-full text-brand-600" onClick={() => setOpen(true)}>
+        <Plus size={15} /> Add a bill
+      </Button>
     );
   }
 
   return (
-    <div className="p-2.5 rounded-xl bg-sky-50/70 space-y-2">
+    <div className="rounded-xl bg-surface p-3 space-y-3">
       <div className="flex flex-wrap gap-1.5">
         {BILL_ICONS.map((i) => (
           <button
             key={i}
             onClick={() => setIcon(i)}
-            className={`text-lg w-8 h-8 rounded-full flex items-center justify-center transition ${
-              icon === i ? "bg-sky-400 scale-110 shadow" : "bg-white hover:bg-sky-100"
+            className={`h-9 w-9 rounded-xl flex items-center justify-center text-lg transition ${
+              icon === i ? "bg-brand-600 ring-2 ring-brand-200" : "bg-white hover:bg-brand-50"
             }`}
           >
             {i}
           </button>
         ))}
       </div>
-      <div className="flex gap-2">
-        <input
-          autoFocus
-          className="border-2 border-sky-100 focus:border-sky-400 outline-none rounded-lg px-2.5 py-1.5 text-sm flex-1"
-          placeholder="Bill name (e.g. Rent)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="border-2 border-sky-100 focus:border-sky-400 outline-none rounded-lg px-2.5 py-1.5 text-sm w-16 text-center"
-          placeholder="p"
+      <Input label="Bill" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Rent" />
+      <div className="grid grid-cols-2 gap-2">
+        <Input
+          label="Amount"
+          inputMode="decimal"
           value={value}
-          onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
+          onChange={(e) => setValue(e.target.value.replace(/[^\d.]/g, ""))}
           onKeyDown={(e) => e.key === "Enter" && add()}
+          placeholder="0.00"
         />
-      </div>
-      <div className="flex gap-2 items-center">
-        <select
-          value={frequency}
-          onChange={(e) => setFrequency(e.target.value)}
-          className="border-2 border-sky-100 focus:border-sky-400 outline-none rounded-lg px-2 py-1.5 text-sm bg-white"
-        >
+        <Select label="Frequency" value={frequency} onChange={(e) => setFrequency(e.target.value)}>
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
-        </select>
-        <button
-          onClick={add}
-          className="flex-1 bg-sky-500 hover:bg-sky-600 text-white rounded-lg px-3 py-1.5 text-sm font-bold transition"
-        >
-          Add bill
-        </button>
+        </Select>
       </div>
-      {err && <p className="text-xs text-rose-600 font-medium">{err}</p>}
+      <ErrorText>{err}</ErrorText>
+      <div className="flex gap-2">
+        <Button size="sm" className="flex-1" onClick={add} disabled={addBill.isPending}>Add bill</Button>
+        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+      </div>
     </div>
   );
 }

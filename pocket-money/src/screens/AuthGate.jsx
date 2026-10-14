@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Centered, Card, BrandHeader, BigButton, primaryBtn } from "../components/common";
+import { Card, Centered, BrandHeader, Button, Input, ErrorText } from "../components/ui";
 import { LegalFooter } from "../components/LegalFooter";
 import * as api from "../lib/api";
 
@@ -10,7 +10,8 @@ export function AuthGate() {
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const submit = async () => {
+  const submit = async (e) => {
+    e?.preventDefault();
     setErr("");
     setBusy(true);
     try {
@@ -25,32 +26,29 @@ export function AuthGate() {
 
   return (
     <Centered>
-      <Card>
+      <Card className="max-w-sm p-7">
         <BrandHeader />
-        <div className="space-y-3">
-          <input
-            className="w-full border-2 border-indigo-100 focus:border-indigo-400 outline-none rounded-2xl px-4 py-3 transition"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            className="w-full border-2 border-indigo-100 focus:border-indigo-400 outline-none rounded-2xl px-4 py-3 transition"
-            placeholder="Password"
+        <form onSubmit={submit} className="space-y-3 mt-5">
+          <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <Input
+            label="Password"
             type="password"
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
           />
-        </div>
-        {err && <p className="text-sm text-rose-600 font-medium">{err}</p>}
-        <BigButton disabled={busy} onClick={submit} className={primaryBtn}>
-          {mode === "signup" ? "Create account" : "Sign in"}
-        </BigButton>
+          <ErrorText>{err}</ErrorText>
+          <Button type="submit" size="lg" className="w-full" disabled={busy}>
+            {busy ? "One moment…" : mode === "signup" ? "Create account" : "Sign in"}
+          </Button>
+        </form>
         <button
-          className="w-full text-sm text-slate-500 font-medium hover:text-indigo-600 transition"
+          type="button"
+          className="mt-4 w-full text-[13px] text-ink-muted hover:text-brand-600 transition"
           onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
         >
-          {mode === "signup" ? "Already have an account? Sign in" : "New parent? Create an account"}
+          {mode === "signup" ? "Already have an account? Sign in" : "New here? Create a parent account"}
         </button>
       </Card>
       <LegalFooter />

@@ -1,46 +1,40 @@
 import { useMoney } from "../hooks/useCurrency";
+import { Progress } from "./ui";
 
-export const JAR_COLORS = {
-  save: "from-emerald-400 to-emerald-300",
-  spend: "from-amber-400 to-amber-300",
-  give: "from-fuchsia-400 to-pink-300",
-};
+export const JARS = [
+  { key: "save", label: "Save", color: "#15803d" },
+  { key: "spend", label: "Spend", color: "#1d6fe8" },
+  { key: "give", label: "Give", color: "#be185d" },
+];
 
-export function Jar({ label, emoji, pence, sharePct }) {
-  const money = useMoney();
-  const fillPct = pence > 0 ? Math.max(10, Math.min(100, sharePct)) : 0;
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative w-9 h-14 rounded-b-2xl rounded-t-md border-2 border-white bg-slate-100 shadow-inner overflow-hidden">
-        <div
-          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${JAR_COLORS[label]} transition-all duration-500`}
-          style={{ height: `${fillPct}%` }}
-        />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-1 rounded-full bg-white/80" />
-      </div>
-      <div className="text-[10px] font-bold text-slate-500 leading-none mt-0.5">
-        {emoji} {money(pence)}
-      </div>
-    </div>
-  );
+function pick(balance, key) {
+  return balance?.[`${key}_pence`] ?? 0;
 }
 
-export function BigJar({ label, emoji, title, pence, sharePct }) {
+// Three stat tiles (Save / Spend / Give) with a bar showing each jar's
+// share of the child's total. `compact` is the dense version for list cards.
+export function JarStats({ balance, compact = false }) {
   const money = useMoney();
-  const fillPct = pence > 0 ? Math.max(10, Math.min(100, sharePct)) : 0;
+  const total = balance?.total_pence ?? 0;
+  const positive = JARS.reduce((s, j) => s + Math.max(0, pick(balance, j.key)), 0);
+
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="relative w-16 h-24 rounded-b-3xl rounded-t-lg border-4 border-white bg-slate-100 shadow-inner overflow-hidden">
-        <div
-          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${JAR_COLORS[label]} transition-all duration-700`}
-          style={{ height: `${fillPct}%` }}
-        />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-2 rounded-full bg-white/80" />
-      </div>
-      <div className="text-xs font-bold text-slate-500">
-        {emoji} {title}
-      </div>
-      <div className="font-display font-extrabold text-slate-800">{money(pence)}</div>
+    <div className={`grid grid-cols-3 ${compact ? "gap-2" : "gap-3"}`}>
+      {JARS.map((jar) => {
+        const pence = pick(balance, jar.key);
+        const share = positive > 0 ? (Math.max(0, pence) / positive) * 100 : 0;
+        return (
+          <div key={jar.key} className={compact ? "" : "rounded-xl bg-surface p-3"}>
+            <div className="flex items-center justify-between mb-1">
+              <span className={`${compact ? "text-[11px]" : "text-[12px]"} font-semibold text-ink-muted`}>{jar.label}</span>
+            </div>
+            <div className={`${compact ? "text-[13px]" : "text-[16px]"} font-bold tabular-nums text-ink mb-1.5`}>
+              {money(pence)}
+            </div>
+            <Progress value={total > 0 ? share : 0} color={jar.color} />
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useAddChore } from "../../hooks/useChores";
+import { Button, Input, ErrorText, Card } from "../ui";
 
 const CHORE_ICONS = ["⭐", "🧹", "🍽️", "🛏️", "🧺", "📚", "🐕", "🌱", "🚮", "🧼"];
 
@@ -13,7 +14,7 @@ export function AddChoreForm({ familyId }) {
   const addChore = useAddChore();
 
   const add = async () => {
-    const pence = parseInt(value, 10);
+    const pence = Math.round(parseFloat(value) * 100);
     if (!name.trim() || !pence) return;
     setErr("");
     try {
@@ -29,53 +30,44 @@ export function AddChoreForm({ familyId }) {
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="mt-3 w-full flex items-center justify-center gap-1.5 text-sm font-bold text-amber-600 border-2 border-dashed border-amber-200 hover:border-amber-400 hover:bg-amber-50 transition rounded-2xl py-2"
-      >
+      <Button variant="secondary" className="w-full mt-3" onClick={() => setOpen(true)}>
         <Plus size={16} /> Add a chore
-      </button>
+      </Button>
     );
   }
 
   return (
-    <div className="mt-3 p-3 rounded-2xl bg-amber-50/70 space-y-2">
-      <div className="flex flex-wrap gap-1.5">
-        {CHORE_ICONS.map((i) => (
-          <button
-            key={i}
-            onClick={() => setIcon(i)}
-            className={`text-xl w-9 h-9 rounded-full flex items-center justify-center transition ${
-              icon === i ? "bg-amber-400 scale-110 shadow" : "bg-white hover:bg-amber-100"
-            }`}
-          >
-            {i}
-          </button>
-        ))}
+    <Card className="p-4 space-y-3 mt-3">
+      <div>
+        <span className="block text-[12px] font-semibold text-ink-muted mb-1.5">Icon</span>
+        <div className="flex flex-wrap gap-1.5">
+          {CHORE_ICONS.map((i) => (
+            <button
+              key={i}
+              onClick={() => setIcon(i)}
+              className={`h-9 w-9 rounded-xl flex items-center justify-center text-lg transition ${
+                icon === i ? "bg-brand-600 ring-2 ring-brand-200" : "bg-surface hover:bg-brand-50"
+              }`}
+            >
+              {i}
+            </button>
+          ))}
+        </div>
       </div>
+      <Input label="Chore" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Make bed" />
+      <Input
+        label="Reward (e.g. 0.50)"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => setValue(e.target.value.replace(/[^\d.]/g, ""))}
+        onKeyDown={(e) => e.key === "Enter" && add()}
+        placeholder="0.00"
+      />
+      <ErrorText>{err}</ErrorText>
       <div className="flex gap-2">
-        <input
-          autoFocus
-          className="border-2 border-amber-100 focus:border-amber-400 outline-none rounded-xl px-3 py-2 text-sm flex-1"
-          placeholder="Chore name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="border-2 border-amber-100 focus:border-amber-400 outline-none rounded-xl px-3 py-2 text-sm w-16 text-center"
-          placeholder="p"
-          value={value}
-          onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-        />
-        <button
-          onClick={add}
-          className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl px-4 text-sm font-bold transition"
-        >
-          Add
-        </button>
+        <Button className="flex-1" onClick={add} disabled={addChore.isPending}>Add chore</Button>
+        <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
       </div>
-      {err && <p className="text-xs text-rose-600 font-medium">{err}</p>}
-    </div>
+    </Card>
   );
 }

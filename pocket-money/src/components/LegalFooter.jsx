@@ -1,9 +1,8 @@
 export function LegalFooter() {
   return (
-    <div className="flex justify-center gap-3 text-[11px] text-slate-400 pt-2">
-      <a href="/privacy" className="hover:text-slate-600 transition">Privacy</a>
-      <span>·</span>
-      <a href="/terms" className="hover:text-slate-600 transition">Terms</a>
+    <div className="flex justify-center gap-4 text-[12px] text-ink-muted pt-4">
+      <a href="/privacy" className="hover:text-ink transition">Privacy</a>
+      <a href="/terms" className="hover:text-ink transition">Terms</a>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { BackgroundBlobs, LoadingScreen } from "./components/common";
+import { LoadingScreen } from "./components/ui";
 import { CurrencyProvider } from "./hooks/useCurrency";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { useFamily } from "./hooks/useFamily";
@@ -30,51 +30,16 @@ function AuthedApp() {
   const session = useAuthSession();
   const { data: family, isLoading: familyLoading } = useFamily(!!session);
 
-  if (session === undefined) {
-    return (
-      <div className="relative min-h-screen overflow-hidden">
-        <BackgroundBlobs />
-        <LoadingScreen />
-      </div>
-    );
-  }
+  if (session === undefined) return <LoadingScreen />;
+  if (!session) return <AuthGate />;
+  if (familyLoading) return <LoadingScreen />;
+  if (!family) return <CreateOrJoinFamily />;
 
-  if (!session) {
-    return (
-      <div className="relative min-h-screen overflow-hidden">
-        <BackgroundBlobs />
-        <AuthGate />
-      </div>
-    );
-  }
-
-  if (familyLoading) {
-    return (
-      <div className="relative min-h-screen overflow-hidden">
-        <BackgroundBlobs />
-        <LoadingScreen />
-      </div>
-    );
-  }
-
-  if (!family) {
-    return (
-      <div className="relative min-h-screen overflow-hidden">
-        <BackgroundBlobs />
-        <CreateOrJoinFamily />
-      </div>
-    );
-  }
-
+  const active = isSubscriptionActive(family);
   return (
     <CurrencyProvider currency={family.currency}>
-      <div className="relative min-h-screen overflow-hidden">
-        <BackgroundBlobs />
-        <div className="relative">
-          {isSubscriptionActive(family) ? <FamilyDashboard family={family} /> : <Paywall family={family} />}
-        </div>
-        {isSubscriptionActive(family) && <InstallPrompt />}
-      </div>
+      {active ? <FamilyDashboard family={family} parentEmail={session.user?.email} /> : <Paywall family={family} />}
+      {active && <InstallPrompt />}
     </CurrencyProvider>
   );
 }

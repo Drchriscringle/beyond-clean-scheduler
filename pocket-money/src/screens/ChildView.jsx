@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
-import { BackgroundBlobs, Section } from "../components/common";
-import { BigJar } from "../components/Jars";
+import { ArrowLeft, Star, Hourglass, Receipt, History, Check } from "lucide-react";
+import { Page, Avatar, Card, Eyebrow, Empty, IconCircle, Pill } from "../components/ui";
+import { Section } from "../components/common";
+import { JarStats } from "../components/Jars";
 import { useMoney } from "../hooks/useCurrency";
 import { useClaimChore } from "../hooks/useClaims";
 import { useRecentActivity } from "../hooks/useActivity";
@@ -9,17 +10,12 @@ import { useRecentActivity } from "../hooks/useActivity";
 export function ChildView({ kid, family, chores, pending, balance, bills, onExit }) {
   const money = useMoney();
   const [claimingId, setClaimingId] = useState(null);
-  const [justClaimed, setJustClaimed] = useState(null); // chore name
+  const [justClaimed, setJustClaimed] = useState(null);
   const [err, setErr] = useState("");
   const claimChore = useClaimChore();
   const { data: activity } = useRecentActivity(kid.id, 6);
 
-  const save = balance?.save_pence ?? 0;
-  const spend = balance?.spend_pence ?? 0;
-  const give = balance?.give_pence ?? 0;
   const total = balance?.total_pence ?? 0;
-  const shareOf = (v) => (total > 0 ? (v / total) * 100 : 0);
-
   const myPending = pending.filter((p) => p.children.id === kid.id);
   const pendingChoreIds = new Set(myPending.map((p) => p.chores?.id).filter(Boolean));
   const availableChores = chores.filter((c) => !pendingChoreIds.has(c.id));
@@ -39,127 +35,99 @@ export function ChildView({ kid, family, chores, pending, balance, bills, onExit
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <BackgroundBlobs />
-      <div className="relative max-w-2xl mx-auto p-4 space-y-6 pb-16">
-        <header className="flex items-center justify-between pt-2">
-          <button
-            onClick={onExit}
-            className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-600 transition"
-          >
-            <ArrowLeft size={14} /> Parent
-          </button>
-          <div className="text-xs font-semibold text-slate-400">🐷 {family.name}</div>
-        </header>
+    <Page>
+      <header className="flex items-center justify-between pt-5 pb-3">
+        <button onClick={onExit} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-muted hover:text-ink transition">
+          <ArrowLeft size={16} /> Parent
+        </button>
+        <span className="text-[12.5px] text-ink-muted">{family.name}</span>
+      </header>
 
-        <div className="text-center space-y-1">
-          <span className="text-6xl">{kid.avatar}</span>
-          <h1 className="font-display text-2xl font-extrabold text-slate-800">Hi {kid.name}!</h1>
-          <div className="font-display text-4xl font-extrabold bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
-            {money(total)}
+      <Card className="p-5 text-white border-0 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900">
+        <div className="flex items-center gap-4">
+          <Avatar name={kid.name} size={60} className="ring-4 ring-white/20" />
+          <div>
+            <div className="text-[13px] text-white/70">Hi {kid.name}, you have</div>
+            <div className="text-[32px] font-bold tabular-nums tracking-tight leading-none mt-1">{money(total)}</div>
           </div>
         </div>
+      </Card>
 
-        <div className="flex justify-center gap-4 bg-white/70 backdrop-blur rounded-3xl p-5 shadow-sm border border-white">
-          <BigJar label="save" emoji="💰" title="Save" pence={save} sharePct={shareOf(save)} />
-          <BigJar label="spend" emoji="🛍️" title="Spend" pence={spend} sharePct={shareOf(spend)} />
-          <BigJar label="give" emoji="🎁" title="Give" pence={give} sharePct={shareOf(give)} />
-        </div>
+      <Eyebrow>Your jars</Eyebrow>
+      <Card className="p-4">
+        <JarStats balance={balance} />
+      </Card>
 
-        {justClaimed && (
-          <div className="text-center text-sm font-bold text-emerald-700 bg-emerald-50 rounded-2xl py-2.5">
-            🎉 Nice! "{justClaimed}" is waiting for a grown-up to say yes.
-          </div>
-        )}
-        {err && (
-          <div className="text-center text-sm font-bold text-rose-600 bg-rose-50 rounded-2xl py-2.5">{err}</div>
-        )}
+      {justClaimed && (
+        <p className="mt-4 text-[13px] font-medium text-emerald-800 bg-emerald-50 rounded-xl px-4 py-3 flex items-center gap-2">
+          <Check size={16} /> Nice! "{justClaimed}" is waiting for a grown-up to approve.
+        </p>
+      )}
+      {err && <p className="mt-4 text-[13px] font-medium text-rose-700 bg-rose-50 rounded-xl px-4 py-3">{err}</p>}
 
-        <Section title="Chores I can do" emoji="⭐">
-          <div className="grid grid-cols-2 gap-2">
-            {availableChores.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => claim(c)}
-                disabled={claimingId === c.id}
-                className="flex flex-col items-center gap-1 bg-white border-2 border-amber-100 hover:border-amber-400 hover:bg-amber-50 disabled:opacity-50 rounded-2xl py-3 transition shadow-sm"
-              >
-                <span className="text-2xl">{c.icon}</span>
-                <span className="text-sm font-bold text-slate-700 text-center px-1">{c.name}</span>
-                <span className="text-xs font-bold text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">
-                  {money(c.value_pence)}
-                </span>
-              </button>
-            ))}
-            {availableChores.length === 0 && (
-              <p className="col-span-2 text-sm text-slate-400 italic py-2 text-center">
-                Nothing to claim right now — nice work!
-              </p>
-            )}
-          </div>
-        </Section>
-
-        {myPending.length > 0 && (
-          <Section title="Waiting for approval" emoji="⏳">
-            <div className="space-y-2">
-              {myPending.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-2 bg-white border border-slate-100 rounded-2xl px-3 py-2 shadow-sm"
-                >
-                  <span className="text-xl">{p.chores?.icon}</span>
-                  <span className="flex-1 text-sm font-semibold text-slate-700">{p.chores?.name}</span>
-                  <span className="text-xs font-bold text-slate-400">{money(p.chores?.value_pence)}</span>
-                </div>
-              ))}
+      <Eyebrow>Chores you can do</Eyebrow>
+      <div className="grid grid-cols-2 gap-3">
+        {availableChores.map((c) => (
+          <Card key={c.id} onClick={() => claim(c)} className={`p-4 ${claimingId === c.id ? "opacity-50" : ""}`}>
+            <IconCircle tone="amber" size={40}>{c.icon}</IconCircle>
+            <div className="mt-3 text-[14px] font-semibold text-ink leading-snug">{c.name}</div>
+            <div className="mt-2 flex items-center justify-between">
+              <Pill tone="green">+{money(c.value_pence)}</Pill>
+              <span className="text-[12px] font-semibold text-brand-600">Done →</span>
             </div>
-          </Section>
+          </Card>
+        ))}
+        {availableChores.length === 0 && (
+          <Card className="p-5 col-span-2 text-center">
+            <Star size={22} className="mx-auto text-brand-500 mb-2" />
+            <p className="text-[13.5px] text-ink-muted">Nothing to do right now — nice work!</p>
+          </Card>
         )}
+      </div>
 
-        {bills.length > 0 && (
-          <Section title="What I pay for" emoji="🧾" subtitle="Real bills, just like grown-ups have.">
-            <div className="flex flex-wrap gap-2">
-              {bills.map((b) => (
-                <div
-                  key={b.id}
-                  className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-full pl-3 pr-2.5 py-1.5"
-                >
-                  <span>{b.icon}</span>
-                  <span className="text-sm font-semibold text-slate-700">{b.name}</span>
-                  <span className="text-xs font-bold text-sky-700 bg-sky-100 rounded-full px-2 py-0.5">
-                    {money(b.amount_pence)}/{b.frequency === "weekly" ? "wk" : "mo"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        <Section title="Recent activity" emoji="📜">
-          <div className="space-y-1.5">
-            {(activity || []).map((a) => (
-              <div key={a.id} className="flex items-center gap-2 text-sm">
-                <span>{a.chores?.icon || "⭐"}</span>
-                <span className="flex-1 text-slate-600">{a.chores?.name}</span>
-                <span
-                  className={`text-xs font-bold rounded-full px-2 py-0.5 ${
-                    a.status === "approved"
-                      ? "bg-emerald-50 text-emerald-700"
-                      : a.status === "declined"
-                        ? "bg-rose-50 text-rose-600"
-                        : "bg-slate-100 text-slate-500"
-                  }`}
-                >
-                  {a.status === "approved" ? `+${money(a.chores?.value_pence)}` : a.status}
-                </span>
+      {myPending.length > 0 && (
+        <>
+          <Eyebrow>Waiting for approval</Eyebrow>
+          <Section title="Sent to a grown-up" icon={<Hourglass size={18} />}>
+            {myPending.map((p) => (
+              <div key={p.id} className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
+                <IconCircle tone="grey" size={36}>{p.chores?.icon}</IconCircle>
+                <span className="flex-1 text-[14px] font-medium text-ink">{p.chores?.name}</span>
+                <Pill tone="grey">{money(p.chores?.value_pence)}</Pill>
               </div>
             ))}
-            {activity !== undefined && activity.length === 0 && (
-              <p className="text-sm text-slate-400 italic py-2">Nothing yet — go claim a chore!</p>
-            )}
+          </Section>
+        </>
+      )}
+
+      {bills.length > 0 && (
+        <>
+          <Eyebrow>What you pay for</Eyebrow>
+          <Section title="Your bills" icon={<Receipt size={18} />} subtitle="Real bills, just like grown-ups have.">
+            {bills.map((b) => (
+              <div key={b.id} className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
+                <IconCircle tone="blue" size={36}>{b.icon}</IconCircle>
+                <span className="flex-1 text-[14px] font-medium text-ink">{b.name}</span>
+                <Pill tone="blue">{money(b.amount_pence)}/{b.frequency === "weekly" ? "wk" : "mo"}</Pill>
+              </div>
+            ))}
+          </Section>
+        </>
+      )}
+
+      <Eyebrow>Recent activity</Eyebrow>
+      <Section title="What's happened" icon={<History size={18} />}>
+        {(activity || []).map((a) => (
+          <div key={a.id} className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
+            <IconCircle tone="grey" size={36}>{a.chores?.icon || "•"}</IconCircle>
+            <span className="flex-1 text-[14px] text-ink">{a.chores?.name}</span>
+            <Pill tone={a.status === "approved" ? "green" : a.status === "declined" ? "rose" : "grey"}>
+              {a.status === "approved" ? `+${money(a.chores?.value_pence)}` : a.status}
+            </Pill>
           </div>
-        </Section>
-      </div>
-    </div>
+        ))}
+        {activity !== undefined && activity.length === 0 && <Empty>Nothing yet — pick a chore above!</Empty>}
+      </Section>
+    </Page>
   );
 }

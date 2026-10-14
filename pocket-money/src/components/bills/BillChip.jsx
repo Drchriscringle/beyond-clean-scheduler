@@ -1,23 +1,25 @@
 import { X } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { useRemoveBill } from "../../hooks/useBills";
+import { IconCircle, Pill } from "../ui";
 
 export function BillChip({ bill }) {
   const money = useMoney();
   const removeBill = useRemoveBill();
 
   return (
-    <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-full pl-3 pr-1.5 py-1.5">
-      <span>{bill.icon}</span>
-      <span className="text-sm font-semibold text-slate-700">{bill.name}</span>
-      <span className="text-xs font-bold text-sky-700 bg-sky-100 rounded-full px-2 py-0.5">
+    <div className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
+      <IconCircle tone="blue" size={38}>{bill.icon}</IconCircle>
+      <span className="flex-1 text-[14px] font-medium text-ink truncate">{bill.name}</span>
+      <Pill tone="blue">
         {money(bill.amount_pence)}/{bill.frequency === "weekly" ? "wk" : "mo"}
-      </span>
+      </Pill>
       <button
         onClick={() => removeBill.mutate(bill.id)}
-        className="text-slate-300 hover:text-rose-500 transition p-1"
+        aria-label="Remove bill"
+        className="h-8 w-8 rounded-full text-ink-muted hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition"
       >
-        <X size={14} />
+        <X size={15} />
       </button>
     </div>
   );

@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'Pocket Money',
         short_name: 'Pocket Money',
         description: "Chores turn into real, saved-up pocket money.",
-        theme_color: '#6366f1',
-        background_color: '#ffffff',
+        theme_color: '#5b2fa8',
+        background_color: '#f5f6fa',
         display: 'standalone',
         start_url: '/',
         icons: [

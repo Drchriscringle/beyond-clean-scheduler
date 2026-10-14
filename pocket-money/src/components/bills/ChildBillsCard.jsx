@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { Banknote } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { useRunBillsNow } from "../../hooks/useBills";
+import { Avatar, Button, Card, Empty, ErrorText } from "../ui";
 import { BillChip } from "./BillChip";
 import { AddBillForm } from "./AddBillForm";
 import { BillHistory } from "./BillHistory";
 
 export function ChildBillsCard({ kid, familyId, bills }) {
   const money = useMoney();
-  const [payResult, setPayResult] = useState(null); // { total_paid_pence, shortfall_pence }
+  const [payResult, setPayResult] = useState(null);
   const [payErr, setPayErr] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const runBillsNow = useRunBillsNow();
@@ -17,58 +19,49 @@ export function ChildBillsCard({ kid, familyId, bills }) {
     setPayErr("");
     setPayResult(null);
     try {
-      const run = await runBillsNow.mutateAsync(kid.id);
-      setPayResult(run);
+      setPayResult(await runBillsNow.mutateAsync(kid.id));
     } catch (e) {
       setPayErr(e.message);
     }
   };
 
   return (
-    <div className="rounded-2xl p-3 bg-white border border-slate-100 shadow-sm">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-2xl">{kid.avatar}</span>
+    <Card className="p-4">
+      <div className="flex items-center gap-3 mb-2">
+        <Avatar name={kid.name} size={40} />
         <div className="flex-1 min-w-0">
-          <div className="font-display font-bold text-slate-800 text-sm">{kid.name}</div>
-          {bills.length > 0 && (
-            <div className="text-xs text-slate-400">{money(totalWeekly)} / week in bills</div>
-          )}
+          <div className="text-[14px] font-semibold text-ink truncate">{kid.name}</div>
+          <div className="text-[12.5px] text-ink-muted">
+            {bills.length > 0 ? `${money(totalWeekly)} / week in bills` : "No bills set"}
+          </div>
         </div>
-        <button
-          onClick={payDay}
-          disabled={runBillsNow.isPending || bills.length === 0}
-          className="flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 disabled:opacity-40 text-white rounded-full px-3 py-1.5 text-sm font-bold transition"
-        >
-          💸 {runBillsNow.isPending ? "Paying…" : "Pay day"}
-        </button>
+        <Button size="sm" onClick={payDay} disabled={runBillsNow.isPending || bills.length === 0}>
+          <Banknote size={15} /> {runBillsNow.isPending ? "Paying…" : "Pay day"}
+        </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-2">
-        {bills.map((b) => (
-          <BillChip key={b.id} bill={b} />
-        ))}
-        {bills.length === 0 && <p className="text-xs text-slate-400 italic">No bills set yet.</p>}
-      </div>
+      {bills.map((b) => <BillChip key={b.id} bill={b} />)}
+      {bills.length === 0 && <Empty>Add a bill to teach real-world outgoings.</Empty>}
 
-      {payErr && <p className="text-xs text-rose-600 font-medium mb-2">{payErr}</p>}
+      <ErrorText>{payErr}</ErrorText>
       {payResult && (
-        <p className="text-xs font-semibold mb-2 text-sky-700 bg-sky-50 rounded-lg px-2 py-1.5">
+        <p className="text-[12.5px] font-medium text-sky-800 bg-sky-50 rounded-lg px-3 py-2 mt-2">
           Paid {money(payResult.total_paid_pence)}
-          {payResult.shortfall_pence > 0 && (
-            <span className="text-rose-600"> · {money(payResult.shortfall_pence)} shortfall</span>
-          )}
+          {payResult.shortfall_pence > 0 && <span className="text-rose-600"> · {money(payResult.shortfall_pence)} short</span>}
         </p>
       )}
 
-      <AddBillForm familyId={familyId} childId={kid.id} />
+      <div className="mt-3">
+        <AddBillForm familyId={familyId} childId={kid.id} />
+      </div>
 
       <button
         onClick={() => setHistoryOpen((o) => !o)}
-        className="mt-2 text-xs font-semibold text-slate-400 hover:text-slate-600 transition"
+        className="mt-2 text-[12.5px] font-semibold text-ink-muted hover:text-ink transition"
       >
         {historyOpen ? "Hide" : "Show"} pay day history
       </button>
       {historyOpen && <BillHistory childId={kid.id} />}
-    </div>
+    </Card>
   );
 }

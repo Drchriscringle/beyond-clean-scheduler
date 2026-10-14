@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ArrowLeft, Trash2 } from "lucide-react";
-import { BackgroundBlobs, Section, BigButton } from "../components/common";
+import { ArrowLeft, Trash2, CreditCard, Coins } from "lucide-react";
+import { Page, Button, Input, Select, ErrorText } from "../components/ui";
+import { Section } from "../components/common";
 import { LegalFooter } from "../components/LegalFooter";
 import { SUPPORTED_CURRENCIES } from "../lib/money";
 import { useUpdateFamilyCurrency, useDeleteMyAccount } from "../hooks/useFamily";
@@ -15,6 +16,11 @@ export function Settings({ family, onExit }) {
   const updateCurrency = useUpdateFamilyCurrency();
   const deleteAccount = useDeleteMyAccount();
 
+  const saveCurrency = (value) => {
+    setCurrency(value);
+    updateCurrency.mutate({ familyId: family.id, currency: value });
+  };
+
   const openBillingPortal = async () => {
     setBillingBusy(true);
     setErr("");
@@ -26,16 +32,10 @@ export function Settings({ family, onExit }) {
     }
   };
 
-  const saveCurrency = (value) => {
-    setCurrency(value);
-    updateCurrency.mutate({ familyId: family.id, currency: value });
-  };
-
   const doDelete = async () => {
     setErr("");
     try {
       await deleteAccount.mutateAsync();
-      // Account + auth session are gone server-side; reload to land back on sign-in.
       window.location.href = "/";
     } catch (e) {
       setErr(e.message);
@@ -43,82 +43,51 @@ export function Settings({ family, onExit }) {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <BackgroundBlobs />
-      <div className="relative max-w-2xl mx-auto p-4 space-y-6 pb-16">
-        <header className="flex items-center gap-2 pt-2">
-          <button
-            onClick={onExit}
-            className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-600 transition"
-          >
-            <ArrowLeft size={14} /> Back
-          </button>
-          <h1 className="font-display text-xl font-extrabold text-slate-800">⚙️ Settings</h1>
-        </header>
+    <Page>
+      <header className="flex items-center gap-3 pt-5 pb-3">
+        <button onClick={onExit} aria-label="Back" className="h-10 w-10 -ml-2 rounded-full flex items-center justify-center text-ink-muted hover:text-ink hover:bg-white transition">
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="text-[18px] font-semibold text-ink">Settings</h1>
+      </header>
 
-        <Section title="Currency" emoji="💱" subtitle="How amounts are displayed throughout the app.">
-          <select
-            value={currency}
-            onChange={(e) => saveCurrency(e.target.value)}
-            className="border-2 border-indigo-100 focus:border-indigo-400 outline-none rounded-xl px-3 py-2 text-sm bg-white font-semibold"
-          >
-            {SUPPORTED_CURRENCIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+      <div className="space-y-4">
+        <Section title="Currency" icon={<Coins size={18} />} subtitle="How amounts are shown throughout the app.">
+          <Select value={currency} onChange={(e) => saveCurrency(e.target.value)}>
+            {SUPPORTED_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </Select>
         </Section>
 
-        <Section title="Billing" emoji="💳" subtitle="Manage your subscription, payment method, and invoices.">
-          <BigButton onClick={openBillingPortal} disabled={billingBusy} className="bg-white border-2 border-indigo-200 text-indigo-600">
+        <Section title="Billing" icon={<CreditCard size={18} />} subtitle="Manage your subscription, payment method and invoices.">
+          <Button variant="secondary" className="w-full" onClick={openBillingPortal} disabled={billingBusy}>
             {billingBusy ? "One moment…" : "Manage billing"}
-          </BigButton>
+          </Button>
         </Section>
 
-        <Section title="Danger zone" emoji="⚠️">
+        <Section title="Delete account" icon={<Trash2 size={18} />}>
           {!confirming ? (
-            <button
-              onClick={() => setConfirming(true)}
-              className="flex items-center gap-1.5 text-sm font-bold text-rose-600 border-2 border-dashed border-rose-200 hover:border-rose-400 hover:bg-rose-50 transition rounded-2xl py-2 px-4"
-            >
-              <Trash2 size={15} /> Delete my family &amp; account
-            </button>
+            <Button variant="ghost" className="w-full text-rose-600 hover:bg-rose-50 hover:text-rose-700" onClick={() => setConfirming(true)}>
+              <Trash2 size={16} /> Delete my family &amp; account
+            </Button>
           ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-slate-600">
-                This permanently deletes your family, every child, chore, bill and
-                transaction, and your own sign-in account. This cannot be undone.
-                Type <strong>DELETE</strong> to confirm.
+            <div className="space-y-3">
+              <p className="text-[13px] text-ink-muted leading-relaxed">
+                This permanently deletes your family, every child, chore, bill and transaction, and your sign-in account. It cannot be undone. Type <strong className="text-ink">DELETE</strong> to confirm.
               </p>
-              <input
-                className="w-full border-2 border-rose-200 focus:border-rose-400 outline-none rounded-xl px-3 py-2 text-sm"
-                value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
-              />
-              {err && <p className="text-xs text-rose-600 font-medium">{err}</p>}
+              <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="DELETE" />
               <div className="flex gap-2">
-                <BigButton
-                  onClick={doDelete}
-                  disabled={confirmText !== "DELETE" || deleteAccount.isPending}
-                  className="bg-rose-600 text-white hover:brightness-105"
-                >
+                <Button variant="danger" className="flex-1" onClick={doDelete} disabled={confirmText !== "DELETE" || deleteAccount.isPending}>
                   {deleteAccount.isPending ? "Deleting…" : "Permanently delete"}
-                </BigButton>
-                <button
-                  onClick={() => {
-                    setConfirming(false);
-                    setConfirmText("");
-                  }}
-                  className="px-4 text-sm font-semibold text-slate-500"
-                >
-                  Cancel
-                </button>
+                </Button>
+                <Button variant="ghost" onClick={() => { setConfirming(false); setConfirmText(""); }}>Cancel</Button>
               </div>
             </div>
           )}
         </Section>
-
-        <LegalFooter />
+        <ErrorText>{err}</ErrorText>
       </div>
-    </div>
+
+      <LegalFooter />
+    </Page>
   );
 }

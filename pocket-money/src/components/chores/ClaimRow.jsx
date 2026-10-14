@@ -1,33 +1,41 @@
 import { Check, X } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { useDecideClaim } from "../../hooks/useClaims";
+import { Avatar, IconCircle } from "../ui";
 
 export function ClaimRow({ claim }) {
   const money = useMoney();
   const decideClaim = useDecideClaim();
+  const busy = decideClaim.isPending;
 
   return (
-    <div className="rounded-2xl p-3 bg-white border border-slate-100 flex items-center gap-3 shadow-sm">
-      <span className="text-2xl">{claim.children.avatar}</span>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-bold text-slate-700 truncate">
-          {claim.children.name} · {claim.chores.icon} {claim.chores.name}
+    <div className="flex items-center gap-3 py-3 border-b border-line last:border-0">
+      <div className="relative">
+        <Avatar name={claim.children.name} size={44} />
+        <div className="absolute -bottom-1 -right-1">
+          <IconCircle tone="amber" size={22}>{claim.chores.icon}</IconCircle>
         </div>
-        <div className="text-xs text-slate-500 font-semibold">{money(claim.chores.value_pence)}</div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[14px] font-semibold text-ink truncate">{claim.chores.name}</div>
+        <div className="text-[12.5px] text-ink-muted">
+          {claim.children.name} · {money(claim.chores.value_pence)}
+        </div>
       </div>
       <button
-        onClick={() => decideClaim.mutate({ claimId: claim.id, approve: true })}
-        disabled={decideClaim.isPending}
-        className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white rounded-full px-3 py-1.5 text-sm font-bold transition"
+        onClick={() => decideClaim.mutate({ claimId: claim.id, approve: false })}
+        disabled={busy}
+        aria-label="Decline"
+        className="h-9 w-9 rounded-full bg-surface text-ink-muted hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition disabled:opacity-50"
       >
-        <Check size={15} /> Approve
+        <X size={16} />
       </button>
       <button
-        onClick={() => decideClaim.mutate({ claimId: claim.id, approve: false })}
-        disabled={decideClaim.isPending}
-        className="flex items-center bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-500 rounded-full p-1.5 transition"
+        onClick={() => decideClaim.mutate({ claimId: claim.id, approve: true })}
+        disabled={busy}
+        className="h-9 px-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-semibold inline-flex items-center gap-1 transition disabled:opacity-50"
       >
-        <X size={15} />
+        <Check size={15} /> Approve
       </button>
     </div>
   );
