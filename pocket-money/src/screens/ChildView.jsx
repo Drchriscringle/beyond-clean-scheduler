@@ -8,6 +8,7 @@ import { PersonaliseSheet } from "../components/children/PersonaliseSheet";
 import { MoneyDrop } from "../components/MoneyDrop";
 import { Tip } from "../components/Tip";
 import { WellDone } from "../components/WellDone";
+import { LessonCard } from "../components/children/LessonCard";
 import { weeklyFlagSeen, markWeeklyFlag } from "../lib/tips";
 import { weekStartUTC } from "../lib/week";
 import { useMoney } from "../hooks/useCurrency";
@@ -136,6 +137,9 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
         <Card className={`p-4 ${drop ? "jar-bump" : ""}`}>
           <JarStats balance={balance} />
         </Card>
+
+        <Eyebrow>Learn</Eyebrow>
+        <LessonCard kid={kid} mode={mode} color={color} />
 
         {justClaimed && (
           <p className="mt-4 text-[13px] font-medium text-emerald-800 bg-emerald-50 rounded-xl px-4 py-3 flex items-center gap-2">

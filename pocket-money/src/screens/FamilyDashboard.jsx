@@ -11,6 +11,8 @@ import { ChildBillsCard } from "../components/bills/ChildBillsCard";
 import { PinPad } from "../components/PinPad";
 import { MoneyDrop } from "../components/MoneyDrop";
 import { Tip } from "../components/Tip";
+import { WelcomeTour } from "../components/WelcomeTour";
+import { tipsEnabled, isTipSeen, markTipSeen } from "../lib/tips";
 import { ChildView } from "./ChildView";
 import { Settings } from "./Settings";
 import * as api from "../lib/api";
@@ -28,6 +30,7 @@ export function FamilyDashboard({ family, parentEmail }) {
   const [activeChildId, setActiveChildId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [drop, setDrop] = useState(null);
+  const [tourOpen, setTourOpen] = useState(() => tipsEnabled() && !isTipSeen("welcome-tour"));
 
   const { data: children = [] } = useChildren();
   const { data: chores = [] } = useChores();
@@ -37,7 +40,9 @@ export function FamilyDashboard({ family, parentEmail }) {
   const bills = useChildrenBills(children);
   useClaimsRealtime(family.id);
 
-  if (settingsOpen) return <Settings family={family} onExit={() => setSettingsOpen(false)} />;
+  if (settingsOpen) {
+    return <Settings family={family} onExit={() => setSettingsOpen(false)} onShowTour={() => { setSettingsOpen(false); setTourOpen(true); }} />;
+  }
 
   const activeChild = children.find((k) => k.id === activeChildId);
   if (activeChild) {
@@ -180,6 +185,7 @@ export function FamilyDashboard({ family, parentEmail }) {
         />
       )}
       {drop && <MoneyDrop amount={drop.amount} label={drop.label} onDone={() => setDrop(null)} />}
+      {tourOpen && <WelcomeTour onClose={() => { markTipSeen("welcome-tour"); setTourOpen(false); }} />}
     </Page>
   );
 }

@@ -10,7 +10,7 @@ import { soundEnabled, setSoundEnabled, playCoinShower } from "../lib/sound";
 import { tipsEnabled, setTipsEnabled, resetTips } from "../lib/tips";
 import * as api from "../lib/api";
 
-export function Settings({ family, onExit }) {
+export function Settings({ family, onExit, onShowTour }) {
   const [currency, setCurrency] = useState(family.currency || "GBP");
   const [confirming, setConfirming] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -68,6 +68,7 @@ export function Settings({ family, onExit }) {
           <div className="flex items-center justify-between gap-3">
             <span className="text-[13.5px] font-medium text-ink">{tips ? "Tips are on" : "Tips are off"}</span>
             <div className="flex gap-2">
+              {onShowTour && <Button variant="ghost" size="sm" onClick={onShowTour}>Welcome tour</Button>}
               <Button variant="ghost" size="sm" onClick={() => { resetTips(); setTips(true); }}>Show all again</Button>
               <Button variant="secondary" size="sm" onClick={() => { setTipsEnabled(!tips); setTips(!tips); }}>
                 {tips ? "Turn off" : "Turn on"}
