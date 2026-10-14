@@ -24,9 +24,21 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App-shell caching only — Supabase API calls are never cached, so
-        // data is always fresh when there's a connection.
-        globPatterns: ['**/*.{js,css,html,svg,png}'],
+        // Hashed assets are precached, but the HTML itself is deliberately
+        // NOT: Netlify rewrites it at the edge (headers, injected scripts),
+        // so pinning it in the precache would freeze those changes on
+        // devices until the next build. Navigations go network-first and
+        // only fall back to the cached page when offline. Supabase API
+        // calls are never cached.
+        globPatterns: ['**/*.{js,css,svg,png}'],
+        navigateFallback: null,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'pages', networkTimeoutSeconds: 4 },
+          },
+        ],
       },
     }),
   ],
