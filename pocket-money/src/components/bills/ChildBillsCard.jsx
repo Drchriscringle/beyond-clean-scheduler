@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Banknote } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { useRunBillsNow } from "../../hooks/useBills";
-import { Avatar, Button, Card, Empty, ErrorText } from "../ui";
+import { Button, Card, Empty, ErrorText } from "../ui";
+import { ChildAvatar } from "../children/ChildAvatar";
 import { BillChip } from "./BillChip";
 import { AddBillForm } from "./AddBillForm";
 import { BillHistory } from "./BillHistory";
@@ -28,7 +29,7 @@ export function ChildBillsCard({ kid, familyId, bills }) {
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3 mb-2">
-        <Avatar name={kid.name} size={40} />
+        <ChildAvatar kid={kid} size={40} />
         <div className="flex-1 min-w-0">
           <div className="text-[14px] font-semibold text-ink truncate">{kid.name}</div>
           <div className="text-[12.5px] text-ink-muted">

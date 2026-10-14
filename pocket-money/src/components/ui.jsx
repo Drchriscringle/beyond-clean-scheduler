@@ -12,11 +12,12 @@ export function Centered({ children }) {
   );
 }
 
-export function Card({ children, className = "", accent, onClick }) {
+export function Card({ children, className = "", accent, onClick, style }) {
   const Tag = onClick ? "button" : "div";
   return (
     <Tag
       onClick={onClick}
+      style={style}
       className={`relative w-full text-left bg-white rounded-2xl border border-line shadow-[0_1px_2px_rgba(27,27,47,0.04),0_8px_24px_-12px_rgba(27,27,47,0.12)] overflow-hidden ${onClick ? "active:scale-[0.995] transition" : ""} ${className}`}
     >
       {children}
@@ -91,12 +92,24 @@ export function avatarColors(seed = "") {
   return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
 }
 
-export function Avatar({ name = "", size = 48, className = "" }) {
-  const [fg, bg] = avatarColors(name);
+// `src` shows a photo instead of the initial; `colors` ([fg, bg]) overrides
+// the name-derived palette (used for a child's chosen theme colour).
+export function Avatar({ name = "", size = 48, className = "", src, colors }) {
+  const [fg, bg] = colors || avatarColors(name);
   const initial = (name.trim()[0] || "?").toUpperCase();
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        className={`rounded-full object-cover shrink-0 bg-surface ${className}`}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <div
-      className={`rounded-full flex items-center justify-center font-bold select-none ${className}`}
+      className={`rounded-full flex items-center justify-center font-bold select-none shrink-0 ${className}`}
       style={{ width: size, height: size, background: bg, color: fg, fontSize: Math.round(size * 0.42) }}
       aria-hidden
     >

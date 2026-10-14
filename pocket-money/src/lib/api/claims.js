@@ -13,7 +13,7 @@ export async function claimChore(choreId, childId, familyId) {
 export async function listPendingClaims() {
   const { data, error } = await supabase
     .from("chore_claims")
-    .select("id, claimed_at, chores(id, name, icon, value_pence), children(id, name, avatar)")
+    .select("id, claimed_at, chores(id, name, icon, value_pence), children(id, name, avatar, avatar_url, theme)")
     .eq("status", "pending")
     .order("claimed_at");
   if (error) throw error;

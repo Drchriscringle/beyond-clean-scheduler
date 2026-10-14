@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { X, Delete } from "lucide-react";
 import { useCheckChildPin } from "../hooks/useChildren";
-import { Avatar } from "./ui";
+import { themeColor } from "../lib/theme";
+import { ChildAvatar } from "./children/ChildAvatar";
 
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
@@ -9,6 +10,7 @@ export function PinPad({ kid, onCancel, onSuccess }) {
   const [entered, setEntered] = useState("");
   const [shake, setShake] = useState(false);
   const checkPin = useCheckChildPin();
+  const color = themeColor(kid.theme, kid.name);
 
   const reject = () => {
     setShake(true);
@@ -45,16 +47,13 @@ export function PinPad({ kid, onCancel, onSuccess }) {
     <div className="fixed inset-0 z-50 bg-ink/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
       <div className={`w-full max-w-xs bg-white rounded-3xl p-6 shadow-2xl text-center ${shake ? "animate-shake" : ""}`}>
         <div className="flex justify-center mb-2">
-          <Avatar name={kid.name} size={56} />
+          <ChildAvatar kid={kid} size={56} />
         </div>
         <div className="font-semibold text-ink">{kid.name}</div>
         <div className="text-[12.5px] text-ink-muted mb-5">Enter your 4-digit PIN</div>
         <div className="flex justify-center gap-3 mb-6">
           {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className={`w-3 h-3 rounded-full transition ${i < entered.length ? "bg-brand-600" : "bg-line"}`}
-            />
+            <div key={i} className="w-3 h-3 rounded-full transition" style={{ background: i < entered.length ? color.main : "#e9ebf2" }} />
           ))}
         </div>
         <div className="grid grid-cols-3 gap-2">

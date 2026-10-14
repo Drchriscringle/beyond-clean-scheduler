@@ -1,7 +1,8 @@
 import { Check, X } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { useDecideClaim } from "../../hooks/useClaims";
-import { Avatar, IconCircle } from "../ui";
+import { IconCircle } from "../ui";
+import { ChildAvatar } from "../children/ChildAvatar";
 
 export function ClaimRow({ claim }) {
   const money = useMoney();
@@ -11,7 +12,7 @@ export function ClaimRow({ claim }) {
   return (
     <div className="flex items-center gap-3 py-3 border-b border-line last:border-0">
       <div className="relative">
-        <Avatar name={claim.children.name} size={44} />
+        <ChildAvatar kid={claim.children} size={44} />
         <div className="absolute -bottom-1 -right-1">
           <IconCircle tone="amber" size={22}>{claim.chores.icon}</IconCircle>
         </div>

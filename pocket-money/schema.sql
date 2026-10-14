@@ -555,3 +555,31 @@ create policy "select own bill runs" on bill_runs
 --      needs to call one thing.
 -- Worth doing once the manual button has been tested with real bills
 -- for a week or two.
+
+-- ============================================================
+-- CHILD PERSONALISATION
+-- `theme` holds { color, icon, wallpaper } chosen on the child's screen;
+-- `avatar_url` is a Storage object path in the private `avatars` bucket,
+-- laid out as <family_id>/<child_id>.jpg so the policies below can scope
+-- access to the owning family by folder. Photos are read via short-lived
+-- signed URLs — never public.
+-- ============================================================
+
+alter table children add column theme jsonb not null default '{}'::jsonb;
+alter table children add column avatar_url text;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', false, 2097152, array['image/jpeg', 'image/png', 'image/webp']);
+
+create policy "family reads own avatars" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = public.my_family_id()::text);
+
+create policy "family uploads own avatars" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = public.my_family_id()::text);
+
+create policy "family replaces own avatars" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = public.my_family_id()::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = public.my_family_id()::text);
