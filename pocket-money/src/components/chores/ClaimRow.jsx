@@ -4,10 +4,16 @@ import { useDecideClaim } from "../../hooks/useClaims";
 import { IconCircle } from "../ui";
 import { ChildAvatar } from "../children/ChildAvatar";
 
-export function ClaimRow({ claim }) {
+export function ClaimRow({ claim, onApproved }) {
   const money = useMoney();
   const decideClaim = useDecideClaim();
   const busy = decideClaim.isPending;
+
+  const approve = () =>
+    decideClaim.mutate(
+      { claimId: claim.id, approve: true },
+      { onSuccess: () => onApproved?.({ amount: claim.chores.value_pence, childName: claim.children.name }) }
+    );
 
   return (
     <div className="flex items-center gap-3 py-3 border-b border-line last:border-0">
@@ -32,7 +38,7 @@ export function ClaimRow({ claim }) {
         <X size={16} />
       </button>
       <button
-        onClick={() => decideClaim.mutate({ claimId: claim.id, approve: true })}
+        onClick={approve}
         disabled={busy}
         className="h-9 px-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-semibold inline-flex items-center gap-1 transition disabled:opacity-50"
       >

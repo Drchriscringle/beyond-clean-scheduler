@@ -5,18 +5,23 @@ export function useChores() {
   return useQuery({ queryKey: ["chores"], queryFn: api.listChores });
 }
 
-export function useAddChore() {
+function useChoreMutation(fn) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: api.addChore,
+    mutationFn: fn,
+    // The database trigger may re-value sibling chores, so refetch the lot.
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chores"] }),
   });
 }
 
+export function useAddChore() {
+  return useChoreMutation(api.addChore);
+}
+
+export function useUpdateChore() {
+  return useChoreMutation(({ choreId, patch }) => api.updateChore(choreId, patch));
+}
+
 export function useRemoveChore() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: api.removeChore,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chores"] }),
-  });
+  return useChoreMutation(api.removeChore);
 }

@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 // check_child_pin() in schema.sql) — it's a UI convenience lock, not a
 // security boundary, but there's no reason to ship its value to the browser.
 const CHILD_COLUMNS =
-  "id, family_id, name, avatar, avatar_url, theme, jar_save, jar_spend, jar_give, allow_negative_balance, created_at";
+  "id, family_id, name, avatar, avatar_url, theme, birth_year, weekly_budget_pence, jar_save, jar_spend, jar_give, allow_negative_balance, created_at";
 
 export async function listChildren() {
   const { data, error } = await supabase.from("children").select(CHILD_COLUMNS).order("created_at");
@@ -12,10 +12,10 @@ export async function listChildren() {
   return data;
 }
 
-export async function addChild({ name, avatar, pin, familyId }) {
+export async function addChild({ name, avatar, pin, familyId, birthYear = null }) {
   const { data, error } = await supabase
     .from("children")
-    .insert({ name, avatar, pin: pin || "0000", family_id: familyId })
+    .insert({ name, avatar, pin: pin || "0000", family_id: familyId, birth_year: birthYear })
     .select(CHILD_COLUMNS)
     .single();
   if (error) throw error;
@@ -27,6 +27,16 @@ export async function updateChildJars(childId, { jar_save, jar_spend, jar_give }
     .from("children")
     .update({ jar_save, jar_spend, jar_give })
     .eq("id", childId);
+  if (error) throw error;
+}
+
+export async function updateChildBudget(childId, weeklyBudgetPence) {
+  const { error } = await supabase.from("children").update({ weekly_budget_pence: weeklyBudgetPence }).eq("id", childId);
+  if (error) throw error;
+}
+
+export async function updateChildBirthYear(childId, birthYear) {
+  const { error } = await supabase.from("children").update({ birth_year: birthYear }).eq("id", childId);
   if (error) throw error;
 }
 

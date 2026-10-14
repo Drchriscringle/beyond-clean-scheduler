@@ -1,22 +1,22 @@
 import { useState } from "react";
-import { LogOut, Settings as SettingsIcon, Users, ClipboardCheck, Star, Receipt } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, Users, ClipboardCheck, Receipt } from "lucide-react";
 import { Page, Avatar, Card, Eyebrow, Empty, Logo } from "../components/ui";
 import { Section } from "../components/common";
 import { InviteCoParent } from "../components/InviteCoParent";
 import { ChildCard } from "../components/children/ChildCard";
 import { AddChildForm } from "../components/children/AddChildForm";
+import { ChildChoresCard } from "../components/children/ChildChoresCard";
 import { ClaimRow } from "../components/chores/ClaimRow";
-import { ChoreChip } from "../components/chores/ChoreChip";
-import { AddChoreForm } from "../components/chores/AddChoreForm";
 import { ChildBillsCard } from "../components/bills/ChildBillsCard";
 import { PinPad } from "../components/PinPad";
+import { MoneyDrop } from "../components/MoneyDrop";
 import { ChildView } from "./ChildView";
 import { Settings } from "./Settings";
 import * as api from "../lib/api";
 import { useMoney } from "../hooks/useCurrency";
 import { useChildren } from "../hooks/useChildren";
 import { useChores } from "../hooks/useChores";
-import { usePendingClaims, useClaimsRealtime } from "../hooks/useClaims";
+import { usePendingClaims, useWeekClaims, useClaimsRealtime } from "../hooks/useClaims";
 import { useChildBalances } from "../hooks/useBalances";
 import { useChildrenBills } from "../hooks/useBills";
 import { trialDaysLeft } from "../lib/subscription";
@@ -26,10 +26,12 @@ export function FamilyDashboard({ family, parentEmail }) {
   const [pinTarget, setPinTarget] = useState(null);
   const [activeChildId, setActiveChildId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [drop, setDrop] = useState(null);
 
   const { data: children = [] } = useChildren();
   const { data: chores = [] } = useChores();
   const { data: pending = [] } = usePendingClaims();
+  const { data: weekClaims = [] } = useWeekClaims();
   const balances = useChildBalances(children);
   const bills = useChildrenBills(children);
   useClaimsRealtime(family.id);
@@ -42,8 +44,9 @@ export function FamilyDashboard({ family, parentEmail }) {
       <ChildView
         kid={activeChild}
         family={family}
-        chores={chores}
+        chores={chores.filter((c) => c.child_id === activeChild.id || c.child_id == null)}
         pending={pending}
+        weekClaims={weekClaims.filter((c) => c.child_id === activeChild.id)}
         balance={balances[activeChild.id]}
         bills={bills[activeChild.id] || []}
         onExit={() => setActiveChildId(null)}
@@ -52,6 +55,7 @@ export function FamilyDashboard({ family, parentEmail }) {
   }
 
   const familyTotal = children.reduce((sum, kid) => sum + (balances[kid.id]?.total_pence ?? 0), 0);
+  const weeklyBudget = children.reduce((sum, kid) => sum + (kid.weekly_budget_pence || 0), 0);
   const daysLeft = family.subscription_status === "trial" ? trialDaysLeft(family) : null;
 
   return (
@@ -77,7 +81,7 @@ export function FamilyDashboard({ family, parentEmail }) {
             <div className="text-[12.5px] text-white/70">Total pocket money</div>
             <div className="text-[32px] font-bold tabular-nums tracking-tight leading-none mt-1">{money(familyTotal)}</div>
             <div className="text-[12.5px] text-white/70 mt-2">
-              {children.length} {children.length === 1 ? "child" : "children"} · {pending.length} awaiting approval
+              {money(weeklyBudget)} a week up for grabs · {pending.length} awaiting approval
             </div>
           </div>
           <div className="opacity-90"><Logo size={44} /></div>
@@ -88,10 +92,24 @@ export function FamilyDashboard({ family, parentEmail }) {
         </div>
       </Card>
 
+      <Eyebrow>Awaiting approval</Eyebrow>
+      <Section title="Chores to check" icon={<ClipboardCheck size={18} />} badge={pending.length}>
+        {pending.map((claim) => (
+          <ClaimRow key={claim.id} claim={claim} onApproved={({ amount, childName }) => setDrop({ amount, label: `sent to ${childName}` })} />
+        ))}
+        {pending.length === 0 && <Empty>Nothing waiting — all caught up.</Empty>}
+      </Section>
+
       <Eyebrow>Children</Eyebrow>
       <div className="space-y-3">
         {children.map((kid) => (
-          <ChildCard key={kid.id} kid={kid} balance={balances[kid.id]} onOpen={() => setPinTarget(kid)} />
+          <ChildCard
+            key={kid.id}
+            kid={kid}
+            balance={balances[kid.id]}
+            weekClaims={weekClaims.filter((c) => c.child_id === kid.id)}
+            onOpen={() => setPinTarget(kid)}
+          />
         ))}
         {children.length === 0 && (
           <Card className="p-5 text-center">
@@ -102,18 +120,22 @@ export function FamilyDashboard({ family, parentEmail }) {
         <AddChildForm familyId={family.id} />
       </div>
 
-      <Eyebrow>Awaiting approval</Eyebrow>
-      <Section title="Chores to check" icon={<ClipboardCheck size={18} />} badge={pending.length}>
-        {pending.map((claim) => <ClaimRow key={claim.id} claim={claim} />)}
-        {pending.length === 0 && <Empty>Nothing waiting — all caught up.</Empty>}
-      </Section>
-
-      <Eyebrow>Chores</Eyebrow>
-      <Section title="Available chores" icon={<Star size={18} />}>
-        {chores.map((c) => <ChoreChip key={c.id} chore={c} />)}
-        {chores.length === 0 && <Empty>No chores yet.</Empty>}
-        <AddChoreForm familyId={family.id} />
-      </Section>
+      <Eyebrow>This week's chores &amp; pocket money</Eyebrow>
+      <p className="text-[12.5px] text-ink-muted -mt-1 mb-3 px-1 leading-relaxed">
+        Set how much each child can earn this week, then add their chores. The amount is split across every completion automatically — or give any chore its own amount.
+      </p>
+      <div className="space-y-3">
+        {children.map((kid) => (
+          <ChildChoresCard
+            key={kid.id}
+            kid={kid}
+            familyId={family.id}
+            chores={chores.filter((c) => c.child_id === kid.id)}
+            weekClaims={weekClaims.filter((c) => c.child_id === kid.id)}
+          />
+        ))}
+        {children.length === 0 && <Empty>Add a child first.</Empty>}
+      </div>
 
       <Eyebrow>Bills</Eyebrow>
       <p className="text-[12.5px] text-ink-muted -mt-1 mb-3 px-1 leading-relaxed">
@@ -141,6 +163,7 @@ export function FamilyDashboard({ family, parentEmail }) {
           }}
         />
       )}
+      {drop && <MoneyDrop amount={drop.amount} label={drop.label} onDone={() => setDrop(null)} />}
     </Page>
   );
 }

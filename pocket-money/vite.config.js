@@ -31,6 +31,8 @@ export default defineConfig({
         // only fall back to the cached page when offline. Supabase API
         // calls are never cached.
         globPatterns: ['**/*.{js,css,svg,png}'],
+        globIgnores: ['push-sw.js'],
+        importScripts: ['push-sw.js'],
         navigateFallback: null,
         runtimeCaching: [
           {

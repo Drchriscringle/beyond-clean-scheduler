@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { ArrowLeft, Trash2, CreditCard, Coins } from "lucide-react";
+import { ArrowLeft, Trash2, CreditCard, Coins, Bell } from "lucide-react";
 import { Page, Button, Input, Select, ErrorText } from "../components/ui";
 import { Section } from "../components/common";
 import { LegalFooter } from "../components/LegalFooter";
 import { SUPPORTED_CURRENCIES } from "../lib/money";
 import { useUpdateFamilyCurrency, useDeleteMyAccount } from "../hooks/useFamily";
+import { useChoreAlerts } from "../hooks/usePush";
 import * as api from "../lib/api";
 
 export function Settings({ family, onExit }) {
@@ -15,6 +16,7 @@ export function Settings({ family, onExit }) {
   const [billingBusy, setBillingBusy] = useState(false);
   const updateCurrency = useUpdateFamilyCurrency();
   const deleteAccount = useDeleteMyAccount();
+  const alerts = useChoreAlerts(family.id);
 
   const saveCurrency = (value) => {
     setCurrency(value);
@@ -57,6 +59,28 @@ export function Settings({ family, onExit }) {
             {SUPPORTED_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </Select>
         </Section>
+
+        {alerts.configured && (
+          <Section title="Chore alerts" icon={<Bell size={18} />} subtitle="Get a notification on this device when a child marks a chore done.">
+            {alerts.status === "ios-install" && (
+              <p className="text-[13px] text-ink-muted">On iPhone, alerts only work once Pocket Money is added to your Home Screen (Share → Add to Home Screen). Open it from there, then come back here.</p>
+            )}
+            {alerts.status === "unsupported" && <p className="text-[13px] text-ink-muted">This browser doesn't support notifications.</p>}
+            {alerts.status === "checking" && <p className="text-[13px] text-ink-muted">Checking…</p>}
+            {alerts.status === "off" && (
+              <Button className="w-full" onClick={() => alerts.enable.mutate()} disabled={alerts.enable.isPending}>
+                <Bell size={16} /> {alerts.enable.isPending ? "Turning on…" : "Turn on alerts on this device"}
+              </Button>
+            )}
+            {alerts.status === "on" && (
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[13.5px] font-medium text-emerald-700">Alerts are on for this device.</span>
+                <Button variant="ghost" size="sm" onClick={() => alerts.disable.mutate()} disabled={alerts.disable.isPending}>Turn off</Button>
+              </div>
+            )}
+            {alerts.enable.error && <ErrorText>{alerts.enable.error.message}</ErrorText>}
+          </Section>
+        )}
 
         <Section title="Billing" icon={<CreditCard size={18} />} subtitle="Manage your subscription, payment method and invoices.">
           <Button variant="secondary" className="w-full" onClick={openBillingPortal} disabled={billingBusy}>

@@ -13,6 +13,25 @@ export function useAddChild() {
   });
 }
 
+export function useUpdateChildBudget() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ childId, pence }) => api.updateChildBudget(childId, pence),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["children"] });
+      queryClient.invalidateQueries({ queryKey: ["chores"] }); // trigger re-values auto chores
+    },
+  });
+}
+
+export function useUpdateChildBirthYear() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ childId, birthYear }) => api.updateChildBirthYear(childId, birthYear),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["children"] }),
+  });
+}
+
 export function useCheckChildPin() {
   return useMutation({
     mutationFn: ({ childId, pin }) => api.checkChildPin(childId, pin),
