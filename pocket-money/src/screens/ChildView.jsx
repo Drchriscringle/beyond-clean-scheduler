@@ -61,7 +61,7 @@ export function ChildView({ kid, family, chores, pending, balance, bills, onExit
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-[13px] text-white/75">
                 <span>Hi {kid.name}</span>
-                <ThemeBadge theme={kid.theme} name={kid.name} size={26} onDark />
+                {kid.avatar_url && <ThemeBadge theme={kid.theme} name={kid.name} size={26} onDark />}
               </div>
               <div className="text-[32px] font-bold tabular-nums tracking-tight leading-none mt-1">{money(total)}</div>
             </div>
