@@ -4,6 +4,7 @@ import { themeColor, ThemeBadge } from "../../lib/theme";
 import { Card, Row, Divider, Progress } from "../ui";
 import { JarStats } from "../Jars";
 import { ChildAvatar } from "./ChildAvatar";
+import { AgeEditor } from "./AgeEditor";
 
 export function ChildCard({ kid, balance, weekClaims = [], onOpen }) {
   const money = useMoney();
@@ -25,6 +26,7 @@ export function ChildCard({ kid, balance, weekClaims = [], onOpen }) {
           <Row label="Spend balance" value={money(spend)} />
           <Row label="Total" value={money(total)} strong />
         </div>
+        <AgeEditor kid={kid} />
       </div>
       <Divider />
       <JarStats balance={balance} compact />
