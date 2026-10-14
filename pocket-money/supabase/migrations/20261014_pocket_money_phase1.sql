@@ -7,7 +7,9 @@ alter table families add column if not exists stripe_customer_id text;
 alter table families add column if not exists subscription_status text not null default 'trial';
 alter table families add column if not exists trial_ends_at timestamptz;
 
-update families set trial_ends_at = created_at + interval '14 days' where trial_ends_at is null;
+-- Pre-existing families get a fresh 14 days from when billing was introduced,
+-- not from their original creation date (which could already be in the past).
+update families set trial_ends_at = now() + interval '14 days' where trial_ends_at is null;
 
 create or replace function create_family(family_name text)
 returns uuid
