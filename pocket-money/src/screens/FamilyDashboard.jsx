@@ -10,6 +10,7 @@ import { ClaimRow } from "../components/chores/ClaimRow";
 import { ChildBillsCard } from "../components/bills/ChildBillsCard";
 import { PinPad } from "../components/PinPad";
 import { MoneyDrop } from "../components/MoneyDrop";
+import { Tip } from "../components/Tip";
 import { ChildView } from "./ChildView";
 import { Settings } from "./Settings";
 import * as api from "../lib/api";
@@ -75,6 +76,9 @@ export function FamilyDashboard({ family, parentEmail }) {
       </header>
 
       <Eyebrow>Family overview</Eyebrow>
+      <Tip id="dash-overview" title="Welcome to Pocket Money">
+        This card shows your family's total and how much is up for grabs this week. Everything else is in order below: chores waiting for your approval, each child, this week's chores and pocket money, and bills.
+      </Tip>
       <Card className="p-5 text-white border-0 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -93,6 +97,9 @@ export function FamilyDashboard({ family, parentEmail }) {
       </Card>
 
       <Eyebrow>Awaiting approval</Eyebrow>
+      <Tip id="dash-approve" title="Approving chores">
+        When a child marks a chore done it appears here (and you get an alert if they're on). Check it's really done, then tap Approve — the money drops into their jars with a little celebration. Decline sends it back.
+      </Tip>
       <Section title="Chores to check" icon={<ClipboardCheck size={18} />} badge={pending.length}>
         {pending.map((claim) => (
           <ClaimRow key={claim.id} claim={claim} onApproved={({ amount, childName }) => setDrop({ amount, label: `sent to ${childName}` })} />
@@ -101,6 +108,9 @@ export function FamilyDashboard({ family, parentEmail }) {
       </Section>
 
       <Eyebrow>Children</Eyebrow>
+      <Tip id="dash-children" title="Each child has their own screen">
+        Tap "Open … chores" to switch to a child's view — it's locked behind their PIN. On their screen they can mark chores done and make it their own with colours, an icon, a photo and a wallpaper. Set their age here so their screen suits them.
+      </Tip>
       <div className="space-y-3">
         {children.map((kid) => (
           <ChildCard
@@ -121,6 +131,9 @@ export function FamilyDashboard({ family, parentEmail }) {
       </div>
 
       <Eyebrow>This week's chores &amp; pocket money</Eyebrow>
+      <Tip id="dash-weekly" title="How weekly pocket money works">
+        Set how much each child can earn per week, then add their chores with how many times a week they can do each one. The amount is split evenly across every completion — or give any chore its own amount and the rest re-balance. Limits reset every Monday.
+      </Tip>
       <p className="text-[12.5px] text-ink-muted -mt-1 mb-3 px-1 leading-relaxed">
         Set how much each child can earn this week, then add their chores. The amount is split across every completion automatically — or give any chore its own amount.
       </p>
@@ -138,6 +151,9 @@ export function FamilyDashboard({ family, parentEmail }) {
       </div>
 
       <Eyebrow>Bills</Eyebrow>
+      <Tip id="dash-bills" title="Bills (optional)">
+        Pretend household bills teach that money goes out as well as in. Add a weekly bill per child and tap "Pay day" to take it from their total — if they can't cover it, the shortfall is recorded rather than taking them into debt.
+      </Tip>
       <p className="text-[12.5px] text-ink-muted -mt-1 mb-3 px-1 leading-relaxed">
         Weekly household bills per child. Pay day deducts them from the child's total, so earning and paying for essentials come from the same pot.
       </p>

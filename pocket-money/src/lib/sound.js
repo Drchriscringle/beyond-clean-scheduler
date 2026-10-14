@@ -95,3 +95,37 @@ export function playTap() {
   if (c.state === "suspended") c.resume().then(go).catch(() => {});
   else go();
 }
+
+function tone(c, at, freq, dur, gain = 0.16, type = "triangle") {
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, at);
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(gain, at + 0.015);
+  g.gain.setValueAtTime(gain, at + dur * 0.6);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  osc.connect(g);
+  g.connect(c.destination);
+  osc.start(at);
+  osc.stop(at + dur + 0.02);
+}
+
+// "Ta-da!": a rising major arpeggio, a held top chord, and a sparkle on top.
+export function playFanfare() {
+  if (!soundEnabled()) return;
+  const c = getContext();
+  if (!c) return;
+  const go = () => {
+    const t = c.currentTime + 0.03;
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+    notes.forEach((f, i) => tone(c, t + i * 0.11, f, 0.22, 0.14));
+    // held chord
+    [523.25, 659.25, 783.99, 1046.5].forEach((f) => tone(c, t + 0.48, f, 0.9, 0.09));
+    tone(c, t + 0.48, 1318.5, 0.9, 0.07, "sine");
+    // sparkle
+    for (let i = 0; i < 10; i++) clink(c, t + 0.55 + Math.random() * 0.8, 2500 + Math.random() * 2500, 0.08, 0.12);
+  };
+  if (c.state === "suspended") c.resume().then(go).catch(() => {});
+  else go();
+}

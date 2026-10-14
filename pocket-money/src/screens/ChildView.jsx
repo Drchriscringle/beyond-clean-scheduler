@@ -6,6 +6,10 @@ import { JarStats } from "../components/Jars";
 import { ChildAvatar } from "../components/children/ChildAvatar";
 import { PersonaliseSheet } from "../components/children/PersonaliseSheet";
 import { MoneyDrop } from "../components/MoneyDrop";
+import { Tip } from "../components/Tip";
+import { WellDone } from "../components/WellDone";
+import { weeklyFlagSeen, markWeeklyFlag } from "../lib/tips";
+import { weekStartUTC } from "../lib/week";
 import { useMoney } from "../hooks/useCurrency";
 import { useClaimChore } from "../hooks/useClaims";
 import { useRecentActivity } from "../hooks/useActivity";
@@ -20,6 +24,7 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
   const [justClaimed, setJustClaimed] = useState(null);
   const [personalising, setPersonalising] = useState(false);
   const [drop, setDrop] = useState(null);
+  const [wellDone, setWellDone] = useState(false);
   const [err, setErr] = useState("");
   const claimChore = useClaimChore();
   const { data: activity } = useRecentActivity(kid.id, 6);
@@ -54,6 +59,16 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
       setDrop({ amount: fresh.reduce((s, c) => s + (c.chores?.value_pence || 0), 0) });
     }
   }, [weekClaims]);
+
+  // Full-screen sticker the first time this week's jobs are all done.
+  useEffect(() => {
+    if (myChores.length === 0 || available.length > 0) return;
+    const key = `welldone_${kid.id}_${weekStartUTC().toISOString().slice(0, 10)}`;
+    if (weeklyFlagSeen(key)) return;
+    markWeeklyFlag(key);
+    const t = setTimeout(() => setWellDone(true), drop ? 2600 : 400);
+    return () => clearTimeout(t);
+  }, [available.length, myChores.length, kid.id, drop]);
 
   const claim = async (chore) => {
     setClaimingId(chore.id);
@@ -130,6 +145,11 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
         {err && <p className="mt-4 text-[13px] font-medium text-rose-700 bg-rose-50 rounded-xl px-4 py-3">{err}</p>}
 
         <Eyebrow>{little ? "Jobs to do" : "Chores you can do"}</Eyebrow>
+        <Tip id={`child-home-${mode}`} kid color={color.main} title={little ? "How it works" : "How your pocket money works"}>
+          {little
+            ? "Do a job, then tap the big button. A grown-up checks it, and your money drops into your jars!"
+            : "Tap a chore once you've done it. A grown-up checks and approves it, and the money lands in your Save, Spend and Give jars. Finish everything for a surprise!"}
+        </Tip>
         {little ? (
           <div className="space-y-3">
             {available.map((c) => (
@@ -236,6 +256,7 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
 
       {personalising && <PersonaliseSheet kid={kid} familyId={family.id} onClose={() => setPersonalising(false)} />}
       {drop && <MoneyDrop amount={drop.amount} color={color.main} label={little ? "Well done!" : "into your jars!"} onDone={() => setDrop(null)} />}
+      {wellDone && <WellDone name={kid.name} color={color.main} onClose={() => setWellDone(false)} />}
     </div>
   );
 }

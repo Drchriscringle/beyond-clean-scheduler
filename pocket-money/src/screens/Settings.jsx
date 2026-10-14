@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Trash2, CreditCard, Coins, Bell, Volume2 } from "lucide-react";
+import { ArrowLeft, Trash2, CreditCard, Coins, Bell, Volume2, Lightbulb } from "lucide-react";
 import { Page, Button, Input, Select, ErrorText } from "../components/ui";
 import { Section } from "../components/common";
 import { LegalFooter } from "../components/LegalFooter";
@@ -7,6 +7,7 @@ import { SUPPORTED_CURRENCIES } from "../lib/money";
 import { useUpdateFamilyCurrency, useDeleteMyAccount } from "../hooks/useFamily";
 import { useChoreAlerts } from "../hooks/usePush";
 import { soundEnabled, setSoundEnabled, playCoinShower } from "../lib/sound";
+import { tipsEnabled, setTipsEnabled, resetTips } from "../lib/tips";
 import * as api from "../lib/api";
 
 export function Settings({ family, onExit }) {
@@ -19,6 +20,7 @@ export function Settings({ family, onExit }) {
   const deleteAccount = useDeleteMyAccount();
   const alerts = useChoreAlerts(family.id);
   const [sound, setSound] = useState(soundEnabled());
+  const [tips, setTips] = useState(tipsEnabled());
 
   const saveCurrency = (value) => {
     setCurrency(value);
@@ -60,6 +62,18 @@ export function Settings({ family, onExit }) {
           <Select value={currency} onChange={(e) => saveCurrency(e.target.value)}>
             {SUPPORTED_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </Select>
+        </Section>
+
+        <Section title="Tips" icon={<Lightbulb size={18} />} subtitle="Short explainer cards the first time you use each part of the app.">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[13.5px] font-medium text-ink">{tips ? "Tips are on" : "Tips are off"}</span>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => { resetTips(); setTips(true); }}>Show all again</Button>
+              <Button variant="secondary" size="sm" onClick={() => { setTipsEnabled(!tips); setTips(!tips); }}>
+                {tips ? "Turn off" : "Turn on"}
+              </Button>
+            </div>
+          </div>
         </Section>
 
         <Section title="Sounds" icon={<Volume2 size={18} />} subtitle="Coins clinking when pocket money lands.">
