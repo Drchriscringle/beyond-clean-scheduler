@@ -1,6 +1,6 @@
 import { ListChecks, ChevronRight } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
-import { themeColor, ThemeIcon } from "../../lib/theme";
+import { themeColor, ThemeBadge } from "../../lib/theme";
 import { Card, Row, Divider } from "../ui";
 import { JarStats } from "../Jars";
 import { ChildAvatar } from "./ChildAvatar";
@@ -14,11 +14,11 @@ export function ChildCard({ kid, balance, onOpen }) {
   return (
     <Card accent={color.main} className="p-4">
       <div className="flex items-center gap-3">
-        <ChildAvatar kid={kid} size={52} />
+        <ChildAvatar kid={kid} size={52} badge />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 text-[16px] font-semibold text-ink truncate">
-            {kid.name}
-            <ThemeIcon theme={kid.theme} size={16} style={{ color: color.main }} />
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[16px] font-semibold text-ink truncate">{kid.name}</span>
+            <ThemeBadge theme={kid.theme} name={kid.name} size={24} />
           </div>
           <Row label="Spend balance" value={money(spend)} />
           <Row label="Total" value={money(total)} strong />

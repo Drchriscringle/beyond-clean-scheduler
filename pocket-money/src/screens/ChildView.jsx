@@ -8,7 +8,7 @@ import { PersonaliseSheet } from "../components/children/PersonaliseSheet";
 import { useMoney } from "../hooks/useCurrency";
 import { useClaimChore } from "../hooks/useClaims";
 import { useRecentActivity } from "../hooks/useActivity";
-import { themeColor, ThemeIcon, wallpaperStyle } from "../lib/theme";
+import { themeColor, ThemeBadge, wallpaperStyle } from "../lib/theme";
 
 export function ChildView({ kid, family, chores, pending, balance, bills, onExit }) {
   const money = useMoney();
@@ -59,8 +59,9 @@ export function ChildView({ kid, family, chores, pending, balance, bills, onExit
           <div className="flex items-center gap-4">
             <ChildAvatar kid={kid} size={60} className="ring-4 ring-white/25" />
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-[13px] text-white/75">
-                Hi {kid.name} <ThemeIcon theme={kid.theme} size={14} className="text-white/90" />
+              <div className="flex items-center gap-2 text-[13px] text-white/75">
+                <span>Hi {kid.name}</span>
+                <ThemeBadge theme={kid.theme} name={kid.name} size={26} onDark />
               </div>
               <div className="text-[32px] font-bold tabular-nums tracking-tight leading-none mt-1">{money(total)}</div>
             </div>

@@ -53,6 +53,30 @@ export function ThemeIcon({ theme, size = 16, className = "", style }) {
   return <Icon size={size} className={className} style={style} aria-hidden />;
 }
 
+// The child's icon in a small tinted circle — visible at a glance next to
+// their name or pinned to the corner of their avatar. `onDark` flips the
+// colours for use on a coloured hero card.
+export function ThemeBadge({ theme, name = "", size = 24, onDark = false, className = "" }) {
+  const Icon = theme?.icon && THEME_ICONS[theme.icon];
+  if (!Icon) return null;
+  const color = themeColor(theme, name);
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full shrink-0 ${className}`}
+      style={{
+        width: size,
+        height: size,
+        background: onDark ? "rgba(255,255,255,0.22)" : color.soft,
+        color: onDark ? "#fff" : color.main,
+        boxShadow: onDark ? "none" : "0 0 0 2px #fff",
+      }}
+      aria-hidden
+    >
+      <Icon size={Math.round(size * 0.6)} strokeWidth={2.2} />
+    </span>
+  );
+}
+
 const svg = (w, h, body) =>
   `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}' viewBox='0 0 ${w} ${h}'>${body}</svg>`)}")`;
 
