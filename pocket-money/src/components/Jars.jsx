@@ -15,7 +15,6 @@ function pick(balance, key) {
 // share of the child's total. `compact` is the dense version for list cards.
 export function JarStats({ balance, compact = false }) {
   const money = useMoney();
-  const total = balance?.total_pence ?? 0;
   const positive = JARS.reduce((s, j) => s + Math.max(0, pick(balance, j.key)), 0);
 
   return (
@@ -31,7 +30,7 @@ export function JarStats({ balance, compact = false }) {
             <div className={`${compact ? "text-[13px]" : "text-[16px]"} font-bold tabular-nums text-ink mb-1.5`}>
               {money(pence)}
             </div>
-            <Progress value={total > 0 ? share : 0} color={jar.color} />
+            <Progress value={share} color={jar.color} />
           </div>
         );
       })}
