@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import App from './App.jsx'
+import { unlockAudio } from './lib/sound'
 
 // One-time cleanup for devices that installed the first build, whose
 // service worker had pinned index.html (including a Netlify-injected
@@ -15,6 +16,8 @@ if ('caches' in window && !localStorage.getItem(PURGE_KEY)) {
     .then(() => localStorage.setItem(PURGE_KEY, '1'))
     .catch(() => {})
 }
+
+unlockAudio()
 
 const queryClient = new QueryClient({
   defaultOptions: {

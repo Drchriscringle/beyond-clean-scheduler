@@ -12,6 +12,7 @@ import { useRecentActivity } from "../hooks/useActivity";
 import { notifyParents } from "../hooks/usePush";
 import { themeColor, ThemeBadge, wallpaperStyle } from "../lib/theme";
 import { ageMode } from "../lib/ageMode";
+import { playTap } from "../lib/sound";
 
 export function ChildView({ kid, family, chores, pending, weekClaims = [], balance, bills, onExit }) {
   const money = useMoney();
@@ -59,6 +60,7 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
     setErr("");
     try {
       await claimChore.mutateAsync({ choreId: chore.id, childId: kid.id });
+      playTap();
       setJustClaimed(chore.name);
       setTimeout(() => setJustClaimed(null), 2500);
       notifyParents({

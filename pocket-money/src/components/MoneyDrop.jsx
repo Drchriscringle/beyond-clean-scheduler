@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useMoney } from "../hooks/useCurrency";
+import { playCoinShower } from "../lib/sound";
 
 // Celebration overlay: coins rain down and the amount pops in the middle.
 // Pure CSS keyframes (see index.css), auto-dismisses after ~2.4s.
@@ -19,9 +20,10 @@ export function MoneyDrop({ amount, label = "into your jars!", color = "#5b2fa8"
   );
 
   useEffect(() => {
+    playCoinShower(coins.length, 1.6);
     const t = setTimeout(() => onDone?.(), 2400);
     return () => clearTimeout(t);
-  }, [onDone]);
+  }, [onDone, coins.length]);
 
   return (
     <div className="fixed inset-0 z-[60] pointer-events-none overflow-hidden" aria-live="polite">

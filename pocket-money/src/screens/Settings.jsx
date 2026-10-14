@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ArrowLeft, Trash2, CreditCard, Coins, Bell } from "lucide-react";
+import { ArrowLeft, Trash2, CreditCard, Coins, Bell, Volume2 } from "lucide-react";
 import { Page, Button, Input, Select, ErrorText } from "../components/ui";
 import { Section } from "../components/common";
 import { LegalFooter } from "../components/LegalFooter";
 import { SUPPORTED_CURRENCIES } from "../lib/money";
 import { useUpdateFamilyCurrency, useDeleteMyAccount } from "../hooks/useFamily";
 import { useChoreAlerts } from "../hooks/usePush";
+import { soundEnabled, setSoundEnabled, playCoinShower } from "../lib/sound";
 import * as api from "../lib/api";
 
 export function Settings({ family, onExit }) {
@@ -17,6 +18,7 @@ export function Settings({ family, onExit }) {
   const updateCurrency = useUpdateFamilyCurrency();
   const deleteAccount = useDeleteMyAccount();
   const alerts = useChoreAlerts(family.id);
+  const [sound, setSound] = useState(soundEnabled());
 
   const saveCurrency = (value) => {
     setCurrency(value);
@@ -58,6 +60,18 @@ export function Settings({ family, onExit }) {
           <Select value={currency} onChange={(e) => saveCurrency(e.target.value)}>
             {SUPPORTED_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </Select>
+        </Section>
+
+        <Section title="Sounds" icon={<Volume2 size={18} />} subtitle="Coins clinking when pocket money lands.">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[13.5px] font-medium text-ink">{sound ? "Sounds are on" : "Sounds are off"}</span>
+            <div className="flex gap-2">
+              {sound && <Button variant="ghost" size="sm" onClick={() => playCoinShower(8, 0.8)}>Preview</Button>}
+              <Button variant="secondary" size="sm" onClick={() => { setSoundEnabled(!sound); setSound(!sound); }}>
+                {sound ? "Turn off" : "Turn on"}
+              </Button>
+            </div>
+          </div>
         </Section>
 
         {alerts.configured && (
