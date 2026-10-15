@@ -1,53 +1,121 @@
 import { useState } from "react";
 import * as icons from "lucide-react";
+import { Check, X, HelpCircle } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
-import { lessonForDay, dayKey } from "../../lib/lessons";
+import { dailyCard, dayKey } from "../../lib/lessons";
+import { quizFor } from "../../lib/quizzes";
+import { playCoinShower, playTap } from "../../lib/sound";
 import { Card } from "../ui";
 
-const DONE_PREFIX = "pm_lesson_done_";
+const PREFIX = "pm_lesson_";
 
-function readDone(key) {
+function readState(key) {
   try {
-    return localStorage.getItem(DONE_PREFIX + key) === "1";
+    return JSON.parse(localStorage.getItem(PREFIX + key) || "null");
   } catch {
-    return false;
+    return null;
   }
 }
-function writeDone(key) {
+function writeState(key, value) {
   try {
-    localStorage.setItem(DONE_PREFIX + key, "1");
+    localStorage.setItem(PREFIX + key, JSON.stringify(value));
   } catch {
     // ignore
   }
 }
 
 // "Money word of the day" — changes daily, pitched at the child's age band.
+// First pass through the deck teaches; the next pass quizzes.
 export function LessonCard({ kid, mode, color }) {
   const money = useMoney();
-  const lesson = lessonForDay(mode, kid.id);
+  const { lesson, kind } = dailyCard(mode, kid.id);
+  const quiz = kind === "quiz" ? quizFor(mode, lesson.term) : null;
   const key = `${kid.id}_${dayKey()}`;
-  const [done, setDone] = useState(() => readDone(key));
+  const [state, setState] = useState(() => readState(key) || { done: false, picked: null });
   const little = mode === "little";
 
   const Icon = icons[lesson.icon] || icons.BookOpen;
   const body = typeof lesson.body === "function" ? lesson.body(money) : lesson.body;
   const tryIt = typeof lesson.tryIt === "function" ? lesson.tryIt(money) : lesson.tryIt;
 
-  if (done) {
+  const save = (next) => {
+    writeState(key, next);
+    setState(next);
+  };
+
+  if (state.done) {
+    const correct = quiz && state.picked === quiz.answer;
     return (
-      <button
-        onClick={() => setDone(false)}
-        className="w-full flex items-center gap-3 rounded-2xl bg-white/80 backdrop-blur border border-line px-4 py-3 text-left"
-      >
+      <button onClick={() => save({ ...state, done: false })} className="w-full flex items-center gap-3 rounded-2xl bg-white/80 backdrop-blur border border-line px-4 py-3 text-left">
         <span className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: color.soft, color: color.main }}>
-          <Icon size={18} />
+          {quiz ? (correct ? <Check size={18} /> : <HelpCircle size={18} />) : <Icon size={18} />}
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block text-[11px] font-semibold tracking-[0.18em] uppercase text-ink-muted">Today's money word</span>
-          <span className="block text-[14px] font-semibold text-ink truncate">{lesson.term}</span>
+          <span className="block text-[11px] font-semibold tracking-[0.18em] uppercase text-ink-muted">{quiz ? "Today's quiz" : "Today's money word"}</span>
+          <span className="block text-[14px] font-semibold text-ink truncate">{lesson.term}{quiz ? (correct ? " · got it right" : " · worth another look") : ""}</span>
         </span>
-        <span className="text-[12px] font-semibold" style={{ color: color.main }}>Read again</span>
+        <span className="text-[12px] font-semibold" style={{ color: color.main }}>Open</span>
       </button>
+    );
+  }
+
+  if (quiz) {
+    const picked = state.picked;
+    const answered = picked !== null && picked !== undefined;
+    const correct = answered && picked === quiz.answer;
+    const choose = (i) => {
+      if (answered) return;
+      if (i === quiz.answer) playCoinShower(6, 0.6);
+      else playTap();
+      save({ done: false, picked: i });
+    };
+    return (
+      <Card className={little ? "p-5" : "p-4"} accent={color.main}>
+        <div className="flex items-start gap-3">
+          <span className={`${little ? "h-14 w-14" : "h-11 w-11"} rounded-2xl flex items-center justify-center shrink-0`} style={{ background: color.soft, color: color.main }}>
+            <HelpCircle size={little ? 28 : 22} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold tracking-[0.18em] uppercase text-ink-muted">Quiz time</div>
+            <div className={`${little ? "text-[20px]" : "text-[17px]"} font-bold text-ink tracking-tight`}>Do you remember… {lesson.term}?</div>
+          </div>
+        </div>
+        <p className={`${little ? "text-[16px]" : "text-[14.5px]"} text-ink mt-3 leading-relaxed`}>{quiz.q}</p>
+        <div className="mt-3 space-y-2">
+          {quiz.options.map((opt, i) => {
+            const isAnswer = i === quiz.answer;
+            const isPicked = i === picked;
+            let style = { background: "#fff", borderColor: "#e9ebf2", color: "#1b1b2f" };
+            if (answered && isAnswer) style = { background: "#dcf3e4", borderColor: "#15803d", color: "#0f5a2c" };
+            else if (answered && isPicked) style = { background: "#fde2e2", borderColor: "#b91c1c", color: "#7a1212" };
+            return (
+              <button
+                key={i}
+                onClick={() => choose(i)}
+                disabled={answered}
+                className={`w-full flex items-center gap-3 rounded-xl border-2 px-4 text-left font-semibold transition active:scale-[0.99] ${little ? "min-h-14 text-[16px]" : "min-h-12 text-[14px]"} ${answered && isPicked && !isAnswer ? "animate-shake" : ""}`}
+                style={style}
+              >
+                <span className="h-7 w-7 rounded-full flex items-center justify-center text-[12px] shrink-0" style={{ background: answered && (isAnswer || isPicked) ? "rgba(255,255,255,0.6)" : color.soft, color: answered && isAnswer ? "#15803d" : answered && isPicked ? "#b91c1c" : color.main }}>
+                  {answered && isAnswer ? <Check size={15} /> : answered && isPicked ? <X size={15} /> : String.fromCharCode(65 + i)}
+                </span>
+                <span className="py-2">{opt}</span>
+              </button>
+            );
+          })}
+        </div>
+        {answered && (
+          <div className="mt-3 rounded-xl px-3.5 py-3 tip-in" style={{ background: correct ? "#dcf3e4" : color.soft }}>
+            <div className="text-[13px] font-semibold" style={{ color: correct ? "#0f5a2c" : color.main }}>{correct ? (little ? "Yes! Brilliant!" : "That's right!") : (little ? "Not quite — here's a reminder" : "Not quite. Remember:")}</div>
+            <p className={`${little ? "text-[15px]" : "text-[13.5px]"} text-ink mt-1 leading-relaxed`}>{body}</p>
+          </div>
+        )}
+        {answered && (
+          <button onClick={() => save({ ...state, done: true })} className={`mt-3 w-full rounded-xl font-semibold text-white transition active:scale-[0.98] ${little ? "h-12 text-[15px]" : "h-10 text-[13.5px]"}`} style={{ background: color.main }}>
+            Done
+          </button>
+        )}
+      </Card>
     );
   }
 
@@ -67,14 +135,7 @@ export function LessonCard({ kid, mode, color }) {
         <div className="text-[11px] font-semibold tracking-[0.18em] uppercase" style={{ color: color.main }}>Try this</div>
         <p className={`${little ? "text-[15px]" : "text-[13.5px]"} text-ink mt-1 leading-relaxed`}>{tryIt}</p>
       </div>
-      <button
-        onClick={() => {
-          writeDone(key);
-          setDone(true);
-        }}
-        className={`mt-3 w-full rounded-xl font-semibold text-white transition active:scale-[0.98] ${little ? "h-12 text-[15px]" : "h-10 text-[13.5px]"}`}
-        style={{ background: color.main }}
-      >
+      <button onClick={() => save({ done: true, picked: null })} className={`mt-3 w-full rounded-xl font-semibold text-white transition active:scale-[0.98] ${little ? "h-12 text-[15px]" : "h-10 text-[13.5px]"}`} style={{ background: color.main }}>
         {little ? "I learned it!" : "Got it"}
       </button>
     </Card>

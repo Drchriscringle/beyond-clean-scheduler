@@ -100,9 +100,18 @@ function hash(seed = "") {
 
 // One lesson per day, stable for the day and different for each child.
 export function lessonForDay(mode, seed = "", date = new Date()) {
+  return dailyCard(mode, seed, date).lesson;
+}
+
+// Walks the deck in order, one card a day. The first time through each
+// card is a lesson; the next time through it comes back as a quiz, then
+// lesson again — so every term is taught, then tested, forever.
+export function dailyCard(mode, seed = "", date = new Date()) {
   const list = lessonsFor(mode);
-  const dayNumber = Math.floor(date.getTime() / 86400000);
-  return list[(dayNumber + hash(seed)) % list.length];
+  const dayNumber = Math.floor(date.getTime() / 86400000) + hash(seed);
+  const lesson = list[dayNumber % list.length];
+  const pass = Math.floor(dayNumber / list.length) % 2;
+  return { lesson, kind: pass === 0 ? "lesson" : "quiz" };
 }
 
 export function dayKey(date = new Date()) {

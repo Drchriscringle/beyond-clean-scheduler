@@ -1,0 +1,91 @@
+// One quiz per lesson term (see lessons.js). `answer` is the index of the
+// correct option. Keep options short — they're tap targets on a phone.
+
+const little = {
+  Coins: { q: "What are coins?", options: ["Little pieces of money", "A kind of sweet", "A type of toy"], answer: 0 },
+  Saving: { q: "What does saving mean?", options: ["Spending it all now", "Keeping money safe for later", "Losing your money"], answer: 1 },
+  Spending: { q: "What is spending?", options: ["Swapping money for something", "Hiding money", "Counting money"], answer: 0 },
+  Earning: { q: "How do you earn money?", options: ["By sleeping", "By doing a job", "By asking nicely"], answer: 1 },
+  Giving: { q: "What is giving?", options: ["Using money to help others", "Keeping all your money", "Buying sweets"], answer: 0 },
+  Need: { q: "Which one is a need?", options: ["A new toy", "Food", "Sweets"], answer: 1 },
+  Want: { q: "Which one is a want?", options: ["A warm bed", "Water", "A new game"], answer: 2 },
+  Waiting: { q: "What do you do to buy something big?", options: ["Save up and wait", "Cry", "Give up"], answer: 0 },
+  Price: { q: "What is a price?", options: ["A kind of coin", "How much something costs", "A shop"], answer: 1 },
+  Change: { q: "A toy costs 3 coins. You give 5. How many come back?", options: ["1", "2", "3"], answer: 1 },
+  Jar: { q: "What are your three jars called?", options: ["Save, Spend, Give", "Big, Small, Medium", "Red, Blue, Green"], answer: 0 },
+  Bank: { q: "What is a bank for?", options: ["Keeping money safe", "Making toys", "Selling sweets"], answer: 0 },
+  Card: { q: "When a grown-up pays with a card, where does the money come from?", options: ["Nowhere, it's free", "From their bank", "From the shop"], answer: 1 },
+  "Pocket money": { q: "Who decides what to do with your pocket money?", options: ["The shop", "Your teacher", "You"], answer: 2 },
+  Job: { q: "Why do grown-ups have jobs?", options: ["To earn money", "For fun only", "To stay up late"], answer: 0 },
+  Counting: { q: "Why count your money?", options: ["To make it grow", "To know how much you have", "To make it shiny"], answer: 1 },
+  Sharing: { q: "What do families share money for?", options: ["Things everyone uses", "Nothing", "Only toys"], answer: 0 },
+  Choosing: { q: "Can you buy everything you want?", options: ["Yes, always", "No, so you choose", "Only on Sundays"], answer: 1 },
+  Goal: { q: "What is a saving goal?", options: ["Something you're saving for", "A football", "A kind of jar"], answer: 0 },
+  "Pay day": { q: "When is your pay day?", options: ["When chores are approved", "Every morning", "Never"], answer: 0 },
+  "Lost money": { q: "Where should you keep coins?", options: ["Under a leaf", "Somewhere safe like a jar", "In the bath"], answer: 1 },
+  "Thank you": { q: "What do you say when someone gives you money?", options: ["Nothing", "More please", "Thank you"], answer: 2 },
+  "Big and small": { q: "How many 1p coins make 10p?", options: ["5", "10", "100"], answer: 1 },
+  Swap: { q: "After you buy a toy, do you still have the money?", options: ["Yes", "No, you swapped it", "Sometimes"], answer: 1 },
+};
+
+const middle = {
+  Budget: { q: "What is a budget?", options: ["A plan for your money", "A type of bank", "Money you've lost"], answer: 0 },
+  Interest: { q: "What is interest on savings?", options: ["A fee you pay", "Extra money the bank gives you", "A shopping list"], answer: 1 },
+  "Needs vs wants": { q: "Which is a need?", options: ["A games console", "A home", "A holiday"], answer: 1 },
+  "Saving goal": { q: "If a goal costs 20 and you save 2 a week, how many weeks?", options: ["5", "10", "20"], answer: 1 },
+  Earning: { q: "Where does money usually come from?", options: ["Work", "Luck", "Trees"], answer: 0 },
+  Charity: { q: "What does a charity do with money people give?", options: ["Keeps it", "Helps people who need it", "Buys adverts"], answer: 1 },
+  "Price tag": { q: "Why might something cost more?", options: ["It's rare or hard to make", "It's blue", "It's on a high shelf"], answer: 0 },
+  Bargain: { q: "Is a cheap thing you don't need a bargain?", options: ["Yes, always", "No", "Only if it's shiny"], answer: 1 },
+  Borrowing: { q: "When you borrow money, what happens later?", options: ["It's yours to keep", "You must pay it back", "The bank forgets"], answer: 1 },
+  "Debit card": { q: "A debit card spends…", options: ["The bank's money", "Money already in your account", "Free money"], answer: 1 },
+  Receipt: { q: "What is a receipt for?", options: ["Proof of what you paid", "Decoration", "A discount"], answer: 0 },
+  Tax: { q: "What does tax pay for?", options: ["Schools, hospitals and roads", "Sweets", "Only the king"], answer: 0 },
+  Wages: { q: "What are wages?", options: ["Pocket money", "Money paid for work", "A kind of tax"], answer: 1 },
+  Bills: { q: "Which is a bill?", options: ["Electricity", "A birthday present", "A trophy"], answer: 0 },
+  "Pocket money plan": { q: "Why split money into jars before spending?", options: ["It looks nice", "So you don't spend the lot by accident", "Jars are lucky"], answer: 1 },
+  "Opportunity cost": { q: "The real cost of spending on sweets is…", options: ["Nothing", "What else that money could have done", "The sugar"], answer: 1 },
+  "Impulse buy": { q: "A good trick to avoid impulse buys?", options: ["Buy quickly", "Wait a day and see if you still want it", "Buy two"], answer: 1 },
+  Value: { q: "Which is better value?", options: ["A cheap toy that breaks tomorrow", "A toy you use every day for a year", "The most expensive one"], answer: 1 },
+  "Savings account": { q: "A savings account is…", options: ["For saving, harder to spend from", "For spending", "A type of card"], answer: 0 },
+  Advert: { q: "What are adverts for?", options: ["To make you want things", "To give you money", "To teach maths"], answer: 0 },
+  "Emergency money": { q: "Emergency money is for…", options: ["Treats", "Surprises like something breaking", "Holidays"], answer: 1 },
+  Profit: { q: "Lemonade costs 1 to make and sells for 3. Profit?", options: ["1", "2", "4"], answer: 1 },
+  Donation: { q: "A donation is…", options: ["Money you give to help", "Money you borrow", "Money you find"], answer: 0 },
+  "Saving streak": { q: "Which works better?", options: ["Saving a little every week", "Saving a lot once a year", "Not saving"], answer: 0 },
+  "Fair price": { q: "How do you find a fair price?", options: ["Guess", "Compare a few places", "Pick the first one"], answer: 1 },
+};
+
+const big = {
+  "Compound interest": { q: "Compound interest is…", options: ["Interest on your interest", "A bank fee", "A type of tax"], answer: 0 },
+  Inflation: { q: "Inflation means…", options: ["Prices go down", "Prices rise over time", "Banks close"], answer: 1 },
+  Budget: { q: "A budget is…", options: ["Income minus planned spending", "A loan", "A savings account"], answer: 0 },
+  "Debit vs credit": { q: "A credit card spends…", options: ["Your own money", "Borrowed money you must repay", "Government money"], answer: 1 },
+  "Interest rate": { q: "When saving, a higher interest rate is…", options: ["Worse", "Better", "Irrelevant"], answer: 1 },
+  "Needs, wants, savings": { q: "A common adult split is…", options: ["50/30/20", "90/5/5", "10/10/80"], answer: 0 },
+  "Opportunity cost": { q: "Opportunity cost is…", options: ["The price tag", "What you give up to get something", "A shop discount"], answer: 1 },
+  Income: { q: "Which is income?", options: ["Rent you pay", "Wages you earn", "A bill"], answer: 1 },
+  Tax: { q: "VAT is a tax on…", options: ["Things you buy", "Your height", "Savings only"], answer: 0 },
+  Scam: { q: "A real bank will…", options: ["Ask for your PIN by text", "Never ask for your PIN", "Rush you to act now"], answer: 1 },
+  Subscription: { q: "5 a month for a year is…", options: ["12", "50", "60"], answer: 2 },
+  "Emergency fund": { q: "An emergency fund is for…", options: ["Holidays", "Unexpected costs", "Gifts"], answer: 1 },
+  Debt: { q: "The cost of debt is…", options: ["The interest", "Nothing", "The receipt"], answer: 0 },
+  "Profit margin": { q: "Sell for 10, costs 6. Margin?", options: ["4%", "40%", "60%"], answer: 1 },
+  "Savings rate": { q: "Savings rate means…", options: ["The share of income you keep", "The bank's fee", "How fast you spend"], answer: 0 },
+  "Delayed gratification": { q: "Delayed gratification is…", options: ["Spending now", "Choosing a bigger reward later", "Never buying anything"], answer: 1 },
+  "Price comparison": { q: "Before buying, it's smart to…", options: ["Compare prices", "Buy the first one", "Ask an advert"], answer: 0 },
+  Advertising: { q: "'Limited time only!' is designed to…", options: ["Save you money", "Rush you into buying", "Inform you"], answer: 1 },
+  "Interest on debt": { q: "Borrow 100 at 20% for a year, pay nothing. You owe…", options: ["100", "120", "80"], answer: 1 },
+  Diversify: { q: "Diversifying means…", options: ["Putting everything in one place", "Spreading money across different things", "Spending it all"], answer: 1 },
+  Investing: { q: "Investing can…", options: ["Only go up", "Go up or down over time", "Never change"], answer: 1 },
+  "Net vs gross": { q: "Gross 100, tax 20%. Net pay?", options: ["80", "100", "120"], answer: 0 },
+  "Credit score": { q: "What builds a good credit score?", options: ["Paying on time", "Missing payments", "Never having an account"], answer: 0 },
+  "Wants in disguise": { q: "You need a phone. The newest model is…", options: ["A need", "A want", "A bill"], answer: 1 },
+  "Giving well": { q: "Charities can plan best with…", options: ["Regular small gifts", "One big gift a year", "No gifts"], answer: 0 },
+};
+
+export const QUIZZES = { little, middle, big };
+
+export function quizFor(mode, term) {
+  return (QUIZZES[mode] || QUIZZES.middle)[term] || null;
+}
