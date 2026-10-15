@@ -9,17 +9,29 @@ export function AuthGate({ onChild }) {
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState("signin"); // signin | signup
   const [err, setErr] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async (e) => {
     e?.preventDefault();
     setErr("");
+    setNotice("");
     setBusy(true);
     try {
-      if (mode === "signup") await api.signUp(email, password);
-      else await api.signIn(email, password);
+      if (mode === "signup") {
+        const data = await api.signUp(email, password);
+        // With email confirmation on, Supabase creates the account but
+        // doesn't sign in until the link in the email is tapped.
+        if (!data?.session) {
+          setNotice(`We've sent a confirmation link to ${email}. Tap it, then sign in here.`);
+          setMode("signin");
+          setPassword("");
+        }
+      } else {
+        await api.signIn(email, password);
+      }
     } catch (e) {
-      setErr(e.message);
+      setErr(/not confirmed/i.test(e.message) ? "Please tap the confirmation link we emailed you first, then sign in." : e.message);
     } finally {
       setBusy(false);
     }
@@ -40,6 +52,7 @@ export function AuthGate({ onChild }) {
             placeholder="••••••••"
           />
           <ErrorText>{err}</ErrorText>
+          {notice && <p className="text-[13px] font-medium text-emerald-800 bg-emerald-50 rounded-xl px-3.5 py-2.5">{notice}</p>}
           <Button type="submit" size="lg" className="w-full" disabled={busy}>
             {busy ? "One moment…" : mode === "signup" ? "Create account" : "Sign in"}
           </Button>

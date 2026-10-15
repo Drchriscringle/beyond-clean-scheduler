@@ -1,9 +1,21 @@
 import { supabase } from "../supabaseClient";
 
+// The confirmation email's link comes back to wherever the app is running
+// (this must also be in Supabase → Authentication → URL Configuration →
+// Redirect URLs, or Supabase falls back to its Site URL).
 export async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: `${window.location.origin}/parent` },
+  });
   if (error) throw error;
   return data;
+}
+
+export async function sendPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/parent` });
+  if (error) throw error;
 }
 
 export async function signIn(email, password) {
