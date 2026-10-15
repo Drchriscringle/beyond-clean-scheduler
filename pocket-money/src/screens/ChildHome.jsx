@@ -68,7 +68,7 @@ export function ChildHome({ device }) {
         ownDevice
         onSignOut={() => signOut.mutate()}
       />
-      <InstallPrompt />
+      <InstallPrompt forChild />
     </CurrencyProvider>
   );
 }

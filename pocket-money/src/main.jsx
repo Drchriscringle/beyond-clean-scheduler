@@ -4,6 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import App from './App.jsx'
 import { unlockAudio } from './lib/sound'
+import { captureInstallPrompt } from './lib/install'
+
+// Must be listening before Chrome fires beforeinstallprompt (early in load),
+// or the Add-to-Home-Screen card can't offer the one-tap install later.
+captureInstallPrompt()
 
 // One-time cleanup for devices that installed the first build, whose
 // service worker had pinned index.html (including a Netlify-injected

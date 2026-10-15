@@ -1,35 +1,32 @@
 import { useEffect, useState } from "react";
-import { X, Share } from "lucide-react";
+import { X, Share, MoreVertical } from "lucide-react";
 import { Button, Logo } from "../components/ui";
+import { getInstallPrompt, onInstallPromptChange, isIOS, isMobile, isStandalone } from "../lib/install";
 
 const DISMISSED_KEY = "pm_install_prompt_dismissed_v1";
 
-const isStandalone = () =>
-  window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
-const isIOS = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-const isMobile = () => /android|iphone|ipad|ipod/i.test(window.navigator.userAgent);
+// Shown once, the first time someone reaches their home screen on a mobile
+// browser that hasn't installed the app (parents after signing up, children
+// after signing in). iOS has no install API so it gets manual instructions;
+// Android/Chrome gets the real one-tap prompt captured at startup.
+export function InstallPrompt({ forChild = false }) {
+  const [deferredPrompt, setDeferredPrompt] = useState(getInstallPrompt);
+  const [visible, setVisible] = useState(() => {
+    try {
+      return !isStandalone() && isMobile() && !localStorage.getItem(DISMISSED_KEY);
+    } catch {
+      return false;
+    }
+  });
 
-// Shown once, the first time a signed-in parent reaches the dashboard on a
-// mobile browser that hasn't installed the app. iOS has no install API, so
-// it gets manual instructions; Android/Chrome gets the real one-tap prompt.
-export function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (isStandalone() || !isMobile() || localStorage.getItem(DISMISSED_KEY)) return;
-    const onBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setVisible(true);
-    };
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-    if (isIOS()) setVisible(true);
-    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-  }, []);
+  useEffect(() => onInstallPromptChange(setDeferredPrompt), []);
 
   const dismiss = () => {
-    localStorage.setItem(DISMISSED_KEY, "1");
+    try {
+      localStorage.setItem(DISMISSED_KEY, "1");
+    } catch {
+      // ignore
+    }
     setVisible(false);
   };
 
@@ -53,14 +50,20 @@ export function InstallPrompt() {
           <Logo size={40} />
           <div>
             <div className="text-[14px] font-semibold text-ink">Add to your Home Screen</div>
-            <div className="text-[12.5px] text-ink-muted">So the kids can just tap an icon.</div>
+            <div className="text-[12.5px] text-ink-muted">
+              {forChild ? "So it's just a tap away, like a real app." : "So the kids can just tap an icon — and alerts work."}
+            </div>
           </div>
         </div>
         {deferredPrompt ? (
           <Button size="sm" className="w-full mt-3" onClick={install}>Install</Button>
-        ) : (
+        ) : isIOS() ? (
           <p className="text-[12.5px] text-ink-muted mt-3 leading-relaxed">
             Tap the <Share size={13} className="inline -mt-0.5" /> <strong className="text-ink">Share</strong> icon in Safari, then <strong className="text-ink">"Add to Home Screen"</strong>.
+          </p>
+        ) : (
+          <p className="text-[12.5px] text-ink-muted mt-3 leading-relaxed">
+            Tap the <MoreVertical size={13} className="inline -mt-0.5" /> menu in your browser, then <strong className="text-ink">"Add to Home screen"</strong> or <strong className="text-ink">"Install app"</strong>.
           </p>
         )}
       </div>
