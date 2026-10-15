@@ -31,11 +31,24 @@ export default function App() {
   );
 }
 
+// Shareable links: /child opens straight onto the child sign-in, /parent onto
+// the parent one. Either is remembered for next time, then the URL is tidied.
+function roleFromUrl() {
+  const path = window.location.pathname;
+  if (path === "/child" || path === "/parent") {
+    const role = path.slice(1);
+    rememberRole(role);
+    window.history.replaceState(null, "", "/");
+    return role;
+  }
+  return rememberedRole();
+}
+
 // Two kinds of session: a parent (email + password, full control) and a
 // child device (anonymous auth user tied to one child by username + PIN).
 function AuthedApp() {
   const session = useAuthSession();
-  const [role, setRole] = useState(rememberedRole);
+  const [role, setRole] = useState(roleFromUrl);
   const isChildSession = !!session?.user?.is_anonymous;
   const { data: family, isLoading: familyLoading } = useFamily(!!session && !isChildSession);
   const { data: device, isLoading: deviceLoading } = useMyChildDevice(isChildSession);

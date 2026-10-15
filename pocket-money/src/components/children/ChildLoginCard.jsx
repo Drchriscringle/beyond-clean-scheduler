@@ -12,7 +12,7 @@ export function ChildLoginCard({ kid }) {
   return (
     <div className="rounded-xl bg-surface p-3 space-y-4">
       <p className="text-[12.5px] text-ink-muted leading-relaxed">
-        On {kid.name}'s phone or tablet, open <strong className="text-ink">{APP_HOST}</strong>, tap <strong className="text-ink">"I'm a child"</strong> and sign in with these details. They'll see their chores, jars and your messages — nothing else.
+        On {kid.name}'s phone or tablet, open <strong className="text-ink">{APP_HOST}/child</strong> and sign in with these details. They'll see their chores, jars and your messages — nothing else.
       </p>
       <NameRow kid={kid} />
       <UsernameRow kid={kid} />
