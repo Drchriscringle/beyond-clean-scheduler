@@ -1,6 +1,7 @@
 import { Check, X } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { useDecideClaim } from "../../hooks/useClaims";
+import { notifyChild } from "../../hooks/usePush";
 import { IconCircle } from "../ui";
 import { ChildAvatar } from "../children/ChildAvatar";
 
@@ -12,7 +13,29 @@ export function ClaimRow({ claim, onApproved }) {
   const approve = () =>
     decideClaim.mutate(
       { claimId: claim.id, approve: true },
-      { onSuccess: () => onApproved?.({ amount: claim.chores.value_pence, childName: claim.children.name }) }
+      {
+        onSuccess: () => {
+          onApproved?.({ amount: claim.chores.value_pence, childName: claim.children.name });
+          notifyChild(claim.children.id, {
+            title: `Approved! +${money(claim.chores.value_pence)}`,
+            body: `${claim.chores.name} — the money's in your jars.`,
+            tag: `approved-${claim.id}`,
+          });
+        },
+      }
+    );
+
+  const decline = () =>
+    decideClaim.mutate(
+      { claimId: claim.id, approve: false },
+      {
+        onSuccess: () =>
+          notifyChild(claim.children.id, {
+            title: "Not quite yet",
+            body: `${claim.chores.name} was sent back — have another go.`,
+            tag: `declined-${claim.id}`,
+          }),
+      }
     );
 
   return (
@@ -30,7 +53,7 @@ export function ClaimRow({ claim, onApproved }) {
         </div>
       </div>
       <button
-        onClick={() => decideClaim.mutate({ claimId: claim.id, approve: false })}
+        onClick={decline}
         disabled={busy}
         aria-label="Decline"
         className="h-9 w-9 rounded-full bg-surface text-ink-muted hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition disabled:opacity-50"

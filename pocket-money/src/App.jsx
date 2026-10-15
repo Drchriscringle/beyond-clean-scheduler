@@ -1,10 +1,15 @@
+import { useState } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LoadingScreen } from "./components/ui";
 import { CurrencyProvider } from "./hooks/useCurrency";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { useFamily } from "./hooks/useFamily";
+import { useMyChildDevice } from "./hooks/useChildDevice";
 import { isSubscriptionActive } from "./lib/subscription";
+import { rememberedRole, rememberRole } from "./lib/role";
 import { AuthGate } from "./screens/AuthGate";
+import { ChildSignIn } from "./screens/ChildSignIn";
+import { ChildHome } from "./screens/ChildHome";
 import { CreateOrJoinFamily } from "./screens/CreateOrJoinFamily";
 import { FamilyDashboard } from "./screens/FamilyDashboard";
 import { Paywall } from "./screens/Paywall";
@@ -26,12 +31,31 @@ export default function App() {
   );
 }
 
+// Two kinds of session: a parent (email + password, full control) and a
+// child device (anonymous auth user tied to one child by username + PIN).
 function AuthedApp() {
   const session = useAuthSession();
-  const { data: family, isLoading: familyLoading } = useFamily(!!session);
+  const [role, setRole] = useState(rememberedRole);
+  const isChildSession = !!session?.user?.is_anonymous;
+  const { data: family, isLoading: familyLoading } = useFamily(!!session && !isChildSession);
+  const { data: device, isLoading: deviceLoading } = useMyChildDevice(isChildSession);
+
+  const pickRole = (next) => {
+    rememberRole(next);
+    setRole(next);
+  };
 
   if (session === undefined) return <LoadingScreen />;
-  if (!session) return <AuthGate />;
+
+  // Child sign-in is rendered at this same spot whether there's no session
+  // yet or an anonymous one that isn't linked, so the form keeps its state
+  // while the anonymous user is being created mid-sign-in.
+  if ((!session && role === "child") || (isChildSession && !device)) {
+    return <ChildSignIn onParent={() => pickRole("parent")} checking={isChildSession && deviceLoading} />;
+  }
+  if (!session) return <AuthGate onChild={() => pickRole("child")} />;
+  if (isChildSession) return <ChildHome device={device} />;
+
   if (familyLoading) return <LoadingScreen />;
   if (!family) return <CreateOrJoinFamily />;
 

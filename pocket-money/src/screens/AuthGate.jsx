@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Smile } from "lucide-react";
 import { Card, Centered, BrandHeader, Button, Input, ErrorText } from "../components/ui";
 import { LegalFooter } from "../components/LegalFooter";
 import * as api from "../lib/api";
 
-export function AuthGate() {
+export function AuthGate({ onChild }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState("signin"); // signin | signup
@@ -50,6 +51,15 @@ export function AuthGate() {
         >
           {mode === "signup" ? "Already have an account? Sign in" : "New here? Create a parent account"}
         </button>
+        {onChild && (
+          <button
+            type="button"
+            onClick={onChild}
+            className="mt-4 w-full h-12 rounded-xl border border-brand-200 bg-brand-50 text-brand-700 text-[14px] font-semibold inline-flex items-center justify-center gap-2 transition hover:bg-brand-100"
+          >
+            <Smile size={17} /> I'm a child
+          </button>
+        )}
       </Card>
       <LegalFooter />
     </Centered>

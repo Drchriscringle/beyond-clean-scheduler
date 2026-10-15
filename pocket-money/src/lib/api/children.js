@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 // check_child_pin() in schema.sql) — it's a UI convenience lock, not a
 // security boundary, but there's no reason to ship its value to the browser.
 const CHILD_COLUMNS =
-  "id, family_id, name, avatar, avatar_url, theme, birth_year, weekly_budget_pence, jar_save, jar_spend, jar_give, allow_negative_balance, created_at";
+  "id, family_id, name, avatar, avatar_url, theme, birth_year, weekly_budget_pence, jar_save, jar_spend, jar_give, allow_negative_balance, username, created_at";
 
 export async function listChildren() {
   const { data, error } = await supabase.from("children").select(CHILD_COLUMNS).order("created_at");
@@ -50,6 +50,62 @@ export async function checkChildPin(childId, pin) {
   const { data, error } = await supabase.rpc("check_child_pin", { target_child_id: childId, candidate_pin: pin });
   if (error) throw error;
   return data === true;
+}
+
+/* ---------------- sign-in details (parent-only) ---------------- */
+
+export const USERNAME_RULE = /^[a-z0-9][a-z0-9_-]{2,19}$/;
+
+// Lower-case letters, numbers, - and _; 3–20 characters.
+export function normaliseUsername(raw) {
+  return (raw || "").trim().toLowerCase().replace(/\s+/g, "-");
+}
+
+export async function renameChild(childId, name) {
+  const { error } = await supabase.from("children").update({ name: name.trim() }).eq("id", childId);
+  if (error) throw error;
+}
+
+export async function updateChildUsername(childId, username) {
+  const value = username ? normaliseUsername(username) : null;
+  if (value && !USERNAME_RULE.test(value)) {
+    throw new Error("Usernames are 3–20 characters: lower-case letters, numbers, - or _.");
+  }
+  const { error } = await supabase.from("children").update({ username: value }).eq("id", childId);
+  if (error) {
+    if (error.code === "23505") throw new Error("That username is already taken — try another.");
+    throw error;
+  }
+  return value;
+}
+
+export async function updateChildPin(childId, pin) {
+  if (!/^\d{4}$/.test(pin)) throw new Error("PINs are exactly 4 digits.");
+  const { error } = await supabase.from("children").update({ pin }).eq("id", childId);
+  if (error) throw error;
+}
+
+// Parents can read a child's PIN back when it's forgotten.
+export async function revealChildPin(childId) {
+  const { data, error } = await supabase.rpc("reveal_child_pin", { target_child_id: childId });
+  if (error) throw error;
+  return data;
+}
+
+export async function listChildDevices() {
+  const { data, error } = await supabase
+    .from("child_devices")
+    .select("id, child_id, label, created_at, last_seen_at, revoked_at")
+    .is("revoked_at", null)
+    .order("last_seen_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+// Signs a child's device out remotely.
+export async function revokeChildDevice(deviceId) {
+  const { error } = await supabase.from("child_devices").update({ revoked_at: new Date().toISOString() }).eq("id", deviceId);
+  if (error) throw error;
 }
 
 /* ---------------- personalisation ---------------- */

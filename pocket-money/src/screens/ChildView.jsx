@@ -1,34 +1,41 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Hourglass, Receipt, History, Check, Palette, Trophy } from "lucide-react";
+import { ArrowLeft, Hourglass, Receipt, History, Check, Palette, Trophy, MessageCircle, LogOut, Bell, ChevronRight } from "lucide-react";
 import { Page, Card, Eyebrow, Empty, IconCircle, Pill, Button } from "../components/ui";
 import { Section } from "../components/common";
 import { JarStats } from "../components/Jars";
 import { ChildAvatar } from "../components/children/ChildAvatar";
 import { PersonaliseSheet } from "../components/children/PersonaliseSheet";
+import { MessagesSheet } from "../components/messages/MessagesSheet";
 import { MoneyDrop } from "../components/MoneyDrop";
 import { Tip } from "../components/Tip";
 import { WellDone } from "../components/WellDone";
 import { LessonCard } from "../components/children/LessonCard";
-import { weeklyFlagSeen, markWeeklyFlag } from "../lib/tips";
+import { weeklyFlagSeen, markWeeklyFlag, isTipSeen, markTipSeen } from "../lib/tips";
 import { weekStartUTC } from "../lib/week";
 import { useMoney } from "../hooks/useCurrency";
 import { useClaimChore } from "../hooks/useClaims";
 import { useRecentActivity } from "../hooks/useActivity";
-import { notifyParents } from "../hooks/usePush";
+import { useUnreadMessages } from "../hooks/useMessages";
+import { notifyParents, useChoreAlerts } from "../hooks/usePush";
 import { themeColor, ThemeBadge, wallpaperStyle } from "../lib/theme";
 import { ageMode } from "../lib/ageMode";
 import { playTap } from "../lib/sound";
 
-export function ChildView({ kid, family, chores, pending, weekClaims = [], balance, bills, onExit }) {
+// `ownDevice` = the child is signed in on their own phone/tablet (messages,
+// alerts and sign-out appear). Without it, a parent is previewing the screen.
+export function ChildView({ kid, family, chores, pending, weekClaims = [], balance, bills, onExit, ownDevice = false, onSignOut }) {
   const money = useMoney();
   const [claimingId, setClaimingId] = useState(null);
   const [justClaimed, setJustClaimed] = useState(null);
   const [personalising, setPersonalising] = useState(false);
+  const [messagesOpen, setMessagesOpen] = useState(false);
   const [drop, setDrop] = useState(null);
   const [wellDone, setWellDone] = useState(false);
   const [err, setErr] = useState("");
   const claimChore = useClaimChore();
   const { data: activity } = useRecentActivity(kid.id, 6);
+  const { data: unread = {} } = useUnreadMessages("child", ownDevice);
+  const unreadCount = unread[kid.id] || 0;
 
   const mode = ageMode(kid); // little | middle | big
   const color = themeColor(kid.theme, kid.name);
@@ -97,9 +104,15 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
     <div className="min-h-screen" style={wallpaperStyle(kid.theme?.wallpaper, color)}>
       <Page>
         <header className="flex items-center justify-between pt-5 pb-3">
-          <button onClick={onExit} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-muted hover:text-ink transition">
-            <ArrowLeft size={16} /> Parent
-          </button>
+          {ownDevice ? (
+            <button onClick={onSignOut} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-muted hover:text-ink transition">
+              <LogOut size={15} /> Sign out
+            </button>
+          ) : (
+            <button onClick={onExit} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-muted hover:text-ink transition">
+              <ArrowLeft size={16} /> Parent
+            </button>
+          )}
           <button
             onClick={() => setPersonalising(true)}
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-white/80 backdrop-blur border border-line text-[13px] font-semibold transition hover:bg-white"
@@ -132,6 +145,27 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
             </div>
           )}
         </Card>
+
+        {ownDevice && (
+          <>
+            <Card onClick={() => setMessagesOpen(true)} className={`${little ? "p-5" : "p-4"} mt-4 flex items-center gap-3`} accent={unreadCount ? color.main : undefined}>
+              <span className={`${little ? "h-14 w-14" : "h-11 w-11"} rounded-2xl flex items-center justify-center shrink-0 relative`} style={{ background: color.soft, color: color.main }}>
+                <MessageCircle size={little ? 28 : 22} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[11px] font-bold flex items-center justify-center">{unreadCount}</span>
+                )}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className={`block ${little ? "text-[18px]" : "text-[15px]"} font-semibold text-ink`}>Messages from home</span>
+                <span className={`block ${little ? "text-[14px]" : "text-[12.5px]"} text-ink-muted`}>
+                  {unreadCount > 0 ? `${unreadCount} new ${unreadCount === 1 ? "message" : "messages"}!` : little ? "Say hi to your grown-ups" : "Chat with your grown-ups"}
+                </span>
+              </span>
+              <ChevronRight size={20} className="text-ink-muted" />
+            </Card>
+            <ChildAlerts family={family} kid={kid} color={color} little={little} />
+          </>
+        )}
 
         <Eyebrow>Your jars</Eyebrow>
         <Card className={`p-4 ${drop ? "jar-bump" : ""}`}>
@@ -259,8 +293,49 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
       </Page>
 
       {personalising && <PersonaliseSheet kid={kid} familyId={family.id} onClose={() => setPersonalising(false)} />}
+      {messagesOpen && <MessagesSheet kid={kid} me="child" mode={mode} onClose={() => setMessagesOpen(false)} />}
       {drop && <MoneyDrop amount={drop.amount} color={color.main} label={little ? "Well done!" : "into your jars!"} onDone={() => setDrop(null)} />}
       {wellDone && <WellDone name={kid.name} color={color.main} onClose={() => setWellDone(false)} />}
     </div>
+  );
+}
+
+// "Turn on alerts" nudge for the child's own device: approvals and messages.
+// Dismissible; disappears once alerts are on.
+function ChildAlerts({ family, kid, color, little }) {
+  const alerts = useChoreAlerts(family.id, { audience: "child", childId: kid.id });
+  const [hidden, setHidden] = useState(() => isTipSeen(`child-alerts-${kid.id}`));
+  if (!alerts.configured || hidden || alerts.status === "on" || alerts.status === "checking" || alerts.status === "unsupported") return null;
+
+  const dismiss = () => {
+    markTipSeen(`child-alerts-${kid.id}`);
+    setHidden(true);
+  };
+
+  return (
+    <Card className={`${little ? "p-5" : "p-4"} mt-3`}>
+      <div className="flex items-start gap-3">
+        <span className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: color.soft, color: color.main }}>
+          <Bell size={20} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className={`${little ? "text-[16px]" : "text-[14px]"} font-semibold text-ink`}>Get a buzz when money lands</div>
+          <p className={`${little ? "text-[14px]" : "text-[12.5px]"} text-ink-muted mt-0.5 leading-relaxed`}>
+            {alerts.status === "ios-install"
+              ? "Add Pocket Money to your Home Screen first (Share → Add to Home Screen), then open it from there."
+              : "We'll tell you when a grown-up approves a chore or sends you a message."}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 flex gap-2">
+        {alerts.status === "off" && (
+          <Button className="flex-1" style={{ background: color.main }} onClick={() => alerts.enable.mutate()} disabled={alerts.enable.isPending}>
+            <Bell size={16} /> {alerts.enable.isPending ? "Turning on…" : "Turn on"}
+          </Button>
+        )}
+        <Button variant="ghost" onClick={dismiss}>Not now</Button>
+      </div>
+      {alerts.enable.error && <p className="mt-2 text-[12.5px] text-rose-600">{alerts.enable.error.message}</p>}
+    </Card>
   );
 }

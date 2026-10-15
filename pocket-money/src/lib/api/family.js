@@ -12,6 +12,17 @@ export async function getMyFamily() {
   return { role: data.role, ...data.families };
 }
 
+// The family a child device belongs to (RLS limits this to its own family).
+export async function getFamilyById(familyId) {
+  const { data, error } = await supabase
+    .from("families")
+    .select("id, name, created_at, currency, subscription_status, trial_ends_at")
+    .eq("id", familyId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function updateFamilyCurrency(familyId, currency) {
   const { error } = await supabase.from("families").update({ currency }).eq("id", familyId);
   if (error) throw error;

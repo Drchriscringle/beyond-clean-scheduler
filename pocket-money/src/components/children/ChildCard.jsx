@@ -1,14 +1,20 @@
-import { ListChecks, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { ListChecks, ChevronRight, ChevronDown, KeyRound } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { themeColor, ThemeBadge } from "../../lib/theme";
 import { Card, Row, Divider, Progress } from "../ui";
 import { JarStats } from "../Jars";
 import { ChildAvatar } from "./ChildAvatar";
 import { AgeEditor } from "./AgeEditor";
+import { BudgetEditor } from "./BudgetEditor";
+import { ChildLoginCard } from "./ChildLoginCard";
 
-export function ChildCard({ kid, balance, weekClaims = [], onOpen }) {
+// Parent Home: one card per child — balances, this week's progress, their
+// pocket-money level and age, and their sign-in details for their own device.
+export function ChildCard({ kid, balance, weekClaims = [], onOpen, showSetup = true }) {
   const money = useMoney();
   const color = themeColor(kid.theme, kid.name);
+  const [loginOpen, setLoginOpen] = useState(false);
   const total = balance?.total_pence ?? 0;
   const spend = balance?.spend_pence ?? 0;
   const budget = kid.weekly_budget_pence || 0;
@@ -26,7 +32,12 @@ export function ChildCard({ kid, balance, weekClaims = [], onOpen }) {
           <Row label="Spend balance" value={money(spend)} />
           <Row label="Total" value={money(total)} strong />
         </div>
-        <AgeEditor kid={kid} />
+        {showSetup && (
+          <div className="flex items-start gap-2">
+            <BudgetEditor kid={kid} />
+            <AgeEditor kid={kid} />
+          </div>
+        )}
       </div>
       <Divider />
       <JarStats balance={balance} compact />
@@ -42,6 +53,23 @@ export function ChildCard({ kid, balance, weekClaims = [], onOpen }) {
           <Progress value={(earned / budget) * 100} color={color.main} />
         </>
       )}
+      {showSetup && (
+        <>
+          <Divider />
+          <button
+            onClick={() => setLoginOpen((o) => !o)}
+            className="w-full flex items-center justify-between text-[14px] font-semibold text-ink transition py-0.5"
+            aria-expanded={loginOpen}
+          >
+            <span className="inline-flex items-center gap-2">
+              <KeyRound size={17} className="text-ink-muted" /> Sign-in details
+              {!kid.username && <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">not set up</span>}
+            </span>
+            <ChevronDown size={18} className={`text-ink-muted transition ${loginOpen ? "rotate-180" : ""}`} />
+          </button>
+          {loginOpen && <div className="mt-3"><ChildLoginCard kid={kid} /></div>}
+        </>
+      )}
       <Divider />
       <button
         onClick={onOpen}
@@ -49,7 +77,7 @@ export function ChildCard({ kid, balance, weekClaims = [], onOpen }) {
         style={{ color: color.main }}
       >
         <span className="inline-flex items-center gap-2">
-          <ListChecks size={18} /> Open {kid.name}'s chores
+          <ListChecks size={18} /> Preview {kid.name}'s screen
         </span>
         <ChevronRight size={18} className="text-ink-muted" />
       </button>

@@ -1,18 +1,25 @@
 import { useState } from "react";
-import { LogOut, Settings as SettingsIcon, Users, ClipboardCheck, Receipt } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, Users, ClipboardCheck, Receipt, House, ClipboardList, PiggyBank } from "lucide-react";
 import { Page, Avatar, Card, Eyebrow, Empty, Logo } from "../components/ui";
 import { Section } from "../components/common";
 import { InviteCoParent } from "../components/InviteCoParent";
 import { ChildCard } from "../components/children/ChildCard";
 import { AddChildForm } from "../components/children/AddChildForm";
 import { ChildChoresCard } from "../components/children/ChildChoresCard";
+import { ChildAvatar } from "../components/children/ChildAvatar";
 import { ClaimRow } from "../components/chores/ClaimRow";
+import { ChoreIdeas } from "../components/chores/ChoreIdeas";
 import { ChildBillsCard } from "../components/bills/ChildBillsCard";
+import { MessagesCard } from "../components/messages/MessagesCard";
+import { MessagesSheet } from "../components/messages/MessagesSheet";
+import { JarStats } from "../components/Jars";
 import { PinPad } from "../components/PinPad";
 import { MoneyDrop } from "../components/MoneyDrop";
 import { Tip } from "../components/Tip";
+import { TabBar } from "../components/TabBar";
 import { WelcomeTour } from "../components/WelcomeTour";
 import { tipsEnabled, isTipSeen, markTipSeen } from "../lib/tips";
+import { themeColor } from "../lib/theme";
 import { ChildView } from "./ChildView";
 import { Settings } from "./Settings";
 import * as api from "../lib/api";
@@ -22,12 +29,20 @@ import { useChores } from "../hooks/useChores";
 import { usePendingClaims, useWeekClaims, useClaimsRealtime } from "../hooks/useClaims";
 import { useChildBalances } from "../hooks/useBalances";
 import { useChildrenBills } from "../hooks/useBills";
+import { useUnreadMessages, useMessagesRealtime } from "../hooks/useMessages";
 import { trialDaysLeft } from "../lib/subscription";
 
+const TABS = [
+  { key: "home", label: "Home", icon: House },
+  { key: "chores", label: "Chores", icon: ClipboardList },
+  { key: "jars", label: "Bills & Jars", icon: PiggyBank },
+];
+
 export function FamilyDashboard({ family, parentEmail }) {
-  const money = useMoney();
+  const [tab, setTab] = useState("home");
   const [pinTarget, setPinTarget] = useState(null);
   const [activeChildId, setActiveChildId] = useState(null);
+  const [chatChildId, setChatChildId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [drop, setDrop] = useState(null);
   const [tourOpen, setTourOpen] = useState(() => tipsEnabled() && !isTipSeen("welcome-tour"));
@@ -36,9 +51,11 @@ export function FamilyDashboard({ family, parentEmail }) {
   const { data: chores = [] } = useChores();
   const { data: pending = [] } = usePendingClaims();
   const { data: weekClaims = [] } = useWeekClaims();
+  const { data: unread = {} } = useUnreadMessages("parent");
   const balances = useChildBalances(children);
   const bills = useChildrenBills(children);
   useClaimsRealtime(family.id);
+  useMessagesRealtime(family.id);
 
   if (settingsOpen) {
     return <Settings family={family} onExit={() => setSettingsOpen(false)} onShowTour={() => { setSettingsOpen(false); setTourOpen(true); }} />;
@@ -60,12 +77,11 @@ export function FamilyDashboard({ family, parentEmail }) {
     );
   }
 
-  const familyTotal = children.reduce((sum, kid) => sum + (balances[kid.id]?.total_pence ?? 0), 0);
-  const weeklyBudget = children.reduce((sum, kid) => sum + (kid.weekly_budget_pence || 0), 0);
-  const daysLeft = family.subscription_status === "trial" ? trialDaysLeft(family) : null;
+  const unreadTotal = Object.values(unread).reduce((s, n) => s + n, 0);
+  const chatChild = children.find((k) => k.id === chatChildId);
 
   return (
-    <Page>
+    <Page className="pb-28">
       <header className="flex items-center justify-between pt-5 pb-2">
         <div className="flex items-center gap-3">
           <Avatar name={parentEmail || family.name} size={40} />
@@ -80,9 +96,54 @@ export function FamilyDashboard({ family, parentEmail }) {
         </div>
       </header>
 
+      {tab === "home" && (
+        <HomeTab
+          family={family}
+          kids={children}
+          pending={pending}
+          weekClaims={weekClaims}
+          balances={balances}
+          unread={unread}
+          onApproved={(d) => setDrop(d)}
+          onOpenChild={(kid) => setPinTarget(kid)}
+          onOpenChat={(kid) => setChatChildId(kid.id)}
+        />
+      )}
+      {tab === "chores" && <ChoresTab family={family} kids={children} chores={chores} weekClaims={weekClaims} />}
+      {tab === "jars" && <JarsTab family={family} kids={children} balances={balances} bills={bills} />}
+
+      <TabBar tabs={TABS} active={tab} onChange={setTab} badges={{ home: pending.length + unreadTotal }} />
+
+      {pinTarget && (
+        <PinPad
+          kid={pinTarget}
+          onCancel={() => setPinTarget(null)}
+          onSuccess={() => {
+            setActiveChildId(pinTarget.id);
+            setPinTarget(null);
+          }}
+        />
+      )}
+      {chatChild && <MessagesSheet kid={chatChild} me="parent" onClose={() => setChatChildId(null)} />}
+      {drop && <MoneyDrop amount={drop.amount} label={drop.label} onDone={() => setDrop(null)} />}
+      {tourOpen && <WelcomeTour onClose={() => { markTipSeen("welcome-tour"); setTourOpen(false); }} />}
+    </Page>
+  );
+}
+
+/* ---------------- Home: welcome, approvals, messages, set-up ---------------- */
+
+function HomeTab({ family, kids, pending, weekClaims, balances, unread, onApproved, onOpenChild, onOpenChat }) {
+  const money = useMoney();
+  const familyTotal = kids.reduce((sum, kid) => sum + (balances[kid.id]?.total_pence ?? 0), 0);
+  const weeklyBudget = kids.reduce((sum, kid) => sum + (kid.weekly_budget_pence || 0), 0);
+  const daysLeft = family.subscription_status === "trial" ? trialDaysLeft(family) : null;
+
+  return (
+    <>
       <Eyebrow>Family overview</Eyebrow>
       <Tip id="dash-overview" title="Welcome to Pocket Money">
-        This card shows your family's total and how much is up for grabs this week. Everything else is in order below: chores waiting for your approval, each child, this week's chores and pocket money, and bills.
+        This is your home tab: the family total, chores waiting for your approval, messages from the kids, and each child's set-up. Chores live in the Chores tab; bills and jars in Bills &amp; Jars.
       </Tip>
       <Card className="p-5 text-white border-0 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900">
         <div className="flex items-start justify-between gap-3">
@@ -107,26 +168,32 @@ export function FamilyDashboard({ family, parentEmail }) {
       </Tip>
       <Section title="Chores to check" icon={<ClipboardCheck size={18} />} badge={pending.length}>
         {pending.map((claim) => (
-          <ClaimRow key={claim.id} claim={claim} onApproved={({ amount, childName }) => setDrop({ amount, label: `sent to ${childName}` })} />
+          <ClaimRow key={claim.id} claim={claim} onApproved={({ amount, childName }) => onApproved({ amount, label: `sent to ${childName}` })} />
         ))}
         {pending.length === 0 && <Empty>Nothing waiting — all caught up.</Empty>}
       </Section>
 
-      <Eyebrow>Children</Eyebrow>
-      <Tip id="dash-children" title="Each child has their own screen">
-        Tap "Open … chores" to switch to a child's view — it's locked behind their PIN. On their screen they can mark chores done and make it their own with colours, an icon, a photo and a wallpaper. Set their age here so their screen suits them.
+      <Eyebrow>Messages</Eyebrow>
+      <Tip id="dash-messages" title="Chat with each child">
+        Once a child is signed in on their own device you can message each other here — with one-tap quick replies for little ones. You'll both get an alert when something new arrives.
+      </Tip>
+      <MessagesCard kids={kids} unread={unread} onOpen={onOpenChat} />
+
+      <Eyebrow>Children &amp; set-up</Eyebrow>
+      <Tip id="dash-children" title="Each child's set-up">
+        Set how much each child can earn per week and their age here. Open "Sign-in details" to give them a username and PIN for their own phone or tablet — you can always see the PIN. "Preview" shows you exactly what they see.
       </Tip>
       <div className="space-y-3">
-        {children.map((kid) => (
+        {kids.map((kid) => (
           <ChildCard
             key={kid.id}
             kid={kid}
             balance={balances[kid.id]}
             weekClaims={weekClaims.filter((c) => c.child_id === kid.id)}
-            onOpen={() => setPinTarget(kid)}
+            onOpen={() => onOpenChild(kid)}
           />
         ))}
-        {children.length === 0 && (
+        {kids.length === 0 && (
           <Card className="p-5 text-center">
             <Users size={22} className="mx-auto text-brand-500 mb-2" />
             <p className="text-[13.5px] text-ink-muted">Add your first child to get started.</p>
@@ -134,59 +201,88 @@ export function FamilyDashboard({ family, parentEmail }) {
         )}
         <AddChildForm familyId={family.id} />
       </div>
+    </>
+  );
+}
 
-      <Eyebrow>This week's chores &amp; pocket money</Eyebrow>
+/* ---------------- Chores: hand out chores, each child's week ---------------- */
+
+function ChoresTab({ family, kids, chores, weekClaims }) {
+  return (
+    <>
+      <Eyebrow>Chores to give out</Eyebrow>
       <Tip id="dash-weekly" title="How weekly pocket money works">
-        Set how much each child can earn per week, then add their chores with how many times a week they can do each one. The amount is split evenly across every completion — or give any chore its own amount and the rest re-balance. Limits reset every Monday.
+        Each child has a weekly amount (set on Home). Add their chores and how many times a week they can do each one — the amount splits evenly across every completion, or give a chore its own amount and the rest re-balance. Limits reset every Monday.
       </Tip>
-      <p className="text-[12.5px] text-ink-muted -mt-1 mb-3 px-1 leading-relaxed">
-        Set how much each child can earn this week, then add their chores. The amount is split across every completion automatically — or give any chore its own amount.
-      </p>
-      <div className="space-y-3">
-        {children.map((kid) => (
+      {kids.length > 0 ? (
+        <ChoreIdeas familyId={family.id} kids={kids} existing={chores} />
+      ) : (
+        <Card className="p-5 text-center">
+          <ClipboardList size={22} className="mx-auto text-brand-500 mb-2" />
+          <p className="text-[13.5px] text-ink-muted">Add a child on the Home tab first.</p>
+        </Card>
+      )}
+
+      {kids.map((kid) => (
+        <div key={kid.id}>
+          <Eyebrow>{kid.name}'s chores this week</Eyebrow>
           <ChildChoresCard
-            key={kid.id}
             kid={kid}
             familyId={family.id}
             chores={chores.filter((c) => c.child_id === kid.id)}
             weekClaims={weekClaims.filter((c) => c.child_id === kid.id)}
           />
-        ))}
-        {children.length === 0 && <Empty>Add a child first.</Empty>}
+        </div>
+      ))}
+    </>
+  );
+}
+
+/* ---------------- Bills & Jars ---------------- */
+
+function JarsTab({ family, kids, balances, bills }) {
+  const money = useMoney();
+  return (
+    <>
+      <Eyebrow>Jars</Eyebrow>
+      <Tip id="dash-jars" title="Save, Spend, Give">
+        Every approved chore is split into three jars so kids learn to put some aside and share some. The bars show how each jar compares.
+      </Tip>
+      <div className="space-y-3">
+        {kids.map((kid) => {
+          const color = themeColor(kid.theme, kid.name);
+          return (
+            <Card key={kid.id} className="p-4" accent={color.main}>
+              <div className="flex items-center gap-3 mb-3">
+                <ChildAvatar kid={kid} size={44} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] font-semibold text-ink truncate">{kid.name}</div>
+                  <div className="text-[12.5px] text-ink-muted">Total {money(balances[kid.id]?.total_pence ?? 0)}</div>
+                </div>
+              </div>
+              <JarStats balance={balances[kid.id]} />
+            </Card>
+          );
+        })}
+        {kids.length === 0 && <Empty>Add a child on the Home tab first.</Empty>}
       </div>
 
       <Eyebrow>Bills</Eyebrow>
       <Tip id="dash-bills" title="Bills (optional)">
         Pretend household bills teach that money goes out as well as in. Add a weekly bill per child and tap "Pay day" to take it from their total — if they can't cover it, the shortfall is recorded rather than taking them into debt.
       </Tip>
-      <p className="text-[12.5px] text-ink-muted -mt-1 mb-3 px-1 leading-relaxed">
-        Weekly household bills per child. Pay day deducts them from the child's total, so earning and paying for essentials come from the same pot.
-      </p>
       <div className="space-y-3">
-        {children.map((kid) => (
+        {kids.map((kid) => (
           <ChildBillsCard key={kid.id} kid={kid} familyId={family.id} bills={bills[kid.id] || []} />
         ))}
-        {children.length === 0 && (
+        {kids.length === 0 && (
           <Card className="p-5 text-center">
             <Receipt size={22} className="mx-auto text-brand-500 mb-2" />
             <p className="text-[13.5px] text-ink-muted">Add a child first.</p>
           </Card>
         )}
       </div>
-
-      {pinTarget && (
-        <PinPad
-          kid={pinTarget}
-          onCancel={() => setPinTarget(null)}
-          onSuccess={() => {
-            setActiveChildId(pinTarget.id);
-            setPinTarget(null);
-          }}
-        />
-      )}
-      {drop && <MoneyDrop amount={drop.amount} label={drop.label} onDone={() => setDrop(null)} />}
-      {tourOpen && <WelcomeTour onClose={() => { markTipSeen("welcome-tour"); setTourOpen(false); }} />}
-    </Page>
+    </>
   );
 }
 

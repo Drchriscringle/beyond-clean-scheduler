@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Plus, X, Pencil, Check } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { useAddChore, useUpdateChore, useRemoveChore } from "../../hooks/useChores";
-import { useUpdateChildBudget } from "../../hooks/useChildren";
 import { splitBudget } from "../../lib/budget";
 import { themeColor } from "../../lib/theme";
 import { Card, Button, Input, Select, IconCircle, Progress, Empty, ErrorText } from "../ui";
 import { ChildAvatar } from "./ChildAvatar";
+import { BudgetEditor } from "./BudgetEditor";
 
 const CHORE_ICONS = ["⭐", "🧹", "🍽️", "🛏️", "🧺", "📚", "🐕", "🌱", "🚮", "🧼", "🚲", "🎒"];
 const TIMES = Array.from({ length: 14 }, (_, i) => i + 1);
@@ -91,33 +91,6 @@ export function ChildChoresCard({ kid, familyId, chores, weekClaims }) {
         </Button>
       )}
     </Card>
-  );
-}
-
-function BudgetEditor({ kid }) {
-  const [value, setValue] = useState(toPounds(kid.weekly_budget_pence));
-  const update = useUpdateChildBudget();
-
-  useEffect(() => setValue(toPounds(kid.weekly_budget_pence)), [kid.weekly_budget_pence]);
-
-  const commit = () => {
-    const pence = toPence(value);
-    setValue(toPounds(pence));
-    if (pence !== kid.weekly_budget_pence) update.mutate({ childId: kid.id, pence });
-  };
-
-  return (
-    <label className="text-right">
-      <span className="block text-[11px] font-semibold text-ink-muted mb-1">Per week</span>
-      <input
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => setValue(e.target.value.replace(/[^\d.]/g, ""))}
-        onBlur={commit}
-        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-        className="w-24 h-10 rounded-xl border border-line bg-white px-3 text-right text-[16px] font-bold tabular-nums text-ink outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
-      />
-    </label>
   );
 }
 

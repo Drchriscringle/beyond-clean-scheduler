@@ -5,8 +5,10 @@ import { currentPushSubscription, pushSupport, subscribeToPush, unsubscribeFromP
 
 const PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
-// Chore alerts on this device: 'on' | 'off' | 'ios-install' | 'unsupported' | 'checking'
-export function useChoreAlerts(familyId) {
+// Alerts on this device: 'on' | 'off' | 'ios-install' | 'unsupported' | 'checking'.
+// Parents get "chore done" alerts; a child device (audience 'child') gets
+// approvals and messages.
+export function useChoreAlerts(familyId, { audience = "parent", childId = null } = {}) {
   const [status, setStatus] = useState("checking");
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function useChoreAlerts(familyId) {
   const enable = useMutation({
     mutationFn: async () => {
       const { endpoint, keys } = await subscribeToPush(PUBLIC_KEY);
-      await api.savePushSubscription({ familyId, endpoint, keys });
+      await api.savePushSubscription({ familyId, endpoint, keys, audience, childId });
     },
     onSuccess: () => setStatus("on"),
   });
@@ -46,12 +48,20 @@ export function useChoreAlerts(familyId) {
   return { status, enable, disable, configured: !!PUBLIC_KEY };
 }
 
-// Best-effort: never let a failed notification break the child's flow.
-export async function notifyParents({ title, body, url = "/" }) {
+async function send(payload) {
   try {
     const sub = await currentPushSubscription();
-    await api.sendPush({ title, body, url, excludeEndpoint: sub?.endpoint });
+    await api.sendPush({ ...payload, excludeEndpoint: sub?.endpoint });
   } catch (err) {
-    console.warn("chore alert not sent:", err?.message || err);
+    console.warn("alert not sent:", err?.message || err);
   }
+}
+
+// Best-effort: never let a failed notification break the flow.
+export function notifyParents({ title, body, url = "/", tag }) {
+  return send({ title, body, url, tag, to: "parents" });
+}
+
+export function notifyChild(childId, { title, body, url = "/", tag }) {
+  return send({ title, body, url, tag, to: "child", childId });
 }
