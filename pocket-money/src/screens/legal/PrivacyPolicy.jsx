@@ -13,8 +13,12 @@ export function PrivacyPolicy() {
       <h2>What we collect</h2>
       <ul>
         <li>The parent's email address, used to sign in and for account/billing emails.</li>
-        <li>A family name, and for each child: a name, a chosen emoji avatar, and a 4-digit PIN (a convenience lock for switching screens on a shared device — not a security credential).</li>
-        <li>Chores, bills, and the resulting activity/transaction history you create in the app.</li>
+        <li>A family name, and for each child: a first name, an age (stored as a birth year), a chosen colour, icon and wallpaper, and an optional photo the parent takes or uploads for their avatar. Photos are stored privately and only shown inside your family's app.</li>
+        <li>For each child, a username and a 4-digit PIN chosen by the parent so the child can sign in on their own phone or tablet. No email address or other contact details are collected from children.</li>
+        <li>When a child signs in on a device, a record of that device (a short label such as "iPhone" and when it was last used) so the parent can see and sign out devices.</li>
+        <li>Chores, bills, planned days, and the resulting activity/transaction history you create in the app.</li>
+        <li>Messages sent between the parents and each child inside the app. These are visible only to your family.</li>
+        <li>If you turn on alerts, a push-notification subscription for that device so we can send chore and message alerts. You can turn this off at any time.</li>
         <li>Billing information if you subscribe — handled entirely by Stripe (see below); we do not receive or store your card details.</li>
       </ul>
 
@@ -23,7 +27,7 @@ export function PrivacyPolicy() {
         <li>No advertising or ad networks — this app has none.</li>
         <li>No selling or sharing data with third parties for marketing.</li>
         <li>No behavioral tracking or profiling of children.</li>
-        <li>Children never create their own account, email, or login — only a parent authenticates, and "child mode" is a view within that same account.</li>
+        <li>Children never provide an email address or create an account themselves. A child's sign-in (username and PIN) is created and controlled by the parent, who can see the PIN and sign the child's devices out at any time.</li>
       </ul>
 
       <h2>Who processes data on our behalf</h2>
@@ -36,15 +40,20 @@ export function PrivacyPolicy() {
       <p>
         You can permanently delete your family's data and your account at any time from
         Settings → Delete my account, inside the app. This removes the family, every
-        child, chore, bill, and transaction record, and your sign-in account itself.
+        child, chore, bill, message, device and transaction record, any child photos, and
+        your sign-in account itself.
         This cannot be undone.
       </p>
 
       <h2>Children's privacy</h2>
       <p>
-        This app is designed for use by a parent on behalf of their household. Children
-        do not register their own accounts or provide information directly to us —
-        everything about a child is entered by the parent into the parent's own account.
+        This app is designed for use by a parent on behalf of their household. A parent
+        sets up each child, including their sign-in details, and stays in control: the
+        parent can see the child's PIN, see which devices the child is signed in on, sign
+        those devices out, and delete the child's data. A child signed in on their own
+        device can only see their own chores, jars and messages, change their colour,
+        icon, photo and wallpaper, and message their parents — nothing else. The only
+        information a child enters themselves is their messages and their avatar choices.
       </p>
 
       <h2>Contact</h2>

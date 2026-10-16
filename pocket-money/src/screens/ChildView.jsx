@@ -204,8 +204,8 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
         <Eyebrow>{little ? "Jobs to do" : "Chores you can do"}</Eyebrow>
         <Tip id={`child-home-${mode}`} kid color={color.main} title={little ? "How it works" : "How your pocket money works"}>
           {little
-            ? "Do a job, then tap the big button. A grown-up checks it, and your money drops into your jars!"
-            : "Tap a chore once you've done it. A grown-up checks and approves it, and the money lands in your Save, Spend and Give jars. Finish everything for a surprise!"}
+            ? "Do a job, then tap the big button. A grown-up checks it, and your money drops into your jars! Jobs marked Today are for today — they come back tomorrow."
+            : "Tap a chore once you've done it. A grown-up checks and approves it, and the money lands in your Save, Spend and Give jars. Chores tagged Today are once a day and come back tomorrow; the others you can do any time this week. Finish everything for a surprise!"}
         </Tip>
         {little ? (
           <div className="space-y-3">

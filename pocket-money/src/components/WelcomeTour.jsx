@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PiggyBank, Calculator, ClipboardCheck, Coins, Palette, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { PiggyBank, Calculator, CalendarDays, ClipboardCheck, Coins, Smartphone, MessageCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button, Logo } from "./ui";
 
 const SLIDES = [
@@ -11,22 +11,32 @@ const SLIDES = [
   {
     icon: Calculator,
     title: "Set the weekly amount",
-    body: "Decide how much each child can earn this week. Add their chores and how many times a week they can do each one — the amount splits itself across them, or you give any chore its own value.",
+    body: "On Home, decide how much each child can earn per week. The amount splits itself across every chore completion planned for that week — or give any chore its own value and the rest re-balance.",
+  },
+  {
+    icon: CalendarDays,
+    title: "Plan the chores",
+    body: "In the Chores tab, hand out ready-made chores or make your own with an icon. Each one happens on any days this week, every day, or on days you pick from today and the next seven. Tap a day in the planner to see who has what.",
   },
   {
     icon: ClipboardCheck,
     title: "They do, you approve",
-    body: "Your child taps a chore when it's done. You get an alert, check it's really done, and tap Approve. Decline sends it back. Weekly limits reset every Monday.",
+    body: "Your child taps a chore when it's done. You get an alert, check it's really done, and tap Approve on Home. Decline sends it back. Every-day and planned chores come back each morning; any-day ones reset on Monday.",
   },
   {
     icon: Coins,
     title: "Money drops into jars",
-    body: "Each reward is split into Save, Spend and Give jars so they learn to put some aside and share some. Optional pretend bills teach that money goes out, too.",
+    body: "Each reward is split into Save, Spend and Give jars so they learn to put some aside and share some. Optional pretend bills in Bills & Jars teach that money goes out, too.",
   },
   {
-    icon: Palette,
-    title: "Make it theirs",
-    body: "Every child gets their own screen, locked with a PIN: their colour, icon, photo and wallpaper, a daily money lesson pitched at their age, and a celebration when the week's jobs are done.",
+    icon: Smartphone,
+    title: "Their own device",
+    body: "Open a child's Sign-in details on Home to give them a username and PIN. On their phone or tablet they use the child link and see only their chores, jars and messages — and they can make it theirs with a colour, icon, photo and wallpaper.",
+  },
+  {
+    icon: MessageCircle,
+    title: "Stay in touch",
+    body: "Message each child from Home, with one-tap quick replies for little ones. You'll both get an alert when something new arrives, and they get a buzz when money lands.",
   },
 ];
 

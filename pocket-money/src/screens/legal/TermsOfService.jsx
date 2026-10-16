@@ -20,10 +20,12 @@ export function TermsOfService() {
 
       <h2>Accounts</h2>
       <p>
-        One parent/guardian per household creates an account with an email and
-        password. Children do not have their own login — a PIN inside the app is a
-        convenience lock for switching between a parent's and a child's view on a
-        shared device, not an account of its own.
+        A parent or guardian creates the household account with an email and password,
+        and may invite a co-parent. Children do not have an email login. A parent may
+        give a child a username and 4-digit PIN so the child can sign in on their own
+        device and see only their own chores, jars and messages. The parent remains
+        responsible for the child's use of the app, can see the PIN, and can sign the
+        child's devices out at any time.
       </p>
 
       <h2>Subscription &amp; billing</h2>
