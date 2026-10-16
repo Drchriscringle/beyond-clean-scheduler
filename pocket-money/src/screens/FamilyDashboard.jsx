@@ -31,6 +31,7 @@ import { usePendingClaims, useWeekClaims, useClaimsRealtime } from "../hooks/use
 import { useChildBalances } from "../hooks/useBalances";
 import { useChildrenBills } from "../hooks/useBills";
 import { useUnreadMessages, useMessagesRealtime } from "../hooks/useMessages";
+import { useScreenTime } from "../hooks/useUsage";
 import { trialDaysLeft } from "../lib/subscription";
 
 const TABS = [
@@ -53,6 +54,7 @@ export function FamilyDashboard({ family, parentEmail }) {
   const { data: pending = [] } = usePendingClaims();
   const { data: weekClaims = [] } = useWeekClaims();
   const { data: unread = {} } = useUnreadMessages("parent");
+  const { data: screenTime = {} } = useScreenTime();
   const balances = useChildBalances(children);
   const bills = useChildrenBills(children);
   useClaimsRealtime(family.id);
@@ -106,6 +108,7 @@ export function FamilyDashboard({ family, parentEmail }) {
           weekClaims={weekClaims}
           balances={balances}
           unread={unread}
+          screenTime={screenTime}
           onApproved={(d) => setDrop(d)}
           onOpenChild={(kid) => setPinTarget(kid)}
           onOpenChat={(kid) => setChatChildId(kid.id)}
@@ -135,7 +138,7 @@ export function FamilyDashboard({ family, parentEmail }) {
 
 /* ---------------- Home: welcome, approvals, messages, set-up ---------------- */
 
-function HomeTab({ family, kids, pending, weekClaims, balances, unread, onApproved, onOpenChild, onOpenChat }) {
+function HomeTab({ family, kids, pending, weekClaims, balances, unread, screenTime = {}, onApproved, onOpenChild, onOpenChat }) {
   const money = useMoney();
   const familyTotal = kids.reduce((sum, kid) => sum + (balances[kid.id]?.total_pence ?? 0), 0);
   const weeklyBudget = kids.reduce((sum, kid) => sum + (kid.weekly_budget_pence || 0), 0);
@@ -166,7 +169,7 @@ function HomeTab({ family, kids, pending, weekClaims, balances, unread, onApprov
 
       <Eyebrow>Awaiting approval</Eyebrow>
       <Tip id="dash-approve" title="Approving chores">
-        When a child marks a chore done it appears here (and you get an alert if they're on). Check it's really done, then tap Approve — the money drops into their jars with a little celebration. Decline sends it back.
+        When a child marks a chore done it appears here (and you get an alert if they're on). They can attach a photo of the finished job — tap the thumbnail to see it — so you can approve from anywhere. Tap Approve and the money drops into their jars with a little celebration. Decline sends it back.
       </Tip>
       <Section title="Chores to check" icon={<ClipboardCheck size={18} />} badge={pending.length}>
         {pending.map((claim) => (
@@ -183,7 +186,7 @@ function HomeTab({ family, kids, pending, weekClaims, balances, unread, onApprov
 
       <Eyebrow>Children &amp; set-up</Eyebrow>
       <Tip id="dash-children" title="Each child's set-up">
-        Set how much each child can earn per week and their age here. Open "Sign-in details" to give them a username and PIN for their own phone or tablet — you can always see the PIN. "Preview" shows you exactly what they see.
+        Set how much each child can earn per week and their age here. Open "Sign-in details" to give them a username and PIN for their own phone or tablet — you can always see the PIN. "Screen time" shows how long they've had the app open today and this week. "Preview" shows you exactly what they see.
       </Tip>
       <div className="space-y-3">
         {kids.map((kid) => (
@@ -192,6 +195,7 @@ function HomeTab({ family, kids, pending, weekClaims, balances, unread, onApprov
             kid={kid}
             balance={balances[kid.id]}
             weekClaims={weekClaims.filter((c) => c.child_id === kid.id)}
+            usage={screenTime[kid.id]}
             onOpen={() => onOpenChild(kid)}
           />
         ))}

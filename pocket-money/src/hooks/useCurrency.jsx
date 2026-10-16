@@ -13,3 +13,8 @@ export function useMoney() {
   const currency = useContext(CurrencyContext);
   return (pence) => formatMoney(pence, currency);
 }
+
+// The family's ISO currency code (e.g. "GBP"), for things like coin games.
+export function useCurrencyCode() {
+  return useContext(CurrencyContext);
+}

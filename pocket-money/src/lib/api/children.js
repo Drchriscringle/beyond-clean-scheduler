@@ -121,7 +121,7 @@ const AVATAR_SIZE = 320;
 // Square-crops and shrinks a photo on the device before upload, so a 12 MP
 // selfie becomes a ~30 KB JPEG. Uses createImageBitmap when available so
 // EXIF orientation from phone cameras is respected.
-async function resizeImage(file, size = AVATAR_SIZE) {
+export async function resizeImage(file, size = AVATAR_SIZE, { square = true } = {}) {
   let source;
   let width;
   let height;
@@ -139,13 +139,21 @@ async function resizeImage(file, size = AVATAR_SIZE) {
     width = source.naturalWidth;
     height = source.naturalHeight;
   }
-  const side = Math.min(width, height);
-  const sx = (width - side) / 2;
-  const sy = (height - side) / 2;
   const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  canvas.getContext("2d").drawImage(source, sx, sy, side, side, 0, 0, size, size);
+  if (square) {
+    const side = Math.min(width, height);
+    const sx = (width - side) / 2;
+    const sy = (height - side) / 2;
+    canvas.width = size;
+    canvas.height = size;
+    canvas.getContext("2d").drawImage(source, sx, sy, side, side, 0, 0, size, size);
+  } else {
+    // Keep the aspect ratio; `size` caps the longer edge.
+    const scale = Math.min(1, size / Math.max(width, height));
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
+  }
   source.close?.();
   return new Promise((resolve, reject) =>
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Could not process the image"))), "image/jpeg", 0.85)

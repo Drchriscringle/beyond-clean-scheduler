@@ -24,6 +24,28 @@ export function useClaimChore() {
   });
 }
 
+export function useAttachClaimPhoto() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.uploadClaimPhoto,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pendingClaims"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "weekClaims" });
+    },
+  });
+}
+
+// Signed URLs last an hour; refresh a little before that.
+export function useClaimPhotoUrl(path) {
+  return useQuery({
+    queryKey: ["claimPhoto", path],
+    queryFn: () => api.getClaimPhotoUrl(path),
+    enabled: !!path,
+    staleTime: 50 * 60 * 1000,
+    retry: false,
+  });
+}
+
 export function useDecideClaim() {
   const queryClient = useQueryClient();
   return useMutation({

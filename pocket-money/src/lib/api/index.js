@@ -8,3 +8,4 @@ export * from "./balances";
 export * from "./billing";
 export * from "./push";
 export * from "./messages";
+export * from "./usage";

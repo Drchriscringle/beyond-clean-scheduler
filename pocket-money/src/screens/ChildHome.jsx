@@ -7,6 +7,7 @@ import { useChildBalances } from "../hooks/useBalances";
 import { useChildrenBills } from "../hooks/useBills";
 import { useFamilyById, useTouchChildDevice, useChildSignOut } from "../hooks/useChildDevice";
 import { useMessagesRealtime } from "../hooks/useMessages";
+import { useScreenTimeTracker } from "../hooks/useUsage";
 import { isSubscriptionActive } from "../lib/subscription";
 import { ChildView } from "./ChildView";
 import { InstallPrompt } from "./InstallPrompt";
@@ -28,6 +29,7 @@ export function ChildHome({ device }) {
   useMessagesRealtime(device.family_id);
   useTouchChildDevice(!!kid);
   useRefreshChoreSchedules(!!kid);
+  useScreenTimeTracker(!!kid);
 
   if (familyLoading || kidsLoading) return <LoadingScreen />;
 

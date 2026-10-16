@@ -1308,3 +1308,94 @@ create or replace function claim_chore(target_chore_id uuid, target_child_id uui
 returns chore_claims language sql security definer set search_path = public as $$
   select claim_chore(target_chore_id, target_child_id, current_date);
 $$;
+
+-- ------------------------------------------------------------
+-- CHORE PHOTOS (migration 20261019)
+-- ------------------------------------------------------------
+
+alter table chore_claims add column if not exists photo_path text;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('chore-photos', 'chore-photos', false, 3145728, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do nothing;
+
+create policy "family reads chore photos" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'chore-photos' and (storage.foldername(name))[1] = public.my_family_id()::text);
+
+create policy "family uploads chore photos" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'chore-photos' and (storage.foldername(name))[1] = public.my_family_id()::text);
+
+create policy "family replaces chore photos" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'chore-photos' and (storage.foldername(name))[1] = public.my_family_id()::text)
+  with check (bucket_id = 'chore-photos' and (storage.foldername(name))[1] = public.my_family_id()::text);
+
+-- chore_claims has no update policy (claims are decided via RPC), so the
+-- photo is attached through this function: the claim must be in the
+-- caller's family, still pending, and either the caller is a parent or it's
+-- the child's own claim. The path is forced to the claim's own slot.
+create or replace function attach_claim_photo(claim_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  claim record;
+  path text;
+begin
+  select * into claim from chore_claims where id = claim_id and family_id = my_family_id();
+  if claim is null then raise exception 'Claim not found.'; end if;
+  if claim.status <> 'pending' then raise exception 'That chore has already been checked.'; end if;
+  if not is_parent() and claim.child_id is distinct from my_child_id() then
+    raise exception 'You can only add a photo to your own chores.';
+  end if;
+  path := claim.family_id::text || '/' || claim.id::text || '.jpg';
+  update chore_claims set photo_path = path where id = claim.id;
+  return path;
+end;
+$$;
+revoke execute on function attach_claim_photo(uuid) from public, anon;
+
+-- ------------------------------------------------------------
+-- SCREEN TIME (migration 20261019)
+-- ------------------------------------------------------------
+
+create table if not exists child_usage (
+  id          uuid primary key default gen_random_uuid(),
+  family_id   uuid not null references families(id) on delete cascade,
+  child_id    uuid not null references children(id) on delete cascade,
+  day         date not null default current_date,
+  seconds     int not null default 0 check (seconds between 0 and 86400),
+  updated_at  timestamptz not null default now(),
+  unique (child_id, day)
+);
+alter table child_usage enable row level security;
+
+create policy "parents see usage" on child_usage
+  for select using (family_id = my_family_id() and (is_parent() or child_id = my_child_id()));
+
+-- The only way in: the child's own device adds a slice of time to today.
+-- Capped per call so a stuck client can't inflate the total.
+create or replace function record_child_usage(add_seconds int)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  kid uuid := my_child_id();
+  fam uuid := my_family_id();
+  slice int := greatest(0, least(coalesce(add_seconds, 0), 300));
+begin
+  if kid is null or fam is null or slice = 0 then return; end if;
+  insert into child_usage (family_id, child_id, day, seconds)
+    values (fam, kid, current_date, slice)
+    on conflict (child_id, day) do update
+      set seconds = least(child_usage.seconds + excluded.seconds, 86400),
+          updated_at = now();
+end;
+$$;
+revoke execute on function record_child_usage(int) from public, anon;

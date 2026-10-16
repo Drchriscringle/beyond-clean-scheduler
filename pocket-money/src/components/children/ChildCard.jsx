@@ -8,10 +8,11 @@ import { ChildAvatar } from "./ChildAvatar";
 import { AgeEditor } from "./AgeEditor";
 import { BudgetEditor } from "./BudgetEditor";
 import { ChildLoginCard } from "./ChildLoginCard";
+import { ScreenTime } from "./ScreenTime";
 
 // Parent Home: one card per child — balances, this week's progress, their
 // pocket-money level and age, and their sign-in details for their own device.
-export function ChildCard({ kid, balance, weekClaims = [], onOpen, showSetup = true }) {
+export function ChildCard({ kid, balance, weekClaims = [], usage, onOpen, showSetup = true }) {
   const money = useMoney();
   const color = themeColor(kid.theme, kid.name);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -68,6 +69,8 @@ export function ChildCard({ kid, balance, weekClaims = [], onOpen, showSetup = t
             <ChevronDown size={18} className={`text-ink-muted transition ${loginOpen ? "rotate-180" : ""}`} />
           </button>
           {loginOpen && <div className="mt-3"><ChildLoginCard kid={kid} /></div>}
+          <Divider />
+          <ScreenTime usage={usage} color={color.main} />
         </>
       )}
       <Divider />

@@ -31,7 +31,7 @@ export function LessonCard({ kid, mode, color }) {
   const { lesson, kind } = dailyCard(mode, kid.id);
   const quiz = kind === "quiz" ? quizFor(mode, lesson.term) : null;
   const key = `${kid.id}_${dayKey()}`;
-  const [state, setState] = useState(() => readState(key) || { done: false, picked: null });
+  const [state, setState] = useState(() => readState(key) || { done: false, picked: null, recapDone: false });
   const little = mode === "little";
 
   const Icon = icons[lesson.icon] || icons.BookOpen;
@@ -67,8 +67,31 @@ export function LessonCard({ kid, mode, color }) {
       if (answered) return;
       if (i === quiz.answer) playCoinShower(6, 0.6);
       else playTap();
-      save({ done: false, picked: i });
+      save({ done: false, picked: i, recapDone: true });
     };
+
+    // Step 1: a quick recap of what the word means. Step 2: the question.
+    if (!state.recapDone) {
+      return (
+        <Card className={little ? "p-5" : "p-4"} accent={color.fill}>
+          <div className="flex items-start gap-3">
+            <span className={`${little ? "h-14 w-14" : "h-11 w-11"} rounded-2xl flex items-center justify-center shrink-0`} style={{ background: color.soft, color: color.main }}>
+              <Icon size={little ? 28 : 22} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-semibold tracking-[0.18em] uppercase text-ink-muted">Quick recap</div>
+              <div className={`${little ? "text-[22px]" : "text-[18px]"} font-bold text-ink tracking-tight`}>{lesson.term}</div>
+            </div>
+          </div>
+          <p className={`${little ? "text-[16px]" : "text-[14px]"} text-ink mt-3 leading-relaxed`}>{body}</p>
+          <p className={`${little ? "text-[14px]" : "text-[12.5px]"} text-ink-muted mt-2`}>{little ? "Read it, then there's one little question!" : "Have a read — then a quick question to see if it stuck."}</p>
+          <button onClick={() => save({ ...state, recapDone: true })} className={`mt-3 w-full rounded-xl font-semibold text-white transition active:scale-[0.98] ${little ? "h-12 text-[15px]" : "h-10 text-[13.5px]"}`} style={{ background: color.fill }}>
+            {little ? "Ready! Ask me" : "Ready for the question"}
+          </button>
+        </Card>
+      );
+    }
+
     return (
       <Card className={little ? "p-5" : "p-4"} accent={color.fill}>
         <div className="flex items-start gap-3">

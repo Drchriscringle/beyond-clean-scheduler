@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { resizeImage } from "./children";
 
 // Goes through claim_chore() so the weekly / once-a-day limits are enforced
 // server-side. `claimDay` is the device's local date ('YYYY-MM-DD').
@@ -23,7 +24,7 @@ export async function listWeekClaims(weekStartIso) {
 export async function listPendingClaims() {
   const { data, error } = await supabase
     .from("chore_claims")
-    .select("id, claimed_at, chores(id, name, icon, value_pence), children(id, name, avatar, avatar_url, theme)")
+    .select("id, claimed_at, photo_path, chores(id, name, icon, value_pence), children(id, name, avatar, avatar_url, theme)")
     .eq("status", "pending")
     .order("claimed_at");
   if (error) throw error;
@@ -45,6 +46,31 @@ export async function listRecentActivity(limit = 10, childId = null) {
   const { data, error } = await query;
   if (error) throw error;
   return data;
+}
+
+/* ---------------- photo of the finished chore ---------------- */
+
+const PHOTO_BUCKET = "chore-photos";
+const PHOTO_MAX_EDGE = 1024;
+
+// Shrinks the photo on the device, uploads it to the claim's slot and records
+// it on the claim (attach_claim_photo checks it's a pending claim of ours).
+export async function uploadClaimPhoto({ claimId, familyId, file }) {
+  const blob = await resizeImage(file, PHOTO_MAX_EDGE, { square: false });
+  const path = `${familyId}/${claimId}.jpg`;
+  const { error: uploadError } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(path, blob, { upsert: true, contentType: "image/jpeg", cacheControl: "3600" });
+  if (uploadError) throw uploadError;
+  const { data, error } = await supabase.rpc("attach_claim_photo", { claim_id: claimId });
+  if (error) throw error;
+  return data;
+}
+
+export async function getClaimPhotoUrl(path) {
+  const { data, error } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrl(path, 60 * 60);
+  if (error) throw error;
+  return data.signedUrl;
 }
 
 // Realtime: parent sees claims appear/change live without polling.

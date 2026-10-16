@@ -4,6 +4,7 @@ import { useDecideClaim } from "../../hooks/useClaims";
 import { notifyChild } from "../../hooks/usePush";
 import { IconCircle } from "../ui";
 import { ChoreIcon } from "../../lib/choreIcons";
+import { ClaimPhotoThumb } from "./ClaimPhoto";
 import { ChildAvatar } from "../children/ChildAvatar";
 
 export function ClaimRow({ claim, onApproved }) {
@@ -50,9 +51,10 @@ export function ClaimRow({ claim, onApproved }) {
       <div className="flex-1 min-w-0">
         <div className="text-[14px] font-semibold text-ink truncate">{claim.chores.name}</div>
         <div className="text-[12.5px] text-ink-muted">
-          {claim.children.name} · {money(claim.chores.value_pence)}
+          {claim.children.name} · {money(claim.chores.value_pence)}{claim.photo_path ? " · photo attached" : ""}
         </div>
       </div>
+      <ClaimPhotoThumb path={claim.photo_path} size={40} />
       <button
         onClick={decline}
         disabled={busy}

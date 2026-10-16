@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Hourglass, Receipt, History, Check, Palette, Trophy, MessageCircle, LogOut, Bell, ChevronRight, CalendarDays } from "lucide-react";
+import { ArrowLeft, Hourglass, Receipt, History, Check, Palette, Trophy, MessageCircle, LogOut, Bell, ChevronRight, CalendarDays, Camera } from "lucide-react";
 import { ChoreIcon } from "../lib/choreIcons";
 import { dateKey, dueOn, shortDay } from "../lib/schedule";
 import { Page, Card, Eyebrow, Empty, IconCircle, Pill, Button } from "../components/ui";
@@ -12,6 +12,8 @@ import { MoneyDrop } from "../components/MoneyDrop";
 import { Tip } from "../components/Tip";
 import { WellDone } from "../components/WellDone";
 import { LessonCard } from "../components/children/LessonCard";
+import { MoneyGamesCard } from "../components/children/MoneyGames";
+import { AddClaimPhoto } from "../components/chores/ClaimPhoto";
 import { weeklyFlagSeen, markWeeklyFlag, isTipSeen, markTipSeen } from "../lib/tips";
 import { weekStartUTC } from "../lib/week";
 import { useMoney } from "../hooks/useCurrency";
@@ -95,13 +97,14 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
     setClaimingId(chore.id);
     setErr("");
     try {
-      await claimChore.mutateAsync({ choreId: chore.id, childId: kid.id, claimDay: today });
+      const created = await claimChore.mutateAsync({ choreId: chore.id, childId: kid.id, claimDay: today });
       playTap();
-      setJustClaimed(chore.name);
-      setTimeout(() => setJustClaimed(null), 2500);
+      setJustClaimed({ name: chore.name, claimId: created?.id });
+      setTimeout(() => setJustClaimed((j) => (j?.photoSent ? null : j)), 12000);
       notifyParents({
         title: `${kid.name} finished a chore`,
         body: `${chore.name} · ${money(chore.value_pence)} — tap to approve`,
+        tag: `claim-${created?.id || chore.id}`,
       });
     } catch (e) {
       const m = e?.message || "";
@@ -191,13 +194,26 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
           <JarStats balance={balance} />
         </Card>
 
-        <Eyebrow>Learn</Eyebrow>
+        <Eyebrow>Learn &amp; play</Eyebrow>
         <LessonCard kid={kid} mode={mode} color={color} />
+        <div className="mt-3">
+          <MoneyGamesCard kid={kid} mode={mode} color={color} />
+        </div>
 
         {justClaimed && (
-          <p className="mt-4 text-[13px] font-medium text-emerald-800 bg-emerald-50 rounded-xl px-4 py-3 flex items-center gap-2">
-            <Check size={16} /> {little ? "Brilliant! A grown-up will check it." : `Nice! "${justClaimed}" is waiting for a grown-up to approve.`}
-          </p>
+          <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 tip-in">
+            <p className={`${little ? "text-[15px]" : "text-[13px]"} font-medium text-emerald-800 flex items-center gap-2`}>
+              <Check size={16} /> {little ? "Brilliant! A grown-up will check it." : `Nice! "${justClaimed.name}" is waiting for a grown-up to approve.`}
+            </p>
+            {justClaimed.claimId && !justClaimed.photoSent && (
+              <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
+                <span className={`${little ? "text-[14px]" : "text-[12.5px]"} text-emerald-900/80`}>{little ? "Show them! Take a photo." : "Send a photo so they can approve it from anywhere."}</span>
+                <AddClaimPhoto claim={{ id: justClaimed.claimId }} familyId={family.id} color={color.main} little={little} onDone={() => setJustClaimed((j) => ({ ...j, photoSent: true }))} />
+              </div>
+            )}
+            {justClaimed.photoSent && <p className={`mt-1.5 ${little ? "text-[14px]" : "text-[12.5px]"} font-semibold text-emerald-800`}>Photo sent!</p>}
+            <button onClick={() => setJustClaimed(null)} className="mt-1 text-[12px] text-emerald-900/60">Dismiss</button>
+          </div>
         )}
         {err && <p className="mt-4 text-[13px] font-medium text-rose-700 bg-rose-50 rounded-xl px-4 py-3">{err}</p>}
 
@@ -270,6 +286,11 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
                 <div key={p.id} className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
                   <IconCircle tone="grey" size={36}><ChoreIcon icon={p.chores?.icon} size={18} /></IconCircle>
                   <span className="flex-1 text-[14px] font-medium text-ink">{p.chores?.name}</span>
+                  {p.photo_path ? (
+                    <Pill tone="green"><Camera size={11} /> photo sent</Pill>
+                  ) : ownDevice ? (
+                    <AddClaimPhoto claim={p} familyId={family.id} color={color.main} />
+                  ) : null}
                   <Pill tone="grey">{money(p.chores?.value_pence)}</Pill>
                 </div>
               ))}
