@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import * as icons from "lucide-react";
-import { X, Check, Star, RotateCcw, ChevronRight, Play, Delete } from "lucide-react";
+import { X, Check, Star, RotateCcw, ChevronRight, Play, Delete, Coins, PenLine } from "lucide-react";
 import { useMoney, useCurrencyCode } from "../../hooks/useCurrency";
+import { useAwardLearning } from "../../hooks/useRewards";
+import { dateKey } from "../../lib/schedule";
+import { Scratchpad } from "../Scratchpad";
 import { GAMES, gamesFor, dailyGame, coinsFor, coinRounds, fewestCoins, needWantRounds, jarRounds, valueRounds } from "../../lib/games";
 import { JARS } from "../Jars";
 import { playTap, playCoinShower, playFanfare } from "../../lib/sound";
@@ -88,15 +91,21 @@ export function MoneyGamesCard({ kid, mode, color }) {
 
 function GameSheet({ game, kid, mode, color, onClose, onEarned }) {
   const [round, setRound] = useState(0); // bump to restart
-  const [result, setResult] = useState(null); // { correct, total }
+  const [result, setResult] = useState(null); // { correct, total, award }
+  const award = useAwardLearning();
   const little = mode === "little";
 
   const finish = (correct, total) => {
-    setResult({ correct, total });
+    setResult({ correct, total, award: null });
     const earned = correct === total ? 3 : correct >= Math.ceil(total / 2) ? 2 : 1;
     onEarned(earned);
     if (correct === total) playFanfare();
     else playCoinShower(6, 0.6);
+    // Pays whatever the parent set, once per game per day; replays are just for fun.
+    award.mutate(
+      { childId: kid.id, kind: `game:${game.key}`, dayKey: dateKey(), correct },
+      { onSuccess: (a) => setResult((r) => (r ? { ...r, award: a } : r)) }
+    );
   };
 
   const Body = { needwant: NeedOrWant, coins: MakeTheMoney, jars: WhichJar, value: BestDeal }[game.key];
@@ -305,12 +314,17 @@ function BestDeal({ color, little, onFinish }) {
   const money = useMoney();
   const rounds = useMemo(() => valueRounds(Date.now(), 5), []);
   const { i, feedback, answer } = useRoundFlow(rounds.length, onFinish);
+  const [padOpen, setPadOpen] = useState(false);
   const r = rounds[i];
   const note = `${r.better === "a" ? r.a.label : r.b.label} works out at ${money(r.better === "a" ? r.unitA : r.unitB)} per ${r.per}, against ${money(r.better === "a" ? r.unitB : r.unitA)}.`;
   return (
     <div>
       <Progress n={i} total={rounds.length} color={color} />
-      <p className="text-[14px] text-ink-muted">Which is better value per {r.per}?</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[14px] text-ink-muted">Which is better value per {r.per}?</p>
+        <button onClick={() => setPadOpen((o) => !o)} className="shrink-0 inline-flex items-center gap-1 rounded-full border border-line bg-white px-2.5 h-8 text-[12px] font-semibold text-ink-muted hover:text-ink"><PenLine size={13} /> {padOpen ? "Hide pad" : "Working out"}</button>
+      </div>
+      {padOpen && <div className="mt-2"><Scratchpad color={color.main} height={140} placeholder="Divide the price by how many" /></div>}
       <div className="mt-4 grid grid-cols-2 gap-3">
         {["a", "b"].map((side) => (
           <button key={side} onClick={() => answer(side === r.better, note)} disabled={!!feedback} className="rounded-2xl border-2 border-line bg-white p-4 text-left transition active:scale-[0.98] hover:bg-surface disabled:opacity-80">
@@ -327,9 +341,15 @@ function BestDeal({ color, little, onFinish }) {
 
 /* ---------------- results ---------------- */
 
-function Results({ correct, total, little, color, name, onAgain, onClose }) {
+function Results({ correct, total, award, little, color, name, onAgain, onClose }) {
+  const money = useMoney();
   const all = correct === total;
   const stars = all ? 3 : correct >= Math.ceil(total / 2) ? 2 : 1;
+  const earned = award && !award.already
+    ? award.mode === "money" && award.amount_pence > 0 ? `+${money(award.amount_pence)} into your jars!`
+      : award.mode === "points" && award.points > 0 ? `+${award.points} ${award.points === 1 ? "point" : "points"} for rewards!`
+      : null
+    : null;
   return (
     <div className="text-center py-4">
       <div className="flex justify-center gap-1.5">
@@ -337,6 +357,12 @@ function Results({ correct, total, little, color, name, onAgain, onClose }) {
       </div>
       <h3 className={`${little ? "text-[26px]" : "text-[22px]"} font-bold text-ink tracking-tight mt-3`}>{all ? `Amazing, ${name}!` : stars === 2 ? "Nice work!" : "Good try!"}</h3>
       <p className={`${little ? "text-[16px]" : "text-[14px]"} text-ink-muted mt-1`}>You got {correct} out of {total}.{all ? " Full marks!" : " Have another go to get them all."}</p>
+      {earned && (
+        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1.5 text-[14px] font-bold text-emerald-800 tip-in">
+          {award.mode === "money" ? <Coins size={15} /> : <Star size={15} className="fill-current text-amber-500" />} {earned}
+        </div>
+      )}
+      {award?.already && <p className="mt-3 text-[12.5px] text-ink-muted">You've already earned today's reward for this game — this one's just for fun.</p>}
       <div className="mt-6 flex gap-2">
         <Button className="flex-1" style={{ background: color.fill }} onClick={onAgain}><RotateCcw size={16} /> Play again</Button>
         <Button variant="ghost" onClick={onClose}><Check size={16} /> Done</Button>

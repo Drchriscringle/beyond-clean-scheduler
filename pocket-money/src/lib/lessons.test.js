@@ -31,6 +31,9 @@ describe("money lessons", () => {
         expect(q.options.length, `${band}:${l.term}`).toBe(3);
         expect(q.answer).toBeGreaterThanOrEqual(0);
         expect(q.answer).toBeLessThan(3);
+        // Every question has a hint that nudges without giving the answer away.
+        expect(q.hint, `${band}:${l.term} hint`).toBeTruthy();
+        expect(q.hint.toLowerCase(), `${band}:${l.term} hint leaks answer`).not.toBe(q.options[q.answer].toLowerCase());
       }
     }
   });

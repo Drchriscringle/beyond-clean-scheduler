@@ -13,6 +13,7 @@ import { Tip } from "../components/Tip";
 import { WellDone } from "../components/WellDone";
 import { LessonCard } from "../components/children/LessonCard";
 import { MoneyGamesCard } from "../components/children/MoneyGames";
+import { RewardsCard } from "../components/children/RewardsCard";
 import { AddClaimPhoto } from "../components/chores/ClaimPhoto";
 import { weeklyFlagSeen, markWeeklyFlag, isTipSeen, markTipSeen } from "../lib/tips";
 import { weekStartUTC } from "../lib/week";
@@ -198,6 +199,9 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
         <LessonCard kid={kid} mode={mode} color={color} />
         <div className="mt-3">
           <MoneyGamesCard kid={kid} mode={mode} color={color} />
+        </div>
+        <div className="mt-3">
+          <RewardsCard kid={kid} mode={mode} color={color} ownDevice={ownDevice} />
         </div>
 
         {justClaimed && (

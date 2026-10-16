@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ListChecks, ChevronRight, ChevronDown, KeyRound } from "lucide-react";
+import { ListChecks, ChevronRight, ChevronDown, KeyRound, Gift } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
 import { themeColor, ThemeBadge } from "../../lib/theme";
 import { Card, Row, Divider, Progress } from "../ui";
@@ -9,13 +9,15 @@ import { AgeEditor } from "./AgeEditor";
 import { BudgetEditor } from "./BudgetEditor";
 import { ChildLoginCard } from "./ChildLoginCard";
 import { ScreenTime } from "./ScreenTime";
+import { QuizRewardSettings } from "./QuizRewardSettings";
 
 // Parent Home: one card per child — balances, this week's progress, their
 // pocket-money level and age, and their sign-in details for their own device.
-export function ChildCard({ kid, balance, weekClaims = [], usage, onOpen, showSetup = true }) {
+export function ChildCard({ kid, balance, weekClaims = [], usage, points = 0, onOpen, showSetup = true }) {
   const money = useMoney();
   const color = themeColor(kid.theme, kid.name);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [rewardsOpen, setRewardsOpen] = useState(false);
   const total = balance?.total_pence ?? 0;
   const spend = balance?.spend_pence ?? 0;
   const budget = kid.weekly_budget_pence || 0;
@@ -69,6 +71,21 @@ export function ChildCard({ kid, balance, weekClaims = [], usage, onOpen, showSe
             <ChevronDown size={18} className={`text-ink-muted transition ${loginOpen ? "rotate-180" : ""}`} />
           </button>
           {loginOpen && <div className="mt-3"><ChildLoginCard kid={kid} /></div>}
+          <Divider />
+          <button
+            onClick={() => setRewardsOpen((o) => !o)}
+            className="w-full flex items-center justify-between text-[14px] font-semibold text-ink transition py-0.5"
+            aria-expanded={rewardsOpen}
+          >
+            <span className="inline-flex items-center gap-2">
+              <Gift size={17} className="text-ink-muted" /> Quiz &amp; game rewards
+              <span className="text-[12.5px] font-medium text-ink-muted">
+                {kid.quiz_reward_mode === "money" ? `${money(kid.quiz_reward_pence)} a right answer` : kid.quiz_reward_mode === "none" ? "off" : `${kid.quiz_points_per_correct} pt a right answer · ${points} saved`}
+              </span>
+            </span>
+            <ChevronDown size={18} className={`text-ink-muted transition ${rewardsOpen ? "rotate-180" : ""}`} />
+          </button>
+          {rewardsOpen && <div className="mt-3"><QuizRewardSettings kid={kid} points={points} /></div>}
           <Divider />
           <ScreenTime usage={usage} color={color.main} />
         </>

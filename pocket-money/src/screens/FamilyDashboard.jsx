@@ -32,6 +32,8 @@ import { useChildBalances } from "../hooks/useBalances";
 import { useChildrenBills } from "../hooks/useBills";
 import { useUnreadMessages, useMessagesRealtime } from "../hooks/useMessages";
 import { useScreenTime } from "../hooks/useUsage";
+import { useChildPoints, useRewardsRealtime } from "../hooks/useRewards";
+import { RewardRequestsCard } from "../components/children/RewardRequestsCard";
 import { trialDaysLeft } from "../lib/subscription";
 
 const TABS = [
@@ -55,6 +57,8 @@ export function FamilyDashboard({ family, parentEmail }) {
   const { data: weekClaims = [] } = useWeekClaims();
   const { data: unread = {} } = useUnreadMessages("parent");
   const { data: screenTime = {} } = useScreenTime();
+  const { data: childPoints = {} } = useChildPoints();
+  useRewardsRealtime(family.id);
   const balances = useChildBalances(children);
   const bills = useChildrenBills(children);
   useClaimsRealtime(family.id);
@@ -109,6 +113,7 @@ export function FamilyDashboard({ family, parentEmail }) {
           balances={balances}
           unread={unread}
           screenTime={screenTime}
+          childPoints={childPoints}
           onApproved={(d) => setDrop(d)}
           onOpenChild={(kid) => setPinTarget(kid)}
           onOpenChat={(kid) => setChatChildId(kid.id)}
@@ -138,7 +143,7 @@ export function FamilyDashboard({ family, parentEmail }) {
 
 /* ---------------- Home: welcome, approvals, messages, set-up ---------------- */
 
-function HomeTab({ family, kids, pending, weekClaims, balances, unread, screenTime = {}, onApproved, onOpenChild, onOpenChat }) {
+function HomeTab({ family, kids, pending, weekClaims, balances, unread, screenTime = {}, childPoints = {}, onApproved, onOpenChild, onOpenChat }) {
   const money = useMoney();
   const familyTotal = kids.reduce((sum, kid) => sum + (balances[kid.id]?.total_pence ?? 0), 0);
   const weeklyBudget = kids.reduce((sum, kid) => sum + (kid.weekly_budget_pence || 0), 0);
@@ -177,6 +182,7 @@ function HomeTab({ family, kids, pending, weekClaims, balances, unread, screenTi
         ))}
         {pending.length === 0 && <Empty>Nothing waiting — all caught up.</Empty>}
       </Section>
+      <div className="mt-3"><RewardRequestsCard kids={kids} /></div>
 
       <Eyebrow>Messages</Eyebrow>
       <Tip id="dash-messages" title="Chat with each child">
@@ -186,7 +192,7 @@ function HomeTab({ family, kids, pending, weekClaims, balances, unread, screenTi
 
       <Eyebrow>Children &amp; set-up</Eyebrow>
       <Tip id="dash-children" title="Each child's set-up">
-        Set how much each child can earn per week and their age here. Open "Sign-in details" to give them a username and PIN for their own phone or tablet — you can always see the PIN. "Screen time" shows how long they've had the app open today and this week. "Preview" shows you exactly what they see.
+        Set how much each child can earn per week and their age here. Open "Sign-in details" to give them a username and PIN for their own phone or tablet — you can always see the PIN. "Quiz &amp; game rewards" sets what a right answer earns: pocket money into their jars, or points to save up for rewards you choose — a cuddle, a film night, a day out. "Screen time" shows how long they've had the app open. "Preview" shows you exactly what they see.
       </Tip>
       <div className="space-y-3">
         {kids.map((kid) => (
@@ -196,6 +202,7 @@ function HomeTab({ family, kids, pending, weekClaims, balances, unread, screenTi
             balance={balances[kid.id]}
             weekClaims={weekClaims.filter((c) => c.child_id === kid.id)}
             usage={screenTime[kid.id]}
+            points={childPoints[kid.id] || 0}
             onOpen={() => onOpenChild(kid)}
           />
         ))}

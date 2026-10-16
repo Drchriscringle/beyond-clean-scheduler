@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 // check_child_pin() in schema.sql) — it's a UI convenience lock, not a
 // security boundary, but there's no reason to ship its value to the browser.
 const CHILD_COLUMNS =
-  "id, family_id, name, avatar, avatar_url, theme, birth_year, weekly_budget_pence, jar_save, jar_spend, jar_give, allow_negative_balance, username, created_at";
+  "id, family_id, name, avatar, avatar_url, theme, birth_year, weekly_budget_pence, jar_save, jar_spend, jar_give, allow_negative_balance, username, quiz_reward_mode, quiz_reward_pence, quiz_points_per_correct, created_at";
 
 export async function listChildren() {
   const { data, error } = await supabase.from("children").select(CHILD_COLUMNS).order("created_at");
