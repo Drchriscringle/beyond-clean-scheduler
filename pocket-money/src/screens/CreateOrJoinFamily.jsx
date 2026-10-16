@@ -24,6 +24,7 @@ export function CreateOrJoinFamily() {
       <Card className="max-w-sm p-7 space-y-6">
         <BrandHeader subtitle="Set up your household to get started." />
         <div className="space-y-3">
+          <p className="text-[12.5px] text-ink-muted -mt-2">First parent in the family? Create it here. Been sent a 6-character code by the other parent? Skip to <strong className="text-ink">Join with an invite code</strong> below.</p>
           <Input label="Family name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. The Lynns" />
           <Button size="lg" className="w-full" disabled={!name.trim() || createFamily.isPending} onClick={() => run(() => createFamily.mutateAsync(name.trim()))}>
             Create family

@@ -141,7 +141,7 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
           </button>
         </header>
 
-        <Card className={`${little ? "p-6" : "p-5"} text-white border-0`} style={{ background: `linear-gradient(135deg, ${color.main} 0%, ${color.dark} 100%)` }}>
+        <Card className={`${little ? "p-6" : "p-5"} text-white border-0`} style={{ background: color.gradient ? color.fill : `linear-gradient(135deg, ${color.main} 0%, ${color.dark} 100%)` }}>
           <div className="flex items-center gap-4">
             <ChildAvatar kid={kid} size={little ? 76 : 60} className="ring-4 ring-white/25" />
             <div className="min-w-0">

@@ -70,7 +70,7 @@ export function LessonCard({ kid, mode, color }) {
       save({ done: false, picked: i });
     };
     return (
-      <Card className={little ? "p-5" : "p-4"} accent={color.main}>
+      <Card className={little ? "p-5" : "p-4"} accent={color.fill}>
         <div className="flex items-start gap-3">
           <span className={`${little ? "h-14 w-14" : "h-11 w-11"} rounded-2xl flex items-center justify-center shrink-0`} style={{ background: color.soft, color: color.main }}>
             <HelpCircle size={little ? 28 : 22} />
@@ -120,7 +120,7 @@ export function LessonCard({ kid, mode, color }) {
   }
 
   return (
-    <Card className={little ? "p-5" : "p-4"} accent={color.main}>
+    <Card className={little ? "p-5" : "p-4"} accent={color.fill}>
       <div className="flex items-start gap-3">
         <span className={`${little ? "h-14 w-14" : "h-11 w-11"} rounded-2xl flex items-center justify-center shrink-0`} style={{ background: color.soft, color: color.main }}>
           <Icon size={little ? 28 : 22} />

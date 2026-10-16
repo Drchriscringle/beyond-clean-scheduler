@@ -21,7 +21,7 @@ export function ChildCard({ kid, balance, weekClaims = [], onOpen, showSetup = t
   const earned = weekClaims.filter((c) => c.status === "approved").reduce((s, c) => s + (c.chores?.value_pence || 0), 0);
 
   return (
-    <Card accent={color.main} className="p-4">
+    <Card accent={color.fill} className="p-4">
       <div className="flex items-center gap-3">
         <ChildAvatar kid={kid} size={52} />
         <div className="flex-1 min-w-0">

@@ -21,14 +21,27 @@ export function ChildAvatar({ kid, size = 48, className = "" }) {
     );
   }
 
+  // Gradient mode: the icon / initial sits on the gradient itself.
   if (Icon) {
     return (
       <span
         className={`rounded-full flex items-center justify-center shrink-0 ${className}`}
-        style={{ width: size, height: size, background: color.soft, color: color.main }}
+        style={{ width: size, height: size, background: color.gradient ? color.fill : color.soft, color: color.gradient ? "#fff" : color.main }}
         aria-hidden
       >
         <Icon size={Math.round(size * 0.52)} strokeWidth={2.1} />
+      </span>
+    );
+  }
+
+  if (color.gradient) {
+    return (
+      <span
+        className={`rounded-full flex items-center justify-center font-bold select-none shrink-0 text-white ${className}`}
+        style={{ width: size, height: size, background: color.fill, fontSize: Math.round(size * 0.42) }}
+        aria-hidden
+      >
+        {(kid.name.trim()[0] || "?").toUpperCase()}
       </span>
     );
   }

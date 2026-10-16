@@ -29,7 +29,7 @@ export function ChildChoresCard({ kid, familyId, chores, weekClaims }) {
   const budget = kid.weekly_budget_pence;
 
   return (
-    <Card className="p-4" accent={color.main}>
+    <Card className="p-4" accent={color.fill}>
       <div className="flex items-center gap-3">
         <ChildAvatar kid={kid} size={44} />
         <div className="flex-1 min-w-0">

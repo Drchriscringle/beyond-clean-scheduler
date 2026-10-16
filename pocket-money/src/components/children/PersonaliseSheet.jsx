@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { X, Camera, ImagePlus, Trash2, Check } from "lucide-react";
-import { THEME_COLORS, THEME_ICONS, THEME_ICON_KEYS, WALLPAPERS, themeColor, wallpaperStyle } from "../../lib/theme";
+import { THEME_COLORS, THEME_ICONS, THEME_ICON_KEYS, WALLPAPERS, themeColor, themeFill, wallpaperStyle } from "../../lib/theme";
 import { useUpdateChildTheme, useUploadChildAvatar, useRemoveChildAvatar } from "../../hooks/useChildren";
 import { Button, ErrorText } from "../ui";
 import { ChildAvatar } from "./ChildAvatar";
@@ -77,8 +77,27 @@ export function PersonaliseSheet({ kid, familyId, onClose }) {
         <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
         <ErrorText>{err}</ErrorText>
 
-        <Heading>Colour</Heading>
-        <div className="flex flex-wrap gap-2.5">
+        <Heading hint={`${color.name}${color.gradient ? " gradient" : ""}`}>Colour</Heading>
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-surface p-1 mb-3">
+          {[
+            { on: false, label: "Solid" },
+            { on: true, label: "Gradient" },
+          ].map((opt) => {
+            const active = !!theme.gradient === opt.on;
+            return (
+              <button
+                key={opt.label}
+                onClick={() => set({ gradient: opt.on })}
+                aria-pressed={active}
+                className={`h-9 rounded-lg text-[13px] font-semibold transition ${active ? "text-white shadow-sm" : "text-ink-muted hover:text-ink"}`}
+                style={active ? { background: themeFill(color, opt.on) } : undefined}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-8 gap-2">
           {THEME_COLORS.map((c) => {
             const selected = c.key === color.key;
             return (
@@ -86,8 +105,10 @@ export function PersonaliseSheet({ kid, familyId, onClose }) {
                 key={c.key}
                 onClick={() => set({ color: c.key })}
                 aria-label={c.name}
-                className="h-10 w-10 rounded-full flex items-center justify-center transition active:scale-95"
-                style={{ background: c.main, boxShadow: selected ? `0 0 0 3px #fff, 0 0 0 5px ${c.main}` : "none" }}
+                aria-pressed={selected}
+                title={c.name}
+                className="aspect-square w-full rounded-full flex items-center justify-center transition active:scale-95"
+                style={{ background: themeFill(c, !!theme.gradient), boxShadow: selected ? `0 0 0 3px #fff, 0 0 0 5px ${c.main}` : "none" }}
               >
                 {selected && <Check size={18} className="text-white" />}
               </button>
@@ -140,7 +161,7 @@ function IconTile({ children, selected, onClick, color }) {
       onClick={onClick}
       className="h-12 rounded-xl flex items-center justify-center transition active:scale-95"
       style={{
-        background: selected ? color.main : color.soft,
+        background: selected ? color.fill : color.soft,
         color: selected ? "#fff" : color.main,
         boxShadow: selected ? `0 0 0 2px ${color.main}` : "none",
       }}

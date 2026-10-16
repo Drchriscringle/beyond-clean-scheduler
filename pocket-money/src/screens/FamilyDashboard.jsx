@@ -260,7 +260,7 @@ function JarsTab({ family, kids, balances, bills }) {
         {kids.map((kid) => {
           const color = themeColor(kid.theme, kid.name);
           return (
-            <Card key={kid.id} className="p-4" accent={color.main}>
+            <Card key={kid.id} className="p-4" accent={color.fill}>
               <div className="flex items-center gap-3 mb-3">
                 <ChildAvatar kid={kid} size={44} />
                 <div className="flex-1 min-w-0">
