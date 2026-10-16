@@ -34,9 +34,16 @@ export async function signOut() {
   if (error) throw error;
 }
 
+// callback(session, event) — event is e.g. 'SIGNED_IN', 'SIGNED_OUT', 'PASSWORD_RECOVERY'.
 export function onAuthChange(callback) {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => callback(session));
+  const { data } = supabase.auth.onAuthStateChange((event, session) => callback(session, event));
   return data.subscription; // caller should .unsubscribe() on unmount
+}
+
+// After a password-reset link has signed the parent in.
+export async function updatePassword(password) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
 }
 
 /* ---------------- child devices ---------------- */

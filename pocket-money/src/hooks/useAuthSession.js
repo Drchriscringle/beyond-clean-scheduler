@@ -28,3 +28,25 @@ export function useAuthSession() {
 
   return session;
 }
+
+// A password-reset email signs the parent in and lands them here with
+// `type=recovery` in the URL; Supabase also fires PASSWORD_RECOVERY. While
+// this is true the app shows the "choose a new password" screen.
+const arrivedViaRecoveryLink = () => {
+  try {
+    return /[#&]type=recovery\b/.test(window.location.hash);
+  } catch {
+    return false;
+  }
+};
+
+export function usePasswordRecovery() {
+  const [recovering, setRecovering] = useState(arrivedViaRecoveryLink);
+  useEffect(() => {
+    const sub = api.onAuthChange((_session, event) => {
+      if (event === "PASSWORD_RECOVERY") setRecovering(true);
+    });
+    return () => sub.unsubscribe();
+  }, []);
+  return [recovering, () => setRecovering(false)];
+}
