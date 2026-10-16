@@ -15,7 +15,7 @@ export function useWeekClaims() {
 export function useClaimChore() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ choreId, childId }) => api.claimChore(choreId, childId),
+    mutationFn: ({ choreId, childId, claimDay }) => api.claimChore(choreId, childId, claimDay),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pendingClaims"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "weekClaims" });

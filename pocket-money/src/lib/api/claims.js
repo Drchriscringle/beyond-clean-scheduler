@@ -1,8 +1,9 @@
 import { supabase } from "../supabaseClient";
 
-// Goes through claim_chore() so the once-per-week limit is enforced server-side.
-export async function claimChore(choreId, childId) {
-  const { data, error } = await supabase.rpc("claim_chore", { target_chore_id: choreId, target_child_id: childId });
+// Goes through claim_chore() so the weekly / once-a-day limits are enforced
+// server-side. `claimDay` is the device's local date ('YYYY-MM-DD').
+export async function claimChore(choreId, childId, claimDay) {
+  const { data, error } = await supabase.rpc("claim_chore", { target_chore_id: choreId, target_child_id: childId, claim_day: claimDay });
   if (error) throw error;
   return data;
 }
@@ -12,7 +13,7 @@ export async function claimChore(choreId, childId) {
 export async function listWeekClaims(weekStartIso) {
   const { data, error } = await supabase
     .from("chore_claims")
-    .select("id, chore_id, child_id, status, claimed_at, decided_at, chores(value_pence, name, icon)")
+    .select("id, chore_id, child_id, status, claimed_at, decided_at, for_day, chores(value_pence, name, icon)")
     .gte("claimed_at", weekStartIso)
     .order("claimed_at", { ascending: false });
   if (error) throw error;

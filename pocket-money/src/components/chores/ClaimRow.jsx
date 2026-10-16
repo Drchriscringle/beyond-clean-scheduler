@@ -3,6 +3,7 @@ import { useMoney } from "../../hooks/useCurrency";
 import { useDecideClaim } from "../../hooks/useClaims";
 import { notifyChild } from "../../hooks/usePush";
 import { IconCircle } from "../ui";
+import { ChoreIcon } from "../../lib/choreIcons";
 import { ChildAvatar } from "../children/ChildAvatar";
 
 export function ClaimRow({ claim, onApproved }) {
@@ -43,7 +44,7 @@ export function ClaimRow({ claim, onApproved }) {
       <div className="relative">
         <ChildAvatar kid={claim.children} size={44} />
         <div className="absolute -bottom-1 -right-1">
-          <IconCircle tone="amber" size={22}>{claim.chores.icon}</IconCircle>
+          <IconCircle tone="amber" size={22}><ChoreIcon icon={claim.chores.icon} size={12} /></IconCircle>
         </div>
       </div>
       <div className="flex-1 min-w-0">

@@ -9,6 +9,7 @@ import { ChildChoresCard } from "../components/children/ChildChoresCard";
 import { ChildAvatar } from "../components/children/ChildAvatar";
 import { ClaimRow } from "../components/chores/ClaimRow";
 import { ChoreIdeas } from "../components/chores/ChoreIdeas";
+import { DayPlanner } from "../components/chores/DayPlanner";
 import { ChildBillsCard } from "../components/bills/ChildBillsCard";
 import { MessagesCard } from "../components/messages/MessagesCard";
 import { MessagesSheet } from "../components/messages/MessagesSheet";
@@ -25,7 +26,7 @@ import { Settings } from "./Settings";
 import * as api from "../lib/api";
 import { useMoney } from "../hooks/useCurrency";
 import { useChildren } from "../hooks/useChildren";
-import { useChores } from "../hooks/useChores";
+import { useChores, useRefreshChoreSchedules } from "../hooks/useChores";
 import { usePendingClaims, useWeekClaims, useClaimsRealtime } from "../hooks/useClaims";
 import { useChildBalances } from "../hooks/useBalances";
 import { useChildrenBills } from "../hooks/useBills";
@@ -56,6 +57,7 @@ export function FamilyDashboard({ family, parentEmail }) {
   const bills = useChildrenBills(children);
   useClaimsRealtime(family.id);
   useMessagesRealtime(family.id);
+  useRefreshChoreSchedules();
 
   if (settingsOpen) {
     return <Settings family={family} onExit={() => setSettingsOpen(false)} onShowTour={() => { setSettingsOpen(false); setTourOpen(true); }} />;
@@ -210,9 +212,15 @@ function HomeTab({ family, kids, pending, weekClaims, balances, unread, onApprov
 function ChoresTab({ family, kids, chores, weekClaims }) {
   return (
     <>
+      <Eyebrow>Plan the week</Eyebrow>
+      <Tip id="dash-planner" title="Today and the next seven days">
+        Tap a day to see what each child has on. "Every day" chores show on every day, planned chores on the days you picked, and "any day" chores can be done whenever during the week. Add a chore straight onto a day from here.
+      </Tip>
+      {kids.length > 0 && <DayPlanner familyId={family.id} kids={kids} chores={chores} weekClaims={weekClaims} />}
+
       <Eyebrow>Chores to give out</Eyebrow>
       <Tip id="dash-weekly" title="How weekly pocket money works">
-        Each child has a weekly amount (set on Home). Add their chores and how many times a week they can do each one — the amount splits evenly across every completion, or give a chore its own amount and the rest re-balance. Limits reset every Monday.
+        Each child has a weekly amount (set on Home). Add their chores and choose when: any days this week, every day, or picked days. The amount splits evenly across every completion this week, or give a chore its own amount and the rest re-balance.
       </Tip>
       {kids.length > 0 ? (
         <ChoreIdeas familyId={family.id} kids={kids} existing={chores} />

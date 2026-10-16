@@ -1,6 +1,6 @@
 import { supabase } from "../supabaseClient";
 
-const CHORE_COLUMNS = "id, family_id, child_id, name, icon, value_pence, times_per_week, custom_value, active, created_at";
+const CHORE_COLUMNS = "id, family_id, child_id, name, icon, value_pence, times_per_week, custom_value, schedule, dates, active, created_at";
 
 export async function listChores() {
   const { data, error } = await supabase
@@ -14,7 +14,8 @@ export async function listChores() {
 
 // value_pence is only meaningful when customValue is true; auto-split chores
 // are re-valued by the database trigger from the child's weekly budget.
-export async function addChore({ familyId, childId, name, icon, timesPerWeek = 1, customValue = false, valuePence = 1 }) {
+// schedule: 'weekly' (any days, timesPerWeek), 'daily', or 'dates' (+ dates[]).
+export async function addChore({ familyId, childId, name, icon, timesPerWeek = 1, customValue = false, valuePence = 1, schedule = "weekly", dates = [] }) {
   const { data, error } = await supabase
     .from("chores")
     .insert({
@@ -25,6 +26,8 @@ export async function addChore({ familyId, childId, name, icon, timesPerWeek = 1
       times_per_week: timesPerWeek,
       custom_value: customValue,
       value_pence: customValue ? valuePence : 1,
+      schedule,
+      dates,
     })
     .select(CHORE_COLUMNS)
     .single();
@@ -40,5 +43,12 @@ export async function updateChore(choreId, patch) {
 export async function removeChore(choreId) {
   // Soft delete keeps history on past chore_claims intact
   const { error } = await supabase.from("chores").update({ active: false }).eq("id", choreId);
+  if (error) throw error;
+}
+
+// Re-derives this week's completion counts for date-planned chores (weeks
+// roll over while nobody is editing). Cheap; called when the app opens.
+export async function refreshChoreSchedules() {
+  const { error } = await supabase.rpc("refresh_chore_schedules");
   if (error) throw error;
 }

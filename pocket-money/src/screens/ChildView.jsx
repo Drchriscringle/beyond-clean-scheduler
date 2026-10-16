@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Hourglass, Receipt, History, Check, Palette, Trophy, MessageCircle, LogOut, Bell, ChevronRight } from "lucide-react";
+import { ArrowLeft, Hourglass, Receipt, History, Check, Palette, Trophy, MessageCircle, LogOut, Bell, ChevronRight, CalendarDays } from "lucide-react";
+import { ChoreIcon } from "../lib/choreIcons";
+import { dateKey, dueOn, shortDay } from "../lib/schedule";
 import { Page, Card, Eyebrow, Empty, IconCircle, Pill, Button } from "../components/ui";
 import { Section } from "../components/common";
 import { JarStats } from "../components/Jars";
@@ -41,14 +43,25 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
   const color = themeColor(kid.theme, kid.name);
   const total = balance?.total_pence ?? 0;
 
-  // How many times each chore has been done (or is waiting) this week.
+  // What's left: "any day" chores count down over the week; "every day" and
+  // planned-day chores are once a day, so they come back tomorrow.
+  const today = dateKey();
   const doneThisWeek = {};
   for (const c of weekClaims) {
     if (c.status === "pending" || c.status === "approved") doneThisWeek[c.chore_id] = (doneThisWeek[c.chore_id] || 0) + 1;
   }
-  const myChores = chores.map((c) => ({ ...c, left: Math.max(0, c.times_per_week - (doneThisWeek[c.id] || 0)) }));
+  const myChores = chores.map((c) => {
+    if (c.schedule === "daily" || c.schedule === "dates") {
+      const onToday = dueOn(c, today);
+      const doneToday = weekClaims.some((cl) => cl.chore_id === c.id && cl.for_day === today && cl.status !== "declined");
+      const later = c.schedule === "dates" && !onToday && (c.dates || []).some((d) => d > today);
+      return { ...c, left: onToday && !doneToday ? 1 : 0, today: onToday, later };
+    }
+    return { ...c, left: Math.max(0, c.times_per_week - (doneThisWeek[c.id] || 0)), today: false, later: false };
+  });
   const available = myChores.filter((c) => c.left > 0);
-  const finished = myChores.filter((c) => c.left === 0);
+  const comingUp = myChores.filter((c) => c.later);
+  const finished = myChores.filter((c) => c.left === 0 && !c.later);
   const myPending = pending.filter((p) => p.children.id === kid.id);
   const earned = weekClaims.filter((c) => c.status === "approved").reduce((s, c) => s + (c.chores?.value_pence || 0), 0);
   const budget = kid.weekly_budget_pence || 0;
@@ -82,7 +95,7 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
     setClaimingId(chore.id);
     setErr("");
     try {
-      await claimChore.mutateAsync({ choreId: chore.id, childId: kid.id });
+      await claimChore.mutateAsync({ choreId: chore.id, childId: kid.id, claimDay: today });
       playTap();
       setJustClaimed(chore.name);
       setTimeout(() => setJustClaimed(null), 2500);
@@ -91,7 +104,13 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
         body: `${chore.name} · ${money(chore.value_pence)} — tap to approve`,
       });
     } catch (e) {
-      setErr(e?.message?.includes("already done") ? "You've already done that one this week!" : "Something went wrong — ask a grown-up to try again.");
+      const m = e?.message || "";
+      setErr(
+        m.includes("already done for today") ? "You've already done that one today!"
+          : m.includes("already done") ? "You've already done that one this week!"
+          : m.includes("planned for today") ? "That one isn't planned for today."
+          : "Something went wrong — ask a grown-up to try again."
+      );
     } finally {
       setClaimingId(null);
     }
@@ -192,10 +211,10 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
           <div className="space-y-3">
             {available.map((c) => (
               <Card key={c.id} className="p-4 flex items-center gap-4">
-                <IconCircle tone="amber" size={64}>{c.icon}</IconCircle>
+                <IconCircle tone="amber" size={64}><ChoreIcon icon={c.icon} size={32} /></IconCircle>
                 <div className="flex-1 min-w-0">
                   <div className="text-[18px] font-bold text-ink leading-snug">{c.name}</div>
-                  <div className="text-[13px] text-ink-muted mt-0.5">{c.left} more {c.left === 1 ? "time" : "times"} this week</div>
+                  <div className="text-[13px] text-ink-muted mt-0.5">{c.today ? "Today's job" : `${c.left} more ${c.left === 1 ? "time" : "times"} this week`}</div>
                 </div>
                 <Button size="lg" onClick={() => claim(c)} disabled={claimingId === c.id} style={{ background: color.main }} className="shrink-0 px-4">
                   <Check size={18} /> I did it!
@@ -208,8 +227,8 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
             {available.map((c) => (
               <Card key={c.id} onClick={() => claim(c)} className={`p-4 ${claimingId === c.id ? "opacity-50" : ""}`}>
                 <div className="flex items-start justify-between">
-                  <IconCircle tone="amber" size={40}>{c.icon}</IconCircle>
-                  {c.times_per_week > 1 && <Pill tone="grey">{c.left} left</Pill>}
+                  <IconCircle tone="amber" size={40}><ChoreIcon icon={c.icon} size={20} /></IconCircle>
+                  {c.today ? <Pill tone="brand">Today</Pill> : c.times_per_week > 1 && <Pill tone="grey">{c.left} left</Pill>}
                 </div>
                 <div className="mt-3 text-[14px] font-semibold text-ink leading-snug">{c.name}</div>
                 <div className="mt-2 flex items-center justify-between">
@@ -223,9 +242,24 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
         {available.length === 0 && (
           <Card className="p-5 text-center">
             <Trophy size={24} className="mx-auto mb-2" style={{ color: color.main }} />
-            <p className="text-[14px] font-semibold text-ink">{myChores.length ? "All done for this week!" : "No chores set yet."}</p>
-            <p className="text-[12.5px] text-ink-muted mt-1">{myChores.length ? "New ones unlock on Monday." : "Ask a grown-up to add some."}</p>
+            <p className="text-[14px] font-semibold text-ink">{myChores.length ? (comingUp.length || myChores.some((c) => c.schedule === "daily") ? "All done for today!" : "All done for this week!") : "No chores set yet."}</p>
+            <p className="text-[12.5px] text-ink-muted mt-1">{myChores.length ? (comingUp.length || myChores.some((c) => c.schedule === "daily") ? "More tomorrow." : "New ones unlock on Monday.") : "Ask a grown-up to add some."}</p>
           </Card>
+        )}
+
+        {comingUp.length > 0 && (
+          <>
+            <Eyebrow>{little ? "Coming up" : "Planned for later"}</Eyebrow>
+            <Section title="Next few days" icon={<CalendarDays size={18} />}>
+              {comingUp.map((c) => (
+                <div key={c.id} className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
+                  <IconCircle tone="grey" size={36}><ChoreIcon icon={c.icon} size={18} /></IconCircle>
+                  <span className="flex-1 text-[14px] font-medium text-ink">{c.name}</span>
+                  <Pill tone="grey">{shortDay((c.dates || []).filter((d) => d > today)[0])}</Pill>
+                </div>
+              ))}
+            </Section>
+          </>
         )}
 
         {myPending.length > 0 && (
@@ -234,7 +268,7 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
             <Section title={little ? "Checking…" : "Sent to a grown-up"} icon={<Hourglass size={18} />}>
               {myPending.map((p) => (
                 <div key={p.id} className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
-                  <IconCircle tone="grey" size={36}>{p.chores?.icon}</IconCircle>
+                  <IconCircle tone="grey" size={36}><ChoreIcon icon={p.chores?.icon} size={18} /></IconCircle>
                   <span className="flex-1 text-[14px] font-medium text-ink">{p.chores?.name}</span>
                   <Pill tone="grey">{money(p.chores?.value_pence)}</Pill>
                 </div>
@@ -249,9 +283,9 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
             <Section title="Finished" icon={<Check size={18} />}>
               {finished.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
-                  <IconCircle tone="green" size={36}>{c.icon}</IconCircle>
+                  <IconCircle tone="green" size={36}><ChoreIcon icon={c.icon} size={18} /></IconCircle>
                   <span className="flex-1 text-[14px] font-medium text-ink">{c.name}</span>
-                  <Pill tone="green">{c.times_per_week}× done</Pill>
+                  <Pill tone="green">{c.schedule === "daily" || c.schedule === "dates" ? "done today" : `${c.times_per_week}× done`}</Pill>
                 </div>
               ))}
             </Section>
@@ -279,7 +313,7 @@ export function ChildView({ kid, family, chores, pending, weekClaims = [], balan
             <Section title="What's happened" icon={<History size={18} />}>
               {(activity || []).map((a) => (
                 <div key={a.id} className="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
-                  <IconCircle tone="grey" size={36}>{a.chores?.icon || "•"}</IconCircle>
+                  <IconCircle tone="grey" size={36}><ChoreIcon icon={a.chores?.icon} size={18} /></IconCircle>
                   <span className="flex-1 text-[14px] text-ink">{a.chores?.name}</span>
                   <Pill tone={a.status === "approved" ? "green" : a.status === "declined" ? "rose" : "grey"}>
                     {a.status === "approved" ? `+${money(a.chores?.value_pence)}` : a.status}

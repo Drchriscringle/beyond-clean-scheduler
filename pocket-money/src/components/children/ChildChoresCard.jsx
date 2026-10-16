@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Plus, X, Pencil, Check } from "lucide-react";
 import { useMoney } from "../../hooks/useCurrency";
-import { useAddChore, useUpdateChore, useRemoveChore } from "../../hooks/useChores";
+import { useUpdateChore, useRemoveChore } from "../../hooks/useChores";
 import { splitBudget } from "../../lib/budget";
 import { themeColor } from "../../lib/theme";
+import { ChoreIcon } from "../../lib/choreIcons";
+import { scheduleLabel } from "../../lib/schedule";
 import { Card, Button, Input, Select, IconCircle, Progress, Empty, ErrorText } from "../ui";
 import { ChildAvatar } from "./ChildAvatar";
 import { BudgetEditor } from "./BudgetEditor";
-
-const CHORE_ICONS = ["⭐", "🧹", "🍽️", "🛏️", "🧺", "📚", "🐕", "🌱", "🚮", "🧼", "🚲", "🎒"];
-const TIMES = Array.from({ length: 14 }, (_, i) => i + 1);
+import { ChoreComposer, IconPicker, ScheduleEditor } from "../chores/ChoreComposer";
 
 const toPence = (s) => Math.round(parseFloat(s || "0") * 100) || 0;
 const toPounds = (p) => ((p || 0) / 100).toFixed(2);
@@ -35,7 +35,7 @@ export function ChildChoresCard({ kid, familyId, chores, weekClaims }) {
         <div className="flex-1 min-w-0">
           <div className="text-[15px] font-semibold text-ink truncate">{kid.name}</div>
           <div className="text-[12.5px] text-ink-muted">
-            {chores.length} {chores.length === 1 ? "chore" : "chores"} · {completions} completions a week
+            {chores.length} {chores.length === 1 ? "chore" : "chores"} · {completions} completions this week
           </div>
         </div>
         <BudgetEditor kid={kid} />
@@ -75,7 +75,7 @@ export function ChildChoresCard({ kid, familyId, chores, weekClaims }) {
       <div className="mt-3">
         {chores.map((c) =>
           editingId === c.id ? (
-            <ChoreEditor key={c.id} chore={c} onClose={() => setEditingId(null)} />
+            <ChoreEditor key={c.id} chore={c} color={color.main} onClose={() => setEditingId(null)} />
           ) : (
             <ChoreRow key={c.id} chore={c} onEdit={() => setEditingId(c.id)} />
           )
@@ -84,7 +84,9 @@ export function ChildChoresCard({ kid, familyId, chores, weekClaims }) {
       </div>
 
       {adding ? (
-        <AddChore kid={kid} familyId={familyId} onClose={() => setAdding(false)} />
+        <div className="mt-3">
+          <ChoreComposer familyId={familyId} kids={[kid]} fixedChild={kid} chores={chores} onClose={() => setAdding(false)} />
+        </div>
       ) : (
         <Button variant="secondary" className="w-full mt-3" onClick={() => setAdding(true)}>
           <Plus size={16} /> Add a chore for {kid.name}
@@ -98,11 +100,11 @@ function ChoreRow({ chore, onEdit }) {
   const money = useMoney();
   return (
     <button onClick={onEdit} className="w-full flex items-center gap-3 py-2.5 border-b border-line last:border-0 text-left">
-      <IconCircle tone="amber" size={38}>{chore.icon}</IconCircle>
+      <IconCircle tone="amber" size={38}><ChoreIcon icon={chore.icon} size={19} /></IconCircle>
       <div className="flex-1 min-w-0">
         <div className="text-[14px] font-medium text-ink truncate">{chore.name}</div>
         <div className="text-[12px] text-ink-muted">
-          {chore.times_per_week}× a week · {chore.custom_value ? "custom amount" : "auto split"}
+          {scheduleLabel(chore)} · {chore.custom_value ? "custom amount" : "auto split"}
         </div>
       </div>
       <div className="text-right">
@@ -114,22 +116,35 @@ function ChoreRow({ chore, onEdit }) {
   );
 }
 
-function ChoreEditor({ chore, onClose }) {
+function ChoreEditor({ chore, color, onClose }) {
+  const [name, setName] = useState(chore.name);
+  const [icon, setIcon] = useState(chore.icon);
+  const [schedule, setSchedule] = useState(chore.schedule || "weekly");
   const [times, setTimes] = useState(chore.times_per_week);
+  const [dates, setDates] = useState(chore.dates || []);
   const [custom, setCustom] = useState(chore.custom_value);
   const [amount, setAmount] = useState(toPounds(chore.value_pence));
+  const [iconOpen, setIconOpen] = useState(false);
   const [err, setErr] = useState("");
   const update = useUpdateChore();
   const remove = useRemoveChore();
 
+  const onSchedule = (patch) => {
+    if (patch.schedule !== undefined) setSchedule(patch.schedule);
+    if (patch.times !== undefined) setTimes(patch.times);
+    if (patch.dates !== undefined) setDates(patch.dates);
+  };
+
   const save = async () => {
     setErr("");
     const pence = toPence(amount);
+    if (!name.trim()) return setErr("Give the chore a name.");
     if (custom && pence < 1) return setErr("Enter an amount of at least 1p.");
+    if (schedule === "dates" && dates.length === 0) return setErr("Pick at least one day.");
     try {
       await update.mutateAsync({
         choreId: chore.id,
-        patch: { times_per_week: times, custom_value: custom, ...(custom ? { value_pence: pence } : {}) },
+        patch: { name: name.trim(), icon, schedule, dates, times_per_week: times, custom_value: custom, ...(custom ? { value_pence: pence } : {}) },
       });
       onClose();
     } catch (e) {
@@ -140,79 +155,29 @@ function ChoreEditor({ chore, onClose }) {
   return (
     <div className="rounded-xl bg-surface p-3 my-2 space-y-3">
       <div className="flex items-center gap-3">
-        <IconCircle tone="amber" size={38}>{chore.icon}</IconCircle>
-        <div className="flex-1 text-[14px] font-semibold text-ink">{chore.name}</div>
+        <button type="button" onClick={() => setIconOpen((o) => !o)} aria-label="Change icon" className="rounded-xl ring-offset-2 focus:ring-4 focus:ring-brand-100">
+          <IconCircle tone="amber" size={40}><ChoreIcon icon={icon} size={20} /></IconCircle>
+        </button>
+        <div className="flex-1"><Input value={name} onChange={(e) => setName(e.target.value)} aria-label="Chore name" /></div>
         <button onClick={onClose} aria-label="Close" className="h-8 w-8 rounded-full text-ink-muted hover:bg-white flex items-center justify-center"><X size={15} /></button>
       </div>
+      {iconOpen && <IconPicker value={icon} onChange={(k) => { setIcon(k); setIconOpen(false); }} size={36} />}
+      <ScheduleEditor schedule={schedule} times={times} dates={dates} onChange={onSchedule} color={color} />
       <div className="grid grid-cols-2 gap-2">
-        <Select label="Times a week" value={times} onChange={(e) => setTimes(Number(e.target.value))}>
-          {TIMES.map((n) => <option key={n} value={n}>{n}×</option>)}
-        </Select>
         <Select label="Amount" value={custom ? "custom" : "auto"} onChange={(e) => setCustom(e.target.value === "custom")}>
           <option value="auto">Auto split</option>
           <option value="custom">Custom</option>
         </Select>
+        {custom && (
+          <Input label="Each time" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0.25" />
+        )}
       </div>
-      {custom && (
-        <Input label="Amount each time" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0.25" />
-      )}
       <ErrorText>{err}</ErrorText>
       <div className="flex gap-2">
         <Button size="sm" className="flex-1" onClick={save} disabled={update.isPending}><Check size={15} /> Save</Button>
         <Button size="sm" variant="ghost" className="text-rose-600 hover:bg-rose-50" onClick={() => remove.mutate(chore.id, { onSuccess: onClose })} disabled={remove.isPending}>
           Remove
         </Button>
-      </div>
-    </div>
-  );
-}
-
-function AddChore({ kid, familyId, onClose }) {
-  const [name, setName] = useState("");
-  const [icon, setIcon] = useState(CHORE_ICONS[0]);
-  const [times, setTimes] = useState(1);
-  const [custom, setCustom] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [err, setErr] = useState("");
-  const add = useAddChore();
-
-  const save = async () => {
-    setErr("");
-    if (!name.trim()) return setErr("Give the chore a name.");
-    const pence = toPence(amount);
-    if (custom && pence < 1) return setErr("Enter an amount of at least 1p.");
-    try {
-      await add.mutateAsync({ familyId, childId: kid.id, name: name.trim(), icon, timesPerWeek: times, customValue: custom, valuePence: pence });
-      onClose();
-    } catch (e) {
-      setErr(e.message);
-    }
-  };
-
-  return (
-    <div className="rounded-xl bg-surface p-3 mt-3 space-y-3">
-      <div className="flex flex-wrap gap-1.5">
-        {CHORE_ICONS.map((i) => (
-          <button key={i} onClick={() => setIcon(i)} className={`h-9 w-9 rounded-xl flex items-center justify-center text-lg transition ${icon === i ? "bg-brand-600 ring-2 ring-brand-200" : "bg-white hover:bg-brand-50"}`}>{i}</button>
-        ))}
-      </div>
-      <Input label="Chore" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Make bed" />
-      <div className="grid grid-cols-2 gap-2">
-        <Select label="Times a week" value={times} onChange={(e) => setTimes(Number(e.target.value))}>
-          {TIMES.map((n) => <option key={n} value={n}>{n}×</option>)}
-        </Select>
-        <Select label="Amount" value={custom ? "custom" : "auto"} onChange={(e) => setCustom(e.target.value === "custom")}>
-          <option value="auto">Auto split</option>
-          <option value="custom">Custom</option>
-        </Select>
-      </div>
-      {custom && (
-        <Input label="Amount each time" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0.25" />
-      )}
-      <ErrorText>{err}</ErrorText>
-      <div className="flex gap-2">
-        <Button size="sm" className="flex-1" onClick={save} disabled={add.isPending}>Add chore</Button>
-        <Button size="sm" variant="ghost" onClick={onClose}>Cancel</Button>
       </div>
     </div>
   );

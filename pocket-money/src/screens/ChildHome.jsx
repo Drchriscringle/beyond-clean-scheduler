@@ -1,7 +1,7 @@
 import { LoadingScreen, Centered, Card, Logo, Button } from "../components/ui";
 import { CurrencyProvider } from "../hooks/useCurrency";
 import { useChildren } from "../hooks/useChildren";
-import { useChores } from "../hooks/useChores";
+import { useChores, useRefreshChoreSchedules } from "../hooks/useChores";
 import { usePendingClaims, useWeekClaims, useClaimsRealtime } from "../hooks/useClaims";
 import { useChildBalances } from "../hooks/useBalances";
 import { useChildrenBills } from "../hooks/useBills";
@@ -27,6 +27,7 @@ export function ChildHome({ device }) {
   useClaimsRealtime(device.family_id);
   useMessagesRealtime(device.family_id);
   useTouchChildDevice(!!kid);
+  useRefreshChoreSchedules(!!kid);
 
   if (familyLoading || kidsLoading) return <LoadingScreen />;
 

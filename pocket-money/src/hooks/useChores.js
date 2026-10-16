@@ -1,8 +1,21 @@
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "../lib/api";
 
 export function useChores() {
   return useQuery({ queryKey: ["chores"], queryFn: api.listChores });
+}
+
+// Once per app open: let the database re-derive this week's counts for
+// date-planned chores, then refetch if anything moved.
+export function useRefreshChoreSchedules(enabled = true) {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!enabled) return;
+    api.refreshChoreSchedules()
+      .then(() => queryClient.invalidateQueries({ queryKey: ["chores"] }))
+      .catch(() => {});
+  }, [enabled, queryClient]);
 }
 
 function useChoreMutation(fn) {
