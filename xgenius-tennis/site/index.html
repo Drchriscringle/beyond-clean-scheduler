@@ -1,0 +1,367 @@
+<meta charset="utf-8">
+<title>xGenius Tennis</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: xGenius house style. Navy top bar, two-column home (main + side panel), yellow-bordered "inside the app" panel with pill tabs */
+:root{
+  --bg:#e8ecf1; --panel:#ffffff; --sunk:#f1f5fb; --line:#d5dce5;
+  --ink:#0f1b2d; --muted:#5a6a7e; --nav:#0b1f3a; --nav2:#13284a; --navink:#f1f5fb; --navmuted:#a9b9cf; --navline:#2b4266;
+  --accent:#ffc61a; --onaccent:#13202f; --ok:#0d8a4a; --bad:#c0392b; --amber:#d68a00; --grey:#9aa8b8; --tint:#fff6d6;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#09121d; --panel:#101c2b; --sunk:#0d1825; --line:#20304a; --ink:#e6edf6; --muted:#8fa0b6;
+  --nav:#050c16; --nav2:#0b1626; --ok:#2fbf71; --bad:#ef7d6b; --amber:#e9a12a; --grey:#5d6d82; --tint:#2a2410; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#09121d; --panel:#101c2b; --sunk:#0d1825; --line:#20304a; --ink:#e6edf6; --muted:#8fa0b6;
+  --nav:#050c16; --nav2:#0b1626; --ok:#2fbf71; --bad:#ef7d6b; --amber:#e9a12a; --grey:#5d6d82; --tint:#2a2410; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--nav)}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{font-family:var(--display);margin:0;line-height:1.05;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.bar1{background:var(--nav)}
+.bar1 .wrap{display:flex;align-items:center;gap:14px;padding-block:12px}
+.logo{display:flex;align-items:center;font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:.02em;color:var(--navink)}
+.logo .xg{background:var(--accent);color:var(--onaccent);padding:0 6px;border-radius:3px;margin-right:1px}
+.logo .tag{margin-left:8px;font-size:13px;letter-spacing:.14em;color:var(--accent);border:1.5px solid var(--accent);border-radius:3px;padding:1px 6px}
+.spacer{flex:1}
+.btn-ghost{background:none;border:0;color:var(--navink);font-weight:600;padding:6px 8px}
+.btn-y{background:var(--accent);color:var(--onaccent);border:0;font-weight:700;border-radius:3px;padding:6px 14px}
+.bar2{background:var(--nav2);color:var(--navmuted);font-size:13px}
+.bar2 .wrap{display:flex;align-items:center;gap:10px;padding-block:8px;flex-wrap:wrap}
+.bar2 b{color:var(--accent)}
+.tourtabs{display:flex;gap:6px}
+.tourtabs button{background:none;border:1px solid var(--navline);color:var(--navink);border-radius:999px;padding:4px 14px;font-weight:700;font-size:13px;letter-spacing:.04em}
+.tourtabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--onaccent)}
+
+main{padding-block:24px 40px}
+.home{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:24px;align-items:start}
+@media (max-width:920px){.home{grid-template-columns:minmax(0,1fr)}}
+.col{display:grid;gap:18px;min-width:0}
+.hero h1{font-size:clamp(34px,6vw,54px);font-weight:700;text-transform:uppercase;letter-spacing:.01em}
+.hero h2{font-size:clamp(20px,3vw,27px);font-weight:600;margin-top:6px}
+.hero p{color:var(--muted);font-size:18px;max-width:60ch;margin:12px 0 0}
+.ctarow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px}
+.bigcta{background:var(--accent);color:var(--onaccent);border:0;border-radius:3px;font-weight:700;font-size:20px;padding:16px 26px}
+.ctarow small{color:var(--muted);font-size:15px}
+.record{background:var(--sunk);border-radius:6px;padding:12px;font-size:15px}
+.record a{color:var(--ink)}
+
+.app{background:var(--panel);border:2px solid var(--accent);border-radius:8px;padding:16px;display:grid;gap:14px;scroll-margin-top:120px}
+.apphead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.apphead h3{font-size:24px;font-weight:700;text-transform:uppercase}
+.live{color:var(--ok);font-weight:700;font-size:13px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px}
+.pill[aria-pressed="true"]{background:var(--nav);border-color:var(--nav);color:var(--accent)}
+.note{color:var(--muted);font-size:14px;margin:0}
+
+/* forecaster */
+.pickers{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:end}
+@media (max-width:560px){.pickers{grid-template-columns:minmax(0,1fr)}.vs{display:none}}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.field input,.field select{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:9px 10px}
+.vs{font-family:var(--display);font-weight:800;color:var(--muted);padding-bottom:9px}
+.opts{display:flex;gap:10px;flex-wrap:wrap}
+.opts .field{min-width:140px}
+.match{border:1px solid var(--line);border-radius:6px;padding:14px;display:grid;gap:12px}
+.mtop{display:flex;align-items:flex-start;gap:10px}
+.mtop .who{flex:1;min-width:0}
+.mtop strong{font-size:18px}
+.mtop small{display:block;color:var(--muted)}
+.badge{background:var(--nav);color:var(--accent);font-weight:700;border-radius:4px;padding:3px 9px;font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stack{display:flex;height:8px;border-radius:2px;overflow:hidden}
+.stack i{display:block}
+.legend2{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.legend2 b{color:var(--ink)}
+.sets{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px}
+.set{background:var(--sunk);border-radius:6px;padding:8px;text-align:center}
+.set b{display:block;font-family:var(--display);font-size:22px}
+.set small{color:var(--muted);font-variant-numeric:tabular-nums}
+.set.top{outline:2px solid var(--accent)}
+.why{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.why{grid-template-columns:minmax(0,1fr)}}
+.whycard{background:var(--sunk);border-radius:6px;padding:10px 12px;display:grid;gap:4px;font-size:14px}
+.whycard strong{font-size:15px}
+.row2{display:flex;justify-content:space-between;gap:10px;color:var(--muted)}
+.row2 b{color:var(--ink);font-variant-numeric:tabular-nums}
+.form{display:flex;gap:3px}
+.form i{width:16px;height:16px;border-radius:3px;font-style:normal;font-size:10px;font-weight:700;display:grid;place-items:center;color:#fff}
+.form .W{background:var(--ok)} .form .L{background:var(--bad)}
+
+/* results */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:620px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--sunk);border-radius:6px;padding:10px 12px}
+.stat b{display:block;font-family:var(--display);font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:13px}
+.list{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.res{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 28px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);font-size:14px}
+.res:first-child{border-top:0}
+.res small{display:block;color:var(--muted)}
+.tick{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.tick.y{background:var(--ok)} .tick.n{background:var(--bad)}
+.day{background:var(--sunk);padding:6px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-top:1px solid var(--line)}
+.day:first-child{border-top:0}
+.more{width:100%;background:var(--sunk);border:0;border-top:1px solid var(--line);padding:10px;font-weight:600}
+svg text{fill:var(--muted);font-family:var(--body);font-size:11px}
+svg .gl{stroke:var(--line)} svg .pr{fill:var(--grey)} svg .ac{fill:var(--ok)}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.key span{display:flex;align-items:center;gap:5px}
+.key i{width:12px;height:8px;border-radius:2px;display:inline-block}
+
+/* rankings */
+.rank{display:grid;grid-template-columns:30px minmax(0,1fr) auto 56px;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}
+.rank:first-child{border-top:0}
+.rank .pos{font-family:var(--display);font-weight:800;font-size:18px;color:var(--muted);text-align:center}
+.rank strong{display:block}
+.rank small{color:var(--muted)}
+.rank .rt{font-family:var(--display);font-weight:700;font-size:20px;text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:480px){.rank .form{display:none}}
+
+.side{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.side h3{font-size:20px;text-transform:uppercase;padding:14px 16px;border-bottom:1px solid var(--line)}
+.sec{padding:14px 16px;border-top:1px solid var(--line);display:grid;gap:8px}
+.sec:first-of-type{border-top:0}
+.sec h4{font-size:16px;text-transform:uppercase;letter-spacing:.03em}
+.sec p{margin:0;color:var(--muted);font-size:14px}
+.plan{display:grid;gap:6px}
+.plan div{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.plan b{font-variant-numeric:tabular-nums}
+
+footer{background:var(--nav);color:var(--navmuted);font-size:13px}
+footer .wrap{display:flex;gap:10px 22px;flex-wrap:wrap;align-items:center;padding-block:18px}
+footer a{color:var(--navink)}
+.age{border:2px solid var(--navink);color:var(--navink);border-radius:50%;width:32px;height:32px;display:grid;place-items:center;font-weight:800;font-size:12px}
+.error{background:var(--tint);border-radius:6px;padding:12px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<header>
+  <div class="bar1"><div class="wrap">
+    <div class="logo"><span class="xg">xG</span>ENIUS<span class="tag">TENNIS</span></div>
+    <div class="spacer"></div>
+    <button class="btn-ghost">Log in</button>
+    <button class="btn-y">Join</button>
+  </div></div>
+  <div class="bar2"><div class="wrap">
+    <span>Every tour-level match · <b>ATP and WTA</b></span>
+    <div class="spacer"></div>
+    <div class="tourtabs" role="group" aria-label="Tour">
+      <button data-tour="ATP" aria-pressed="true">ATP</button>
+      <button data-tour="WTA" aria-pressed="false">WTA</button>
+    </div>
+  </div></div>
+</header>
+
+<main class="wrap">
+  <div class="home">
+    <div class="col">
+      <section class="hero">
+        <h1>Every match, forecast.</h1>
+        <h2>From the Grand Slams to the 250s, men’s and women’s.</h2>
+        <p>Each player’s chance of winning and the likely score in sets, from a rating built on every match they’ve played. Every forecast is checked against the result, in public.</p>
+        <div class="ctarow"><button class="bigcta" data-goto="forecast">Try the match forecaster</button><small>7 days free on every plan</small></div>
+      </section>
+      <div class="record" id="record">Loading the track record…</div>
+
+      <section class="app" id="app">
+        <div class="apphead"><h3>Inside the app</h3><span class="live" id="liveTag">Real numbers</span></div>
+        <div class="pills" role="group" aria-label="Views">
+          <button class="pill" data-view="forecast" aria-pressed="true">Match forecaster</button>
+          <button class="pill" data-view="results" aria-pressed="false">We said. It finished.</button>
+          <button class="pill" data-view="rankings" aria-pressed="false">Rankings</button>
+        </div>
+        <div id="view"></div>
+      </section>
+    </div>
+
+    <aside class="side">
+      <h3>How it works</h3>
+      <div class="sec">
+        <h4>A rating for every player</h4>
+        <p>Every player has a rating that rises when they win and falls when they lose. Beating a strong player counts for more. Each player also has a separate rating for hard courts, clay and grass, and a forecast uses both.</p>
+      </div>
+      <div class="sec">
+        <h4>From ratings to sets</h4>
+        <p>The gap between two ratings gives the chance of winning. From that we work out the chance of each set score, best of three or best of five.</p>
+      </div>
+      <div class="sec">
+        <h4>Checked in public</h4>
+        <p>Every forecast is made before the match, using only earlier results. Then it’s checked against what happened, misses included.</p>
+      </div>
+      <div class="sec">
+        <h4>Plans</h4>
+        <div class="plan">
+          <div><span>Free</span><b>Top 20 players, results check</b></div>
+          <div><span>Plus</span><b>Every match, both tours</b></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<footer><div class="wrap">
+  <div class="age">18+</div>
+  <span>Stats, not tips. No odds, no bookmaker links.</span>
+  <span>BeGambleAware.org · National Gambling Helpline 0808 8020 133</span>
+  <span id="srcNote"></span>
+</div></footer>
+
+<script>
+const SURF = ["Hard","Clay","Grass"];
+const state = { tour:"ATP", view:"forecast", a:null, b:null, surface:"Hard", bestOf:3, rankSurface:"all", shown:30 };
+let DATA = null;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct = x => Math.round(100*x) + "%";
+const fmtDay = d => new Date(d + "T12:00:00Z").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+const tour = () => DATA.tours[state.tour];
+
+// Same maths as model/build.py
+const eloProb = (a,b) => 1/(1+Math.pow(10,(b-a)/400));
+function setProb(p){let lo=0,hi=1;for(let i=0;i<60;i++){const s=(lo+hi)/2;(s*s*(3-2*s)<p)?lo=s:hi=s}return (lo+hi)/2}
+function setScores(p, bestOf){
+  const s=setProb(p), t=1-s;
+  return bestOf===5
+    ? {"3-0":s**3,"3-1":3*s**3*t,"3-2":6*s**3*t**2,"2-3":6*s**2*t**3,"1-3":3*s*t**3,"0-3":t**3}
+    : {"2-0":s*s,"2-1":2*s*s*t,"1-2":2*s*t*t,"0-2":t*t};
+}
+const rating = (p, surface) => surface === "all" ? p.all : p[surface.toLowerCase()];
+const formHtml = f => `<span class="form" aria-label="Last ${f.length}: ${f}">${[...f].map(c=>`<i class="${c}">${c}</i>`).join("")}</span>`;
+
+function renderRecord(){
+  const a = DATA.tours.ATP.check, w = DATA.tours.WTA.check, y = DATA.test_year;
+  $("#record").innerHTML = `<b>Track record in ${y}:</b> the player we made favourite won ${a.right.toLocaleString()} of ${a.n.toLocaleString()} ATP matches (${pct(a.right/a.n)}) and ${w.right.toLocaleString()} of ${w.n.toLocaleString()} WTA matches (${pct(w.right/w.n)}). Misses included. <a href="#app" data-goto="results">See every result</a>`;
+  $("#srcNote").innerHTML = `Results data: <a href="${esc(DATA.source)}" rel="noopener" target="_blank">ATP &amp; WTA matches (CC BY 4.0)</a>`;
+}
+
+function renderForecast(){
+  const t = tour(), ps = t.players;
+  if (!state.a || !ps.find(p=>p.id===state.a)) state.a = ps[0].id;
+  if (!state.b || !ps.find(p=>p.id===state.b) || state.b===state.a) state.b = ps[1].id;
+  const A = ps.find(p=>p.id===state.a), B = ps.find(p=>p.id===state.b);
+  const opts = ps.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.ioc?" ("+esc(p.ioc)+")":""}</option>`).join("");
+  const ra = rating(A,state.surface), rb = rating(B,state.surface);
+  const scores = setScores(eloProb(ra,rb), state.bestOf);
+  const pA = Object.entries(scores).filter(([k])=>+k[0]>+k[2]).reduce((s,[,v])=>s+v,0);
+  const top = Object.entries(scores).sort((x,y)=>y[1]-x[1])[0][0];
+  const rankOf = id => ps.findIndex(p=>p.id===id)+1;
+  const card = (P, r) => `<div class="whycard"><strong>${esc(P.name)}</strong>
+    <div class="row2"><span>${state.surface} rating</span><b>${r}</b></div>
+    <div class="row2"><span>Overall rating</span><b>${P.all} · #${rankOf(P.id)}</b></div>
+    <div class="row2"><span>Last 10</span>${formHtml(P.form)}</div>
+    <div class="row2"><span>Last match</span><b>${fmtDay(P.last)}</b></div></div>`;
+  $("#view").innerHTML = `
+    <div class="pickers">
+      <div class="field"><label for="pa">Player</label><select id="pa">${opts}</select></div>
+      <span class="vs">v</span>
+      <div class="field"><label for="pb">Opponent</label><select id="pb">${opts}</select></div>
+    </div>
+    <div class="opts">
+      <div class="field"><label for="surf">Surface</label><select id="surf">${SURF.map(s=>`<option ${s===state.surface?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div class="field"><label for="bo">Format</label><select id="bo"><option value="3" ${state.bestOf===3?"selected":""}>Best of 3 sets</option><option value="5" ${state.bestOf===5?"selected":""}>Best of 5 sets</option></select></div>
+    </div>
+    <div class="match">
+      <div class="mtop"><div class="who"><strong>${esc(A.name)} v ${esc(B.name)}</strong><small>${state.surface} court · best of ${state.bestOf} · ratings as of ${fmtDay(t.latest)}</small></div><span class="badge" title="Most likely score in sets">${top}</span></div>
+      <div class="stack" aria-hidden="true"><i style="width:${100*pA}%;background:var(--ok)"></i><i style="width:${100-100*pA}%;background:var(--amber)"></i></div>
+      <div class="legend2"><span>${esc(A.name)} <b>${pct(pA)}</b></span><span><b>${pct(1-pA)}</b> ${esc(B.name)}</span></div>
+      <div class="sets">${Object.entries(scores).map(([k,v])=>`<div class="set${k===top?" top":""}"><b>${k}</b><small>${pct(v)}</small></div>`).join("")}</div>
+      <p class="note">Set scores are from ${esc(A.name)}’s side. The highlighted score is the single most likely one.</p>
+    </div>
+    <div class="why">${card(A,ra)}${card(B,rb)}</div>
+    <p class="note">Today’s order of play appears here once a fixtures feed is connected. Until then, pick any two players.</p>`;
+  $("#pa").value = A.id; $("#pb").value = B.id;
+}
+
+function renderResults(){
+  const c = tour().check;
+  const cal = c.calibration, x0=44, y0=176, h=150, max=100, step=Math.min(96, 460/cal.length);
+  let svg = "";
+  [40,50,60,70,80,90,100].forEach(v=>{const y=y0-(v-40)/(max-40)*h;svg+=`<line class="gl" x1="${x0}" x2="${x0+cal.length*step+10}" y1="${y}" y2="${y}"/><text x="${x0-8}" y="${y+4}" text-anchor="end">${v}%</text>`});
+  cal.forEach((b,i)=>{const x=x0+14+i*step, hs=(b.said-40)/(max-40)*h, hw=(b.won-40)/(max-40)*h;
+    svg+=`<rect class="pr" x="${x}" width="22" y="${y0-hs}" height="${hs}" rx="2"><title>Said ${b.said}%</title></rect><rect class="ac" x="${x+25}" width="22" y="${y0-hw}" height="${hw}" rx="2"><title>Won ${b.won}%</title></rect><text x="${x+23}" y="${y0+16}" text-anchor="middle">${b.label}</text><text x="${x+23}" y="${y0+30}" text-anchor="middle">${b.n.toLocaleString()}</text>`});
+  const width = x0+cal.length*step+20;
+  let lastDay = "", rows = "";
+  c.recent.slice(0, state.shown).forEach(m=>{
+    if (m.day !== lastDay){ rows += `<div class="day">${fmtDay(m.day)}</div>`; lastDay = m.day; }
+    rows += `<div class="res"><div><b>${esc(m.fav)}</b> v ${esc(m.dog)}<small>${esc(m.tourney)} · ${esc(m.round)} · we said ${m.chance}%, ${esc(m.pick)}</small></div>
+      <div>${m.right?"Won":"Lost"} ${esc(m.actual)}<small>${esc(m.score)}</small></div>
+      <span class="tick ${m.right?"y":"n"}" aria-label="${m.right?"right":"wrong"}">${m.right?"✓":"✕"}</span></div>`;
+  });
+  const recentRight = c.recent.filter(m=>m.right).length;
+  const surf = Object.entries(c.by_surface).map(([s,v])=>`${s} ${pct(v.right/v.n)}`).join(" · ");
+  $("#view").innerHTML = `
+    <div class="stats">
+      <div class="stat"><b>${c.n.toLocaleString()}</b><small>${state.tour} matches forecast in ${DATA.test_year}</small></div>
+      <div class="stat"><b>${pct(c.right/c.n)}</b><small>won by our favourite</small></div>
+      <div class="stat"><b>${pct(c.exact_sets/c.n)}</b><small>exact score in sets</small></div>
+      <div class="stat"><b>${recentRight}/${c.recent.length}</b><small>favourites won in the last 2 weeks</small></div>
+    </div>
+    <p class="note">By surface: ${surf}.</p>
+    <div style="display:grid;gap:8px">
+      <h4 style="font-size:20px;text-transform:uppercase">Can you trust the percentages?</h4>
+      <div style="overflow-x:auto"><svg viewBox="0 0 ${width} 214" style="width:100%;max-width:${width}px;min-width:340px" role="img" aria-label="Calibration: the chance we gave favourites against how often they won">${svg}</svg></div>
+      <div class="key"><span><i style="background:var(--grey)"></i>Chance we gave the favourite</span><span><i style="background:var(--ok)"></i>How often they won</span></div>
+      <p class="note">Every ${state.tour} match in ${DATA.test_year}, grouped by how strongly we fancied the favourite (number of matches underneath). Matching bars mean the percentages hold up. Ours run a little high for 70–90% favourites, so those players win slightly less often than we say.</p>
+    </div>
+    <div class="list">${rows}${c.recent.length>state.shown?`<button class="more" data-more>Show ${Math.min(30,c.recent.length-state.shown)} more</button>`:""}</div>`;
+}
+
+function renderRankings(){
+  const t = tour(), s = state.rankSurface;
+  const ps = [...t.players].sort((x,y)=>rating(y,s)-rating(x,s)).slice(0,50);
+  $("#view").innerHTML = `
+    <div class="pills" role="group" aria-label="Surface">${["all",...SURF].map(x=>`<button class="pill" data-rsurf="${x}" aria-pressed="${x===s}">${x==="all"?"Overall":x}</button>`).join("")}</div>
+    <p class="note">Our ratings, not the official ranking. They count who you beat, not how far you went. Players who haven’t played in ${120} days drop off. Ratings as of ${fmtDay(t.latest)}.</p>
+    <div class="list">${ps.map((p,i)=>`<div class="rank"><span class="pos">${i+1}</span><div><strong>${esc(p.name)}</strong><small>${esc(p.ioc||"Neutral")} · last match ${fmtDay(p.last)}</small></div>${formHtml(p.form)}<span class="rt">${rating(p,s)}</span></div>`).join("")}</div>`;
+}
+
+function render(){
+  document.querySelectorAll("[data-tour]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.tour===state.tour));
+  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.view===state.view));
+  $("#liveTag").textContent = `${state.tour} · results to ${fmtDay(tour().latest)}`;
+  ({forecast:renderForecast, results:renderResults, rankings:renderRankings})[state.view]();
+}
+
+document.addEventListener("click", e=>{
+  const el = e.target.closest("button,a"); if(!el || !DATA) return;
+  if (el.dataset.tour){ state.tour = el.dataset.tour; state.a = state.b = null; state.shown = 30; render(); return; }
+  if (el.dataset.view){ state.view = el.dataset.view; render(); return; }
+  if (el.dataset.goto){ e.preventDefault(); state.view = el.dataset.goto; render(); $("#app").scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  if (el.dataset.rsurf){ state.rankSurface = el.dataset.rsurf; render(); return; }
+  if ("more" in el.dataset){ state.shown += 30; render(); }
+});
+document.addEventListener("change", e=>{
+  const id = e.target.id;
+  if (id==="pa"){ state.a = e.target.value; if (state.a===state.b) state.b = tour().players.find(p=>p.id!==state.a).id; }
+  else if (id==="pb"){ state.b = e.target.value; if (state.a===state.b) state.a = tour().players.find(p=>p.id!==state.b).id; }
+  else if (id==="surf") state.surface = e.target.value;
+  else if (id==="bo") state.bestOf = +e.target.value;
+  else return;
+  render();
+});
+
+fetch("data.json").then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(d=>{
+  DATA = d;
+  const h = (location.hash||"").slice(1);
+  if (["results","rankings"].includes(h)) state.view = h;
+  renderRecord(); render();
+}).catch(()=>{
+  $("#view").innerHTML = `<div class="error">The forecasts didn’t load. Refresh the page to try again.</div>`;
+  $("#record").textContent = "Track record unavailable right now.";
+});
+</script>
