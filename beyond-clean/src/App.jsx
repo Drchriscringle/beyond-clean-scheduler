@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom'
 import { api } from './lib/api.js'
 import { DEFAULT_SETTINGS } from '../supabase/functions/_shared/pricing.js'
 import { CustomerShell } from './components/ui.jsx'
+import Splash from './components/Splash.jsx'
 import Home from './pages/Home.jsx'
 import Enquire from './pages/Enquire.jsx'
 import EnquiryStatus from './pages/EnquiryStatus.jsx'
@@ -24,6 +25,7 @@ export default function App() {
 
   return (
     <HashRouter>
+      <Splash />
       <Routes>
         <Route path="/" element={customer(<Home settings={settings} />)} />
         <Route path="/enquire" element={customer(<Enquire settings={settings} />)} />

@@ -47,3 +47,10 @@ body {
     hover:border-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500;
 }
 @utility tile-on { @apply border-brand-600! bg-brand-100! ring-1 ring-brand-600 text-brand-900; }
+
+/* Opening screen */
+@keyframes splash-in { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+@keyframes splash-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.splash-logo { animation: splash-in .6s ease-out both; }
+.splash-hint { animation: splash-in .6s .4s ease-out both, splash-pulse 1.8s 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .splash-logo, .splash-hint { animation: none; } }
