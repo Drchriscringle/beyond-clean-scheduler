@@ -64,7 +64,10 @@ export default function Home({ settings }) {
 
       {reviews?.items?.length > 0 && (
         <section>
-          <h2 className="font-extrabold text-xl text-brand-900 mb-2">What customers say</h2>
+          <div className="flex items-baseline gap-2 mb-2">
+            <h2 className="font-extrabold text-xl text-brand-900 flex-1">What customers say</h2>
+            {settings.googleReviewUrl && <a href={settings.googleReviewUrl} target="_blank" rel="noreferrer" className="text-sm font-bold underline text-brand-700">See us on Google ↗</a>}
+          </div>
           <div className="grid sm:grid-cols-2 gap-3">
             {reviews.items.map((r, i) => (
               <figure key={i} className="card p-4">

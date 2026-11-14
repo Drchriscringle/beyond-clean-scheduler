@@ -31,6 +31,7 @@ export function CustomerShell({ children, settings }) {
         <div className="flex justify-center gap-4 font-semibold">
           <Link to="/policies" className="underline">Our promise & policies</Link>
           <Link to="/account" className="underline">My account</Link>
+          {settings?.googleReviewUrl && <a href={settings.googleReviewUrl} target="_blank" rel="noreferrer" className="underline">Find us on Google</a>}
         </div>
         {settings?.businessName || 'Beyond Clean Ltd'}
         {settings?.phone && <> · <a className="underline" href={`tel:${settings.phone}`}>{settings.phone}</a></>}
