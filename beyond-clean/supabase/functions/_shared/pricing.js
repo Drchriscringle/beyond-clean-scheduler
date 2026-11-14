@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS = {
   area: 'Ayrshire',
   phone: '',
   email: '',
-  googleReviewUrl: 'https://maps.app.goo.gl/m64hKCH1bkFQjyd27',
+  googleReviewUrl: 'https://g.page/r/CVh8Zf8n1BwIEBI/review',
   // Postcode areas or districts you cover, e.g. "KA" (all of KA) or "KA7". Empty = everywhere.
   serviceAreas: ['KA'],
 
