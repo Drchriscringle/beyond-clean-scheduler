@@ -6,6 +6,9 @@ import Inbox from './Inbox.jsx'
 import PlansAdmin from './PlansAdmin.jsx'
 import Week from './Week.jsx'
 import SettingsAdmin from './SettingsAdmin.jsx'
+import Team from './Team.jsx'
+import Reviews from './Reviews.jsx'
+import Reports from './Reports.jsx'
 
 // A short two-tone "ding" made in the browser, so there's no sound file to host.
 export function ding() {
@@ -32,9 +35,27 @@ export default function Admin({ settings, onSettings }) {
     return api.onAuthChange(setSession)
   }, [])
 
+  const [admin, setAdmin] = useState(undefined)
+  useEffect(() => {
+    if (session) api.isAdmin().then(setAdmin).catch(() => setAdmin(false))
+    else setAdmin(undefined)
+  }, [session])
+  const out = () => api.signOut().then(() => setSession(null))
+
   if (session === undefined) return <Spinner />
   if (!session) return <Login onIn={() => api.getSession().then(setSession)} />
-  return <Owner settings={settings} onSettings={onSettings} onOut={() => api.signOut().then(() => setSession(null))} />
+  if (admin === undefined) return <Spinner />
+  if (!admin) {
+    return (
+      <div className="min-h-screen grid place-items-center px-4">
+        <div className="card p-6 max-w-sm text-center space-y-3">
+          <p>This account isn't set up as the Beyond Clean owner.</p>
+          <button className="btn-primary" onClick={out}>Sign out</button>
+        </div>
+      </div>
+    )
+  }
+  return <Owner settings={settings} onSettings={onSettings} onOut={out} />
 }
 
 function Login({ onIn }) {
@@ -57,7 +78,7 @@ function Login({ onIn }) {
             <h1 className="font-extrabold text-xl text-brand-900">Owner sign in</h1>
           </div>
           {DEMO ? (
-            <p className="text-sm text-slate-600 text-center">Demo mode: no password needed.</p>
+            <p className="text-sm text-slate-600 text-center">Demo mode: no password needed. (Cleaners use <a className="underline" href="#/cleaner">the cleaner app</a>.)</p>
           ) : (
             <>
               <div><label className="label" htmlFor="em">Email</label>
@@ -75,16 +96,17 @@ function Login({ onIn }) {
 }
 
 function Owner({ settings, onSettings, onOut }) {
-  const [enquiries, setEnquiries] = useState(null)
-  const [plans, setPlans] = useState(null)
+  const [data, setData] = useState(null)
   const [toast, setToast] = useState(null)
   const [error, setError] = useState('')
   const toastTimer = useRef()
 
   const reload = useCallback(async () => {
     try {
-      const [e, p] = await Promise.all([api.listEnquiries(), api.listPlans()])
-      setEnquiries(e); setPlans(p)
+      const [enquiries, plans, changes, cleaners, reviews] = await Promise.all([
+        api.listEnquiries(), api.listPlans(), api.listChanges(), api.listCleaners(), api.listReviews(),
+      ])
+      setData({ enquiries, plans, changes, cleaners, reviews })
     } catch (err) { setError(err.message) }
   }, [])
 
@@ -96,7 +118,14 @@ function Owner({ settings, onSettings, onOut }) {
     const r = evt.record || {}
     let msg = ''
     if (evt.table === 'enquiries' && evt.type === 'INSERT') msg = `New enquiry from ${r.name}`
-    if (evt.table === 'enquiries' && evt.type === 'UPDATE' && r.status === 'booked' && r.accepted_at) msg = `${r.name} accepted your quote`
+    if (evt.byOwner) return
+    if (evt.table === 'enquiries' && evt.type === 'UPDATE' && r.status === 'booked' && r.accepted_at) msg = `${r.name} is booked in`
+    if (evt.table === 'enquiries' && evt.type === 'UPDATE' && r.status === 'awaiting_deposit') msg = `${r.name} accepted your quote`
+    if (evt.table === 'enquiries' && evt.type === 'UPDATE' && r.status === 'cancelled') msg = `${r.name} cancelled their booking`
+    if (evt.table === 'plan_changes' && evt.type === 'INSERT' && r.made_by === 'customer') {
+      msg = { skip: 'A customer skipped a clean', move: 'A customer wants to move a clean', extra: 'A customer added an extra' }[r.kind] || ''
+    }
+    if (evt.table === 'reviews' && evt.type === 'INSERT') msg = r.fix_requested ? `⚠️ ${r.name} wants us to put something right` : `New ${r.rating}★ review from ${r.name}`
     if (evt.table === 'enquiries' && evt.type === 'UPDATE' && r.status === 'declined' && r.customer_declined) msg = `${r.name} declined your quote`
     if (evt.table === 'subscriptions' && (evt.type === 'INSERT' || evt.type === 'UPDATE') && r.status === 'active' && !r.owner_seen) msg = `New cleaning plan: ${r.name}`
     if (!msg) return
@@ -109,15 +138,19 @@ function Owner({ settings, onSettings, onOut }) {
     toastTimer.current = setTimeout(() => setToast(null), 6000)
   }), [reload])
 
-  const newCount = (enquiries || []).filter((e) => e.status === 'new').length
+  const newCount = (data?.enquiries || []).filter((e) => e.status === 'new').length
   useEffect(() => {
     document.title = newCount ? `(${newCount}) Beyond Clean – Owner` : 'Beyond Clean – Owner'
   }, [newCount])
 
   const tabs = [
     ['', 'Enquiries', newCount],
-    ['plans', 'Plans', (plans || []).filter((p) => p.status === 'active' && !p.owner_seen).length],
+    ['plans', 'Plans', (data?.plans || []).filter((p) => p.status === 'active' && !p.owner_seen).length
+      + (data?.changes || []).filter((c) => c.kind === 'move' && c.status === 'requested').length],
     ['week', 'Week', 0],
+    ['team', 'Team', 0],
+    ['reviews', 'Reviews', (data?.reviews || []).filter((r) => r.fix_status === 'open' || !r.seen).length],
+    ['reports', 'Reports', 0],
     ['settings', 'Settings', 0],
   ]
 
@@ -145,11 +178,14 @@ function Owner({ settings, onSettings, onOut }) {
       <main className="max-w-5xl mx-auto px-4 py-5">
         <ErrorNote>{error}</ErrorNote>
         <NotifyPrompt />
-        {enquiries === null ? <Spinner /> : (
+        {data === null ? <Spinner /> : (
           <Routes>
-            <Route index element={<Inbox enquiries={enquiries} onChange={reload} />} />
-            <Route path="plans" element={<PlansAdmin plans={plans} onChange={reload} />} />
-            <Route path="week" element={<Week plans={plans} enquiries={enquiries} settings={settings} />} />
+            <Route index element={<Inbox data={data} settings={settings} onChange={reload} />} />
+            <Route path="plans" element={<PlansAdmin data={data} onChange={reload} />} />
+            <Route path="week" element={<Week data={data} settings={settings} onChange={reload} />} />
+            <Route path="team" element={<Team data={data} onChange={reload} />} />
+            <Route path="reviews" element={<Reviews data={data} onChange={reload} />} />
+            <Route path="reports" element={<Reports data={data} />} />
             <Route path="settings" element={<SettingsAdmin settings={settings} onSaved={onSettings} />} />
           </Routes>
         )}

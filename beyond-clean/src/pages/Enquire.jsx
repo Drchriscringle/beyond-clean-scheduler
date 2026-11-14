@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { AREAS, CLEAN_TYPES, EXTRAS, PROPERTY_TYPES, TIME_WINDOWS, labelFor } from '../lib/options.js'
-import { Choice, Counter, ErrorNote, Stepper, formatDate } from '../components/ui.jsx'
+import { estimateOneOff, formatPounds, inServiceArea } from '../../supabase/functions/_shared/pricing.js'
+import { AccessFields, Choice, CodeField, Counter, ErrorNote, PhotoPicker, Stepper, accessSummary, formatDate } from '../components/ui.jsx'
 
 const STEPS = ['Property', 'Type of clean', 'Dates', 'Your details', 'Check & send']
 const MAX_PREFS = 3
@@ -25,7 +26,10 @@ const EMPTY = {
   property_type: '', bedrooms: 2, bathrooms: 1, areas: [], extras: [],
   clean_type: '', preferred: [], flexible: false,
   name: '', email: '', phone: '', address: '', postcode: '', contact_pref: 'phone', notes: '',
+  access: {}, photos: [], code: null, property_id: null,
 }
+
+const COPY_FIELDS = ['property_type', 'bedrooms', 'bathrooms', 'areas', 'extras', 'clean_type', 'name', 'email', 'phone', 'address', 'postcode', 'contact_pref', 'access']
 
 export default function Enquire({ settings }) {
   const nav = useNavigate()
@@ -33,6 +37,33 @@ export default function Enquire({ settings }) {
   const [f, setF] = useState(EMPTY)
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
+  const [params] = useSearchParams()
+  const [photoFolder] = useState(() => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())))
+  const [showAccess, setShowAccess] = useState(false)
+
+  // Rebook: copy a saved property (?property=id) or an earlier enquiry (?from=token).
+  useEffect(() => {
+    const from = params.get('from')
+    const property = params.get('property')
+    if (from) {
+      api.getEnquiry(from).then((e) => e && setF((x) => ({ ...x, ...Object.fromEntries(COPY_FIELDS.map((k) => [k, e[k] ?? x[k]])) })))
+    } else if (property) {
+      api.getAccount().then((acc) => {
+        const p = acc?.properties?.find((x) => x.id === property)
+        if (p) {
+          setF((x) => ({
+            ...x, email: acc.email, address: p.address, postcode: p.postcode, property_type: p.property_type || x.property_type,
+            bedrooms: p.bedrooms ?? x.bedrooms, bathrooms: p.bathrooms ?? x.bathrooms, access: p.access || {}, property_id: p.id,
+            clean_type: p.property_type === 'holiday_let' ? 'holiday_turnover' : x.clean_type,
+          }))
+          const prev = acc.enquiries?.[0]
+          if (prev) setF((x) => ({ ...x, name: prev.name, phone: prev.phone }))
+        }
+      }).catch(() => {})
+    }
+  }, [params])
+  const estimate = estimateOneOff(settings, f)
+  const outOfArea = f.postcode.trim().length >= 5 && !inServiceArea(settings, f.postcode)
   const days = useMemo(() => nextDays(28, settings.closedDays || []), [settings.closedDays])
   const set = (patch) => { setError(''); setF((x) => ({ ...x, ...patch })) }
   const toggle = (k, id) => set({ [k]: f[k].includes(id) ? f[k].filter((x) => x !== id) : [...f[k], id] })
@@ -60,7 +91,12 @@ export default function Enquire({ settings }) {
   async function submit() {
     setSending(true); setError('')
     try {
-      const { token } = await api.submitEnquiry({ ...f, postcode: f.postcode.toUpperCase().trim() })
+      const { code, photos, ...rest } = f
+      const { token } = await api.submitEnquiry({
+        ...rest, postcode: f.postcode.toUpperCase().trim(), photos: photos.map((p) => p.path),
+        discount_code: code?.code || null,
+        estimate_low_pence: estimate?.lowPence ?? null, estimate_high_pence: estimate?.highPence ?? null, est_hours: estimate?.hours ?? null,
+      })
       nav(`/enquiry/${token}?new=1`)
     } catch (e) {
       setError(e.message)
@@ -138,8 +174,14 @@ export default function Enquire({ settings }) {
                 </Choice>
               ))}
             </div>
-            <p className="text-sm text-slate-500 mt-3">
-              Want this every week? <a className="underline font-semibold text-brand-700" href="#/plans">See our regular cleaning plans</a>.
+            {f.clean_type && <div className="mt-4"><EstimateBox estimate={estimate} code={f.code} /></div>}
+            <div className="mt-4">
+              <h2 className="label mb-0">Photos <span className="font-normal text-slate-500">(optional, helps us price it exactly)</span></h2>
+              <p className="text-sm text-slate-600 mb-2">Oven, problem areas, or each room for end-of-tenancy and after-builders cleans.</p>
+              <PhotoPicker value={f.photos} onChange={(photos) => set({ photos })} upload={(blob, i) => api.uploadEnquiryPhoto(blob, photoFolder, i)} />
+            </div>
+            <p className="text-sm text-slate-500 mt-4">
+              Want this regularly? <a className="underline font-semibold text-brand-700" href="#/plans">See our cleaning plans</a>.
             </p>
           </section>
         )}
@@ -215,6 +257,7 @@ export default function Enquire({ settings }) {
               <input id="address" className="field" autoComplete="street-address" value={f.address} onChange={(e) => set({ address: e.target.value })} /></div>
             <div className="w-40"><label className="label" htmlFor="postcode">Postcode</label>
               <input id="postcode" className="field uppercase" autoComplete="postal-code" value={f.postcode} onChange={(e) => set({ postcode: e.target.value })} /></div>
+            {outOfArea && <p className="text-sm rounded-xl bg-amber-50 text-amber-900 px-3 py-2">That's just outside the area we usually cover ({settings.area}). Send it anyway and we'll let you know if we can help.</p>}
             <div>
               <span className="label">Best way to reach you</span>
               <div className="grid grid-cols-3 gap-2">
@@ -224,14 +267,22 @@ export default function Enquire({ settings }) {
               </div>
             </div>
             <div><label className="label" htmlFor="notes">Anything else? <span className="font-normal text-slate-500">(optional)</span></label>
-              <textarea id="notes" rows={3} className="field" placeholder="Pets, parking, access, problem areas…" value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></div>
+              <textarea id="notes" rows={3} className="field" placeholder="Problem areas, anything we should know…" value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></div>
+            <div className="rounded-xl border border-slate-200 p-3">
+              <button type="button" className="font-bold w-full text-left" aria-expanded={showAccess} onClick={() => setShowAccess(!showAccess)}>
+                {showAccess ? '▾' : '▸'} Access, pets & parking <span className="font-normal text-slate-500 text-sm">(optional, you can add this later)</span>
+              </button>
+              {showAccess && <div className="mt-3"><AccessFields value={f.access} onChange={(access) => set({ access })} /></div>}
+            </div>
+            <CodeField kind="oneoff" applied={f.code} onApplied={(code) => set({ code })} />
           </section>
         )}
 
         {step === 4 && (
           <section className="space-y-3 text-[15px]">
             <h2 className="font-extrabold text-lg">Check your enquiry</h2>
-            <Summary f={f} />
+            <EstimateBox estimate={estimate} code={f.code} />
+            <Summary f={{ ...f, photos: f.photos.length }} />
             <p className="text-xs text-slate-500">
               By sending this you agree to Beyond Clean contacting you about this enquiry. We never share your details.
             </p>
@@ -265,6 +316,9 @@ export function Summary({ f }) {
     ['Contact', `${f.phone} · ${f.email} (prefers ${f.contact_pref})`],
     ['Address', `${f.address}, ${String(f.postcode).toUpperCase()}`],
     ...(f.notes ? [['Notes', f.notes]] : []),
+    ...(accessSummary(f.access) ? [['Access', accessSummary(f.access)]] : []),
+    ...(f.photos ? [['Photos', `${f.photos.length ?? f.photos} added`]] : []),
+    ...(f.code?.code || f.discount_code ? [['Code', f.code?.code || f.discount_code]] : []),
   ]
   return (
     <dl className="divide-y divide-slate-100 rounded-xl border border-slate-200">
@@ -274,5 +328,18 @@ export function Summary({ f }) {
         </div>
       ))}
     </dl>
+  )
+}
+
+function EstimateBox({ estimate, code }) {
+  if (!estimate) {
+    return <div className="rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-3 text-sm">We price this kind of job individually. Send your enquiry and we'll come back with an exact quote.</div>
+  }
+  return (
+    <div className="rounded-2xl bg-brand-900 text-white px-4 py-3">
+      <div className="text-sm opacity-80">Estimated price</div>
+      <div className="text-2xl font-extrabold">{formatPounds(estimate.lowPence)} – {formatPounds(estimate.highPence)}</div>
+      <div className="text-xs opacity-80">About {estimate.hours} hours. We'll confirm an exact price when we reply.{code ? ` Your code ${code.code} comes off that.` : ''}</div>
+    </div>
   )
 }

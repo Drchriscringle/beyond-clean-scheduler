@@ -27,7 +27,7 @@ test('discounts apply per visits per week', () => {
 test('mergeSettings keeps defaults for missing keys', () => {
   const m = mergeSettings({ hourlyRate: 22, discounts: { 3: 15 } })
   assert.equal(m.hourlyRate, 22)
-  assert.deepEqual(m.discounts, { 1: 0, 2: 5, 3: 15 })
+  assert.deepEqual(m.discounts, { 0.5: 0, 1: 0, 2: 5, 3: 15 })
   assert.equal(m.slotCapacity, 2)
   assert.deepEqual(mergeSettings(null).slots, s.slots)
 })
@@ -48,7 +48,7 @@ test('validatePlan checks count, distinct days and capacity', () => {
   assert.match(validatePlan(s, avail, { ...ok, slots: [{ day: 2, start: '09:00' }, { day: 2, start: '13:00' }] })[0], /different day/)
   assert.match(validatePlan(s, avail, { ...ok, slots: [{ day: 1, start: '09:00' }, { day: 3, start: '09:00' }] })[0], /just been taken/)
   assert.match(validatePlan(s, avail, { ...ok, slots: [{ day: 7, start: '09:00' }, { day: 3, start: '09:00' }] })[0], /not a bookable/)
-  assert.match(validatePlan(s, avail, { ...ok, visitsPerWeek: 5 })[0], /how many cleans/)
+  assert.match(validatePlan(s, avail, { ...ok, visitsPerWeek: 5 })[0], /how often/)
 })
 
 test('helpers', () => {

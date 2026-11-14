@@ -46,10 +46,22 @@ export const TIME_WINDOWS = [
 export const ENQUIRY_STATUS = {
   new: { label: 'New', tone: 'bg-amber-100 text-amber-800' },
   replied: { label: 'Quote sent', tone: 'bg-sky-100 text-sky-800' },
+  awaiting_deposit: { label: 'Awaiting deposit', tone: 'bg-amber-100 text-amber-800' },
   booked: { label: 'Booked', tone: 'bg-green-100 text-green-800' },
+  completed: { label: 'Done', tone: 'bg-brand-100 text-brand-700' },
   declined: { label: 'Declined', tone: 'bg-slate-200 text-slate-700' },
+  cancelled: { label: 'Cancelled', tone: 'bg-red-100 text-red-800' },
   closed: { label: 'Closed', tone: 'bg-slate-200 text-slate-700' },
 }
+
+// How the cleaner gets in.
+export const ACCESS_METHODS = [
+  { id: 'home', label: "I'll be home" },
+  { id: 'key_safe', label: 'Key safe' },
+  { id: 'key_held', label: 'Beyond Clean holds a key' },
+  { id: 'neighbour', label: 'Neighbour / concierge' },
+  { id: 'other', label: 'Other' },
+]
 
 export const SUB_STATUS = {
   pending_payment: { label: 'Awaiting payment', tone: 'bg-amber-100 text-amber-800' },

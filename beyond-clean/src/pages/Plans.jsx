@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DEMO, api } from '../lib/api.js'
 import {
-  DAY_NAMES_LONG, WEEKS_PER_MONTH, addHours, formatPounds, planPrice, slotKey, slotLabel, validatePlan,
+  DAY_NAMES_LONG, FORTNIGHTLY, WEEKS_PER_MONTH, addHours, applyDiscount, formatPounds, frequencyLabel, inServiceArea, planPrice, slotKey, slotLabel,
+  slotsNeeded, validatePlan,
 } from '../../supabase/functions/_shared/pricing.js'
-import { Choice, ErrorNote, Stepper, formatDate } from '../components/ui.jsx'
+import { AccessFields, Choice, CodeField, ErrorNote, Stepper, accessSummary, formatDate } from '../components/ui.jsx'
+import { Link } from 'react-router-dom'
 
 const STEPS = ['Your plan', 'Your times', 'Your details', 'Pay']
 
@@ -13,12 +15,12 @@ function isoDate(d) {
 
 export default function Plans({ settings }) {
   const [step, setStep] = useState(0)
-  const [visits, setVisits] = useState(settings.visitsPerWeekOptions[0])
+  const [visits, setVisits] = useState(settings.visitsPerWeekOptions.includes(1) ? 1 : settings.visitsPerWeekOptions[0])
   const [hours, setHours] = useState(settings.hoursPerVisitOptions[0])
   const [slots, setSlots] = useState([])
   const [availability, setAvailability] = useState(null)
   const minStart = useMemo(() => { const d = new Date(); d.setDate(d.getDate() + 3); return isoDate(d) }, [])
-  const [d, setD] = useState({ name: '', email: '', phone: '', address: '', postcode: '', notes: '', startDate: minStart, agree: false })
+  const [d, setD] = useState({ name: '', email: '', phone: '', address: '', postcode: '', notes: '', startDate: minStart, agree: false, access: {}, code: null })
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -31,7 +33,7 @@ export default function Plans({ settings }) {
 
   function chooseVisits(v) {
     setVisits(v)
-    setSlots((s) => s.slice(0, v))
+    setSlots((s) => s.slice(0, slotsNeeded(v)))
   }
 
   function toggleSlot(slot) {
@@ -40,7 +42,7 @@ export default function Plans({ settings }) {
     if (on) return setSlots(slots.filter((s) => s !== on))
     const sameDay = slots.find((s) => s.day === slot.day)
     if (sameDay) return setSlots(slots.map((s) => (s === sameDay ? { day: slot.day, start: slot.start } : s)))
-    if (slots.length >= visits) {
+    if (slots.length >= slotsNeeded(visits)) {
       // Replace the oldest pick so tapping always does something.
       return setSlots([...slots.slice(1), { day: slot.day, start: slot.start }])
     }
@@ -58,6 +60,7 @@ export default function Plans({ settings }) {
       else if (!/^\S+@\S+\.\S+$/.test(d.email.trim())) p = 'Please add a valid email address.'
       else if (d.phone.replace(/\D/g, '').length < 10) p = 'Please add a phone number we can reach you on.'
       else if (!d.address.trim() || !d.postcode.trim()) p = 'Please add the address and postcode.'
+      else if (!inServiceArea(settings, d.postcode)) p = `Sorry, ${d.postcode.toUpperCase()} is outside the area we cover for regular plans. Send us an enquiry and we'll see what we can do.`
     }
     setError(p)
     if (!p) { setStep(step + 1); window.scrollTo(0, 0) }
@@ -71,6 +74,7 @@ export default function Plans({ settings }) {
         visitsPerWeek: visits, hoursPerVisit: hours, slots,
         name: d.name.trim(), email: d.email.trim(), phone: d.phone.trim(), address: d.address.trim(),
         postcode: d.postcode.toUpperCase().trim(), notes: d.notes.trim(), startDate: d.startDate,
+        access: d.access, discountCode: d.code?.code || null,
       })
       window.location.href = url
     } catch (e) {
@@ -88,21 +92,21 @@ export default function Plans({ settings }) {
   return (
     <div>
       <h1 className="text-2xl font-extrabold text-brand-900 mb-1">Regular cleaning plans</h1>
-      <p className="text-slate-600 mb-5 text-sm">Same cleaner-friendly times every week. One simple monthly payment. Cancel any time with 30 days' notice.</p>
+      <p className="text-slate-600 mb-5 text-sm">The same times every week or every 2 weeks. One simple monthly payment. Skip, pause or cancel from your phone.</p>
       <Stepper steps={STEPS} current={step} />
 
       <div className="card p-4 sm:p-5 space-y-5">
         {step === 0 && (
           <>
             <section>
-              <h2 className="label">How many cleans a week?</h2>
-              <div className="grid grid-cols-3 gap-2">
+              <h2 className="label">How often?</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {settings.visitsPerWeekOptions.map((v) => {
                   const disc = Number(settings.discounts[v]) || 0
                   return (
                     <Choice key={v} on={visits === v} onClick={() => chooseVisits(v)} className="text-center !px-2">
-                      <div className="text-2xl font-extrabold text-brand-900">{v}×</div>
-                      <div className="text-sm font-semibold">per week</div>
+                      <div className="text-2xl font-extrabold text-brand-900">{v === FORTNIGHTLY ? '2 wks' : `${v}×`}</div>
+                      <div className="text-sm font-semibold">{v === FORTNIGHTLY ? 'every 2 weeks' : 'per week'}</div>
                       {disc > 0 && <div className="mt-1 inline-block rounded-full bg-leaf-100 text-leaf-600 text-xs font-extrabold px-2 py-0.5">Save {disc}%</div>}
                     </Choice>
                   )
@@ -127,8 +131,8 @@ export default function Plans({ settings }) {
         {step === 1 && (
           <section className="space-y-4">
             <div>
-              <h2 className="label mb-0">Pick {visits} time{visits > 1 ? 's' : ''} each week</h2>
-              <p className="text-sm text-slate-600">Your cleaner comes at these times every week. Each clean lasts {hours} hours.</p>
+              <h2 className="label mb-0">Pick {slotsNeeded(visits)} time{slotsNeeded(visits) > 1 ? 's' : ''} {visits === FORTNIGHTLY ? 'for your fortnightly clean' : 'each week'}</h2>
+              <p className="text-sm text-slate-600">Your cleaner comes at {slotsNeeded(visits) > 1 ? 'these times' : 'this time'} {frequencyLabel(visits)}. Each clean lasts {hours} hours.</p>
             </div>
             {!availability ? <div className="text-slate-500 py-6 text-center">Checking availability…</div> : (
               <div className="space-y-2">
@@ -154,7 +158,7 @@ export default function Plans({ settings }) {
               </div>
             )}
             <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm">
-              <b>Chosen:</b> {slots.length ? slots.map((s) => slotLabel(s)).join(', ') : 'none yet'} ({slots.length}/{visits})
+              <b>Chosen:</b> {slots.length ? slots.map((s) => slotLabel(s)).join(', ') : 'none yet'} ({slots.length}/{slotsNeeded(visits)})
             </div>
             <div className="w-56">
               <label className="label" htmlFor="start">First week starting</label>
@@ -179,6 +183,11 @@ export default function Plans({ settings }) {
               <input id="ppc" className="field uppercase" autoComplete="postal-code" value={d.postcode} onChange={(e) => setDetail({ postcode: e.target.value })} /></div>
             <div><label className="label" htmlFor="pnotes">Access, pets, priorities <span className="font-normal text-slate-500">(optional)</span></label>
               <textarea id="pnotes" rows={3} className="field" value={d.notes} onChange={(e) => setDetail({ notes: e.target.value })} /></div>
+            <div className="rounded-xl border border-slate-200 p-3">
+              <div className="font-bold mb-2">🔑 Access, pets & parking <span className="font-normal text-slate-500 text-sm">(optional, you can add this later)</span></div>
+              <AccessFields value={d.access} onChange={(access) => setDetail({ access })} />
+            </div>
+            <CodeField kind="plan" applied={d.code} onApplied={(code) => setDetail({ code })} />
           </section>
         )}
 
@@ -187,11 +196,13 @@ export default function Plans({ settings }) {
             <h2 className="font-extrabold text-lg">Your plan</h2>
             <dl className="divide-y divide-slate-100 rounded-xl border border-slate-200 text-[15px]">
               {[
-                ['Cleans', `${visits} per week, ${hours} hours each`],
+                ['Cleans', `${hours} hours, ${frequencyLabel(visits)}`],
                 ['Times', slots.map((s) => `${slotLabel(s, true)} ${s.start}–${addHours(s.start, hours)}`).join(' · ')],
                 ['Starting', formatDate(d.startDate, { weekday: 'long', day: 'numeric', month: 'long' })],
                 ['Address', `${d.address}, ${d.postcode.toUpperCase()}`],
                 ['Contact', `${d.name} · ${d.phone} · ${d.email}`],
+                ...(accessSummary(d.access) ? [['Access', accessSummary(d.access)]] : []),
+                ...(d.code ? [['Code', `${d.code.code}: ${d.code.description}${d.code.first_payment_only ? ' (first month)' : ''}`]] : []),
               ].map(([k, v]) => (
                 <div key={k} className="grid grid-cols-[6.5rem_1fr] gap-2 px-3 py-2">
                   <dt className="text-slate-500 text-sm font-semibold">{k}</dt><dd>{v}</dd>
@@ -199,9 +210,17 @@ export default function Plans({ settings }) {
               ))}
             </dl>
             <PriceBox price={price} visits={visits} hours={hours} />
+            {d.code && (
+              <p className="rounded-xl bg-leaf-100 px-3 py-2 text-sm font-semibold">
+                🏷️ With {d.code.code}, your {d.code.first_payment_only ? 'first month' : 'monthly price'} is {formatPounds(applyDiscount(price.monthlyPence, d.code))}.
+              </p>
+            )}
             <label className="flex items-start gap-2.5 text-sm">
               <input type="checkbox" className="size-5 mt-0.5 accent-brand-600" checked={d.agree} onChange={(e) => setDetail({ agree: e.target.checked })} />
-              <span>I agree to pay {formatPounds(price.monthlyPence)} every month until I cancel. I can cancel any time with 30 days' notice, and missed cleans can be rearranged within the same month.</span>
+              <span>
+                I agree to pay {formatPounds(price.monthlyPence)} every month until I cancel. I can cancel any time and it stops at the end of the month I've paid for.
+                Cleans skipped with {settings.skipNoticeHours} hours' notice come off my next bill. <Link to="/policies" className="underline" target="_blank">Policies</Link>
+              </span>
             </label>
             {DEMO && <p className="text-xs text-amber-800 bg-amber-50 rounded-lg px-3 py-2">Demo mode: no card is needed and nothing is charged.</p>}
           </section>
@@ -228,7 +247,7 @@ function PriceBox({ price, visits, hours }) {
         <div className="text-sm opacity-80">Monthly price</div>
         <div className="text-3xl font-extrabold">{formatPounds(price.monthlyPence)}<span className="text-base font-bold opacity-80"> /month</span></div>
         <div className="text-xs opacity-80 mt-0.5">
-          {visits * hours} hrs a week · about {formatPounds(price.effectivePerVisitPence)} per clean
+          {hours} hrs {frequencyLabel(visits)} · about {formatPounds(price.effectivePerVisitPence)} per clean
         </div>
       </div>
       {price.savingPence > 0 && (

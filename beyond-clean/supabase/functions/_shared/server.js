@@ -72,16 +72,23 @@ export async function sendEmail({ to, subject, html, replyTo }) {
   if (!res.ok) console.error('email failed', res.status, await res.text())
 }
 
-/** Optional text message to the owner's mobile through Twilio. Skips quietly if not configured. */
-export async function sendOwnerSms(body) {
-  const sid = env('TWILIO_ACCOUNT_SID'), token = env('TWILIO_AUTH_TOKEN'), from = env('TWILIO_FROM'), to = env('OWNER_MOBILE')
+/** Text message through Twilio. Skips quietly if Twilio is not configured. */
+export async function sendSms(to, body) {
+  const sid = env('TWILIO_ACCOUNT_SID'), token = env('TWILIO_AUTH_TOKEN'), from = env('TWILIO_FROM')
   if (!sid || !token || !from || !to) return
+  let num = String(to).replace(/[^\d+]/g, '')
+  if (num.startsWith('0')) num = '+44' + num.slice(1)
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: 'POST',
     headers: { Authorization: 'Basic ' + btoa(`${sid}:${token}`), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ From: from, To: to, Body: body }),
+    body: new URLSearchParams({ From: from, To: num, Body: body }),
   })
   if (!res.ok) console.error('sms failed', res.status, await res.text())
+}
+
+/** Optional text message to the owner's mobile (OWNER_MOBILE). */
+export function sendOwnerSms(body) {
+  return sendSms(env('OWNER_MOBILE'), body)
 }
 
 export function emailLayout(title, inner) {
@@ -96,4 +103,24 @@ export function emailLayout(title, inner) {
 
 export function button(href, label) {
   return `<p style="margin:20px 0"><a href="${esc(href)}" style="background:#1f6fb2;color:#fff;text-decoration:none;font-weight:bold;padding:12px 18px;border-radius:10px;display:inline-block">${esc(label)}</a></p>`
+}
+
+/** Money on or off the customer's next Stripe bill. Negative = credit. */
+export function stripeBalance(customer, amount, description) {
+  return stripe(`customers/${customer}/balance_transactions`, { amount, currency: 'gbp', description })
+}
+
+/** One-off charge added to the customer's next Stripe invoice. */
+export function stripeInvoiceItem(customer, amount, description) {
+  return stripe('invoiceitems', { customer, amount, currency: 'gbp', description })
+}
+
+export async function loadSettings(supa) {
+  const { mergeSettings } = await import('./pricing.js')
+  const { data } = await supa.from('settings').select('data').eq('id', 1).single()
+  return mergeSettings(data?.data)
+}
+
+export function siteBase() {
+  return (env('SITE_URL') || '').replace(/\/?$/, '/')
 }
